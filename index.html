@@ -560,12 +560,12 @@
         // --- UPDATED: New Motion Detection Logic ---
         function findMotionRange(data, travelAxis, settings) {
             const pos = data.map(d => d.pos[travelAxis]);
-            if (pos.length < 20) return { start: 0, end: pos.length }; // Not enough data for reliable detection
+            if (pos.length < 20) return { start: 0, end: pos.length };
 
             const overallMax = Math.max(...pos);
             const overallMin = Math.min(...pos);
             const overallRange = overallMax - overallMin;
-            if (overallRange === 0) return null; // No movement at all
+            if (overallRange === 0) return null; 
 
             const margin = overallRange * settings.multiplier;
 
@@ -594,7 +594,7 @@
             let endIndex = pos.length;
             for (let i = pos.length - 1; i >= startIndex; i--) {
                 if (pos[i] < endLowerBound || pos[i] > endUpperBound) {
-                    endIndex = i + 1; // The point after the last deviation
+                    endIndex = i + 1;
                     break;
                 }
             }
@@ -746,8 +746,16 @@
 
                 Object.assign(chart.options.plugins.title, newStyles.plugins.title);
                 Object.assign(chart.options.plugins.legend.labels, newStyles.plugins.legend.labels);
-                Object.assign(chart.options.scales.x, newStyles.scales.x);
-                Object.assign(chart.options.scales.y, newStyles.scales.y);
+                Object.assign(chart.options.scales.x.ticks, newStyles.scales.x.ticks);
+                Object.assign(chart.options.scales.x.grid, newStyles.scales.x.grid);
+                chart.options.scales.x.border = newStyles.scales.x.border;
+                Object.assign(chart.options.scales.x.title, newStyles.scales.x.title);
+
+
+                Object.assign(chart.options.scales.y.ticks, newStyles.scales.y.ticks);
+                Object.assign(chart.options.scales.y.grid, newStyles.scales.y.grid);
+                chart.options.scales.y.border = newStyles.scales.y.border;
+                Object.assign(chart.options.scales.y.title, newStyles.scales.y.title);
 
                 chart.options.scales.x.title.text = currentXLabel;
                 chart.options.scales.y.title.text = currentYLabel;
