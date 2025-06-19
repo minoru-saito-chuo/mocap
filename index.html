@@ -610,7 +610,7 @@
 
         function displayResults(processedData) {
             const container = document.getElementById('average-velocities');
-            container.innerHTML = '<h3 class="text-xl font-semibold mb-3 text-gray-800">平均値</h3>';
+            container.innerHTML = '<h3 class="text-xl font-semibold mb-3 text-gray-800">平均値</h3><p class="text-xs text-gray-500 mt-1">平均速度及び平均スリップ率は、静止範囲として設定している倍率により大きく変動します。例えば加減速を含めるか、安定状態の値を取るかで平均値は変わります。</p><br>';
             const list = document.createElement('div');
             list.className = 'space-y-3';
             processedData.forEach(result => {
