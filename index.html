@@ -656,85 +656,92 @@
             });
             container.appendChild(list);
         }
+function renderAllCharts(processedData, travelAxis, verticalAxis) {
+    Object.values(chartInstances).forEach(chart => chart.destroy());
+    
+    const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
+    const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
 
-        function renderAllCharts(processedData, travelAxis, verticalAxis) {
-            Object.values(chartInstances).forEach(chart => chart.destroy());
-            
-            const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
-            const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
+    const initialLabels = {
+        'velocity': { id: 'velocity-chart', title: '速度 vs 距離', x: '距離 (m)', y: '速度 (m/s)' },
+        'slip': { id: 'slip-chart', title: 'スリップ率 vs 距離', x: '距離 (m)', y: 'スリップ率 (%)' },
+        'vertical': { id: 'vertical-chart', title: '鉛直変位 vs 距離', x: '距離 (m)', y: `鉛直変位 (${verticalAxis}軸) (m)` },
+        'trajectory': { id: 'trajectory-chart', title: '平面移動軌跡', x: `${travelAxis}軸 変位 (m)`, y: `${trajectoryYAxisName}軸 変位 (m)` }
+    };
+    
+    // ラベル設定のマッピングを修正
+    const labelMapping = {
+        'v': 'velocity',
+        's': 'slip', 
+        'z': 'vertical',
+        't': 'trajectory'
+    };
+    
+    for (const [prefix, fullKey] of Object.entries(labelMapping)) {
+        const labels = initialLabels[fullKey];
+        document.getElementById(`${prefix}-chart-title`).value = labels.title;
+        document.getElementById(`${prefix}-chart-xlabel`).value = labels.x;
+        document.getElementById(`${prefix}-chart-ylabel`).value = labels.y;
+    }
 
-            const initialLabels = {
-                'v': { id: 'velocity-chart', title: '速度 vs 距離', x: '距離 (m)', y: '速度 (m/s)' },
-                's': { id: 'slip-chart', title: 'スリップ率 vs 距離', x: '距離 (m)', y: 'スリップ率 (%)' },
-                'z': { id: 'vertical-chart', title: '鉛直変位 vs 距離', x: '距離 (m)', y: `鉛直変位 (${verticalAxis}軸) (m)` },
-                't': { id: 'trajectory-chart', title: '平面移動軌跡', x: `${travelAxis}軸 変位 (m)`, y: `${trajectoryYAxisName}軸 変位 (m)` }
-            };
-            
-            for (const [prefix, labels] of Object.entries(initialLabels)) {
-                 document.getElementById(`${prefix}-chart-title`).value = labels.title;
-                 document.getElementById(`${prefix}-chart-xlabel`).value = labels.x;
-                 document.getElementById(`${prefix}-chart-ylabel`).value = labels.y;
-            }
+    const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
+    const pointStyles = ['circle', 'rect', 'cross', 'star', 'triangle', 'rectRot'];
+    const datasets = processedData.map((result, index) => {
+        const color = colors[index % colors.length];
+        const style = pointStyles[index % pointStyles.length];
+        const base = {
+            label: result.name, borderColor: color, backgroundColor: color,
+            pointRadius: 3, pointStyle: style, showLine: true, tension: 0.1, borderWidth: 1.5
+        };
+        return {
+            velocity: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.instVelocity })) },
+            slip: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.slipRate })) },
+            vertical: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.verticalDisp })) },
+            trajectory: { ...base, data: result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }))}
+        };
+    });
+    
+    ['velocity', 'slip', 'vertical'].forEach(key => {
+        const chartId = `${key}-chart`;
+        const chartData = datasets.map(d => d[key]);
+        const labels = initialLabels[key];
+        chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
+            type: 'scatter', 
+            data: { datasets: chartData },
+            options: getChartOptions(labels.y, labels.x, labels.title)
+        });
+    });
 
-            const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
-            const pointStyles = ['circle', 'rect', 'cross', 'star', 'triangle', 'rectRot'];
-            const datasets = processedData.map((result, index) => {
-                const color = colors[index % colors.length];
-                const style = pointStyles[index % pointStyles.length];
-                const base = {
-                    label: result.name, borderColor: color, backgroundColor: color,
-                    pointRadius: 3, pointStyle: style, showLine: true, tension: 0.1, borderWidth: 1.5
-                };
-                return {
-                    velocity: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.instVelocity })) },
-                    slip: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.slipRate })) },
-                    vertical: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.verticalDisp })) },
-                    trajectory: { ...base, data: result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }))}
-                };
-            });
-            
-            ['velocity', 'slip', 'vertical'].forEach(key => {
-                const chartId = `${key}-chart`;
-                const chartData = datasets.map(d => d[key]);
-                const labels = initialLabels[key[0]];
-                chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
-                    type: 'scatter', 
-                    data: { datasets: chartData },
-                    options: getChartOptions(labels.y, labels.x, labels.title)
-                });
-            });
+    const trajectoryLabels = initialLabels['trajectory'];
+    const trajectoryDatasets = datasets.map(d => d.trajectory);
+    
+    let minVal = Infinity, maxVal = -Infinity;
+    trajectoryDatasets.forEach(dataset => {
+        dataset.data.forEach(point => {
+            minVal = Math.min(minVal, point.x, point.y);
+            maxVal = Math.max(maxVal, point.x, point.y);
+        });
+    });
+    const range = maxVal - minVal;
+    const padding = range === 0 ? 1 : range * 0.1;
+    const finalMin = minVal - padding;
+    const finalMax = maxVal + padding;
 
-            const trajectoryLabels = initialLabels['t'];
-            const trajectoryDatasets = datasets.map(d => d.trajectory);
-            
-            let minVal = Infinity, maxVal = -Infinity;
-            trajectoryDatasets.forEach(dataset => {
-                dataset.data.forEach(point => {
-                    minVal = Math.min(minVal, point.x, point.y);
-                    maxVal = Math.max(maxVal, point.x, point.y);
-                });
-            });
-            const range = maxVal - minVal;
-            const padding = range === 0 ? 1 : range * 0.1;
-            const finalMin = minVal - padding;
-            const finalMax = maxVal + padding;
+    const trajectoryOptions = getChartOptions(trajectoryLabels.y, trajectoryLabels.x, trajectoryLabels.title);
+    trajectoryOptions.scales.x.min = finalMin;
+    trajectoryOptions.scales.x.max = finalMax;
+    trajectoryOptions.scales.y.min = finalMin;
+    trajectoryOptions.scales.y.max = finalMax;
+    trajectoryOptions.aspectRatio = 1;
 
-            const trajectoryOptions = getChartOptions(trajectoryLabels.y, trajectoryLabels.x, trajectoryLabels.title);
-            trajectoryOptions.scales.x.min = finalMin;
-            trajectoryOptions.scales.x.max = finalMax;
-            trajectoryOptions.scales.y.min = finalMin;
-            trajectoryOptions.scales.y.max = finalMax;
-            trajectoryOptions.aspectRatio = 1;
-
-            chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), { 
-                type: 'scatter', 
-                data: { datasets: trajectoryDatasets },
-                options: trajectoryOptions
-            });
-            
-            handleStyleChange({target: document.getElementById('style-casual')});
-        }
-
+    chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), { 
+        type: 'scatter', 
+        data: { datasets: trajectoryDatasets },
+        options: trajectoryOptions
+    });
+    
+    handleStyleChange({target: document.getElementById('style-casual')});
+}
         function updateAllChartLabels() {
             document.querySelectorAll('.chart-label-input').forEach(input => {
                  const chartId = input.dataset.chartId;
