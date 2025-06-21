@@ -16,15 +16,12 @@
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
         }
-        .chart-wrapper {
-            margin: 0 auto; /* Center the wrapper */
-        }
         .chart-container {
             position: relative;
-            height: 100%;
             width: 100%;
+            height: 100%;
         }
-        .loader {
+        .loader, .download-loader {
             border: 8px solid #e5e7eb; /* light gray */
             border-radius: 50%;
             border-top: 8px solid #3b82f6; /* blue */
@@ -85,8 +82,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- UPDATED: Advanced Motion Detection Settings -->
-                 <div class="md:col-span-2">
+                <div class="md:col-span-2">
                      <details class="bg-gray-50 border rounded-lg p-4">
                         <summary class="font-semibold text-gray-700">
                             動作検出の高度な設定
@@ -114,13 +110,20 @@
             </div>
         </div>
         
-        <!-- Loading Indicator -->
+        <!-- Loading Indicators -->
         <div id="loading" class="hidden fixed top-0 left-0 w-full h-full bg-white bg-opacity-70 flex justify-center items-center z-50">
             <div class="text-center">
                 <div class="loader mx-auto"></div>
                 <p class="text-gray-700 text-xl mt-4">解析中... これには数分かかる場合があります。</p>
             </div>
         </div>
+        <div id="download-overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+             <div class="text-center">
+                <div class="download-loader mx-auto"></div>
+                <p class="text-white text-lg mt-4">エクスポート用の画像を生成中...</p>
+            </div>
+        </div>
+
 
         <!-- Step 3: Results and Graphs -->
         <div id="results-section" class="hidden">
@@ -148,6 +151,8 @@
                 </div>
 
                 <div id="average-velocities" class="mb-6"></div>
+                <p class="text-xs text-gray-500 mb-4">※平均速度及び平均スリップ率は、静止範囲として設定している倍率により大きく変動します。例えば加減速を含めるか、安定状態の値を取るかで平均値は変わります。</p>
+                
                 <button id="download-velocity-csv" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">
                     微小速度データをCSVでダウンロード
                 </button>
@@ -164,77 +169,89 @@
                 </div>
 
                 <div id="graph-customization" class="mt-6">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">グラフのカスタマイズ</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 p-4 bg-gray-50 rounded-lg border">
-                        <div>
-                            <label for="chart-width" class="block text-sm font-medium text-gray-700">グラフの幅 (px)</label>
-                            <input type="number" id="chart-width" value="800" class="mt-1 block w-full rounded-md shadow-sm p-2">
-                        </div>
-                        <div>
-                            <label for="chart-height" class="block text-sm font-medium text-gray-700">グラフの高さ (px)</label>
-                            <input type="number" id="chart-height" value="450" class="mt-1 block w-full rounded-md shadow-sm p-2">
-                        </div>
-                        <div class="flex items-end">
-                            <button id="update-graph-appearance-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">
-                                設定を適用
-                            </button>
+                    <div class="mb-8 p-4 bg-gray-50 rounded-lg border">
+                         <h4 class="font-semibold text-gray-700 mb-3">エクスポート設定</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="export-width" class="block text-sm font-medium text-gray-600">画像の幅 (px)</label>
+                                <input type="number" id="export-width" value="800" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-gray-300">
+                            </div>
+                             <div>
+                                <label for="export-height" class="block text-sm font-medium text-gray-600">画像の高さ (px)</label>
+                                <input type="number" id="export-height" value="450" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-gray-300">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">グラフのラベル編集</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="space-y-3 p-4 border rounded-lg">
                             <h4 class="font-bold text-center text-gray-700">速度 vs 距離</h4>
                             <div>
                                 <label for="v-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="v-chart-title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="v-chart-title" data-chart-id="velocity-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                             <div>
                                 <label for="v-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="v-chart-xlabel" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="v-chart-xlabel" data-chart-id="velocity-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                             <div>
                                 <label for="v-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="v-chart-ylabel" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="v-chart-ylabel" data-chart-id="velocity-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                         </div>
                         <div class="space-y-3 p-4 border rounded-lg">
                             <h4 class="font-bold text-center text-gray-700">スリップ率 vs 距離</h4>
                             <div>
                                 <label for="s-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="s-chart-title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="s-chart-title" data-chart-id="slip-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                             <div>
                                 <label for="s-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="s-chart-xlabel" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="s-chart-xlabel" data-chart-id="slip-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                             <div>
                                 <label for="s-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="s-chart-ylabel" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="s-chart-ylabel" data-chart-id="slip-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                         </div>
                         <div class="space-y-3 p-4 border rounded-lg">
                             <h4 class="font-bold text-center text-gray-700">鉛直変位 vs 距離</h4>
                             <div>
                                 <label for="z-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="z-chart-title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="z-chart-title" data-chart-id="vertical-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                             <div>
                                 <label for="z-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="z-chart-xlabel" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="z-chart-xlabel" data-chart-id="vertical-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                             <div>
                                 <label for="z-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="z-chart-ylabel" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <input type="text" id="z-chart-ylabel" data-chart-id="vertical-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                            </div>
+                        </div>
+                        <div class="space-y-3 p-4 border rounded-lg">
+                            <h4 class="font-bold text-center text-gray-700">平面移動軌跡</h4>
+                            <div>
+                                <label for="t-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
+                                <input type="text" id="t-chart-title" data-chart-id="trajectory-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                            </div>
+                            <div>
+                                <label for="t-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
+                                <input type="text" id="t-chart-xlabel" data-chart-id="trajectory-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                            </div>
+                            <div>
+                                <label for="t-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
+                                <input type="text" id="t-chart-ylabel" data-chart-id="trajectory-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-12 mt-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 mt-8">
                     <div>
-                        <div class="chart-wrapper">
-                            <div class="chart-container"><canvas id="velocity-chart"></canvas></div>
+                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
+                           <div class="chart-container"><canvas id="velocity-chart"></canvas></div>
                         </div>
                         <div class="text-center mt-3">
                             <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="velocity-chart" data-format="png">PNG</button>
@@ -242,7 +259,7 @@
                         </div>
                     </div>
                     <div>
-                        <div class="chart-wrapper">
+                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
                             <div class="chart-container"><canvas id="slip-chart"></canvas></div>
                         </div>
                         <div class="text-center mt-3">
@@ -251,12 +268,21 @@
                         </div>
                     </div>
                     <div>
-                         <div class="chart-wrapper">
+                         <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
                             <div class="chart-container"><canvas id="vertical-chart"></canvas></div>
                         </div>
                         <div class="text-center mt-3">
                             <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="vertical-chart" data-format="png">PNG</button>
                             <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="vertical-chart" data-format="pdf">PDF</button>
+                        </div>
+                    </div>
+                     <div>
+                         <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
+                            <div class="chart-container"><canvas id="trajectory-chart"></canvas></div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="trajectory-chart" data-format="png">PNG</button>
+                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="trajectory-chart" data-format="pdf">PDF</button>
                         </div>
                     </div>
                 </div>
@@ -281,7 +307,7 @@
         const startAnalysisBtn = document.getElementById('start-analysis-btn');
         const resultsSection = document.getElementById('results-section');
         const loadingDiv = document.getElementById('loading');
-        const updateGraphAppearanceBtn = document.getElementById('update-graph-appearance-btn');
+        const downloadOverlay = document.getElementById('download-overlay');
         const filterVelocityCheckbox = document.getElementById('filter-velocity-checkbox');
         const filterRangeInputs = document.getElementById('filter-range-inputs');
         const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
@@ -290,7 +316,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             csvFileInput.addEventListener('change', handleFileSelect);
             startAnalysisBtn.addEventListener('click', startAnalysis);
-            updateGraphAppearanceBtn.addEventListener('click', updateGraphAppearance);
             
             rigidbodyListDiv.addEventListener('change', (event) => {
                 if (event.target.classList.contains('rigidbody-checkbox')) {
@@ -312,11 +337,7 @@
             document.querySelectorAll('.download-btn').forEach(btn => btn.addEventListener('click', handleDownload));
             document.getElementById('download-velocity-csv').addEventListener('click', downloadVelocityCSV);
             document.querySelectorAll('.chart-label-input').forEach(input => {
-                input.addEventListener('change', () => {
-                    if (Object.keys(chartInstances).length > 0) {
-                        updateGraphAppearance();
-                    }
-                });
+                input.addEventListener('input', updateAllChartLabels);
             });
         });
 
@@ -522,12 +543,19 @@
                 const startTime = workingData[0].time;
                 const initialPos = workingData[0].pos;
                 const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
+
                 workingData.forEach((d, i) => {
                     d.time = d.time - startTime;
                     const d_h1 = d.pos[horizontalAxes[0]] - initialPos[horizontalAxes[0]];
                     const d_h2 = d.pos[horizontalAxes[1]] - initialPos[horizontalAxes[1]];
                     d.distance = Math.sqrt(d_h1 ** 2 + d_h2 ** 2);
                     d.verticalDisp = d.pos[verticalAxis] - initialPos[verticalAxis];
+                    
+                    const chartXAxisName = travelAxis;
+                    const chartYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
+                    d.trajectory_x = d.pos[chartXAxisName] - initialPos[chartXAxisName];
+                    d.trajectory_y = d.pos[chartYAxisName] - initialPos[chartYAxisName];
+                    
                     if (i === 0) { d.instVelocity = 0; } else {
                         const dt = d.time - workingData[i - 1].time;
                         const dd = d.distance - workingData[i - 1].distance;
@@ -557,7 +585,6 @@
             }).filter(d => d !== null);
         }
 
-        // --- UPDATED: New Motion Detection Logic ---
         function findMotionRange(data, travelAxis, settings) {
             const pos = data.map(d => d.pos[travelAxis]);
             if (pos.length < 20) return { start: 0, end: pos.length };
@@ -569,7 +596,6 @@
 
             const margin = overallRange * settings.multiplier;
 
-            // --- Find Start Index ---
             const initialValue = pos[0];
             const startLowerBound = initialValue - margin;
             const startUpperBound = initialValue + margin;
@@ -586,7 +612,6 @@
                 return null; 
             }
 
-            // --- Find End Index ---
             const finalValue = pos[pos.length - 1];
             const endLowerBound = finalValue - margin;
             const endUpperBound = finalValue + margin;
@@ -610,7 +635,7 @@
 
         function displayResults(processedData) {
             const container = document.getElementById('average-velocities');
-            container.innerHTML = '<h3 class="text-xl font-semibold mb-3 text-gray-800">平均値</h3><p class="text-xs text-gray-500 mt-1">平均速度及び平均スリップ率は、静止範囲として設定している倍率により大きく変動します。例えば加減速を含めるか、安定状態の値を取るかで平均値は変わります。</p><br>';
+            container.innerHTML = '<h3 class="text-xl font-semibold mb-3 text-gray-800">平均値</h3>';
             const list = document.createElement('div');
             list.className = 'space-y-3';
             processedData.forEach(result => {
@@ -634,15 +659,23 @@
 
         function renderAllCharts(processedData, travelAxis, verticalAxis) {
             Object.values(chartInstances).forEach(chart => chart.destroy());
-            document.getElementById('v-chart-title').value = '速度 vs 距離';
-            document.getElementById('v-chart-xlabel').value = '距離 (m)';
-            document.getElementById('v-chart-ylabel').value = '速度 (m/s)';
-            document.getElementById('s-chart-title').value = 'スリップ率 vs 距離';
-            document.getElementById('s-chart-xlabel').value = '距離 (m)';
-            document.getElementById('s-chart-ylabel').value = 'スリップ率 (%)';
-            document.getElementById('z-chart-title').value = '鉛直変位 vs 距離';
-            document.getElementById('z-chart-xlabel').value = '距離 (m)';
-            document.getElementById('z-chart-ylabel').value = `鉛直変位 (${verticalAxis}軸) (m)`;
+            
+            const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
+            const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
+
+            const initialLabels = {
+                'v': { id: 'velocity-chart', title: '速度 vs 距離', x: '距離 (m)', y: '速度 (m/s)' },
+                's': { id: 'slip-chart', title: 'スリップ率 vs 距離', x: '距離 (m)', y: 'スリップ率 (%)' },
+                'z': { id: 'vertical-chart', title: '鉛直変位 vs 距離', x: '距離 (m)', y: `鉛直変位 (${verticalAxis}軸) (m)` },
+                't': { id: 'trajectory-chart', title: '平面移動軌跡', x: `${travelAxis}軸 変位 (m)`, y: `${trajectoryYAxisName}軸 変位 (m)` }
+            };
+            
+            for (const [prefix, labels] of Object.entries(initialLabels)) {
+                 document.getElementById(`${prefix}-chart-title`).value = labels.title;
+                 document.getElementById(`${prefix}-chart-xlabel`).value = labels.x;
+                 document.getElementById(`${prefix}-chart-ylabel`).value = labels.y;
+            }
+
             const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
             const pointStyles = ['circle', 'rect', 'cross', 'star', 'triangle', 'rectRot'];
             const datasets = processedData.map((result, index) => {
@@ -656,48 +689,77 @@
                     velocity: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.instVelocity })) },
                     slip: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.slipRate })) },
                     vertical: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.verticalDisp })) },
+                    trajectory: { ...base, data: result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }))}
                 };
             });
-            chartInstances['velocity-chart'] = new Chart(document.getElementById('velocity-chart'), { type: 'scatter', data: { datasets: datasets.map(d => d.velocity) } });
-            chartInstances['slip-chart'] = new Chart(document.getElementById('slip-chart'), { type: 'scatter', data: { datasets: datasets.map(d => d.slip) } });
-            chartInstances['vertical-chart'] = new Chart(document.getElementById('vertical-chart'), { type: 'scatter', data: { datasets: datasets.map(d => d.vertical) } });
-            updateGraphAppearance();
+            
+            ['velocity', 'slip', 'vertical'].forEach(key => {
+                const chartId = `${key}-chart`;
+                const chartData = datasets.map(d => d[key]);
+                const labels = initialLabels[key[0]];
+                chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
+                    type: 'scatter', 
+                    data: { datasets: chartData },
+                    options: getChartOptions(labels.y, labels.x, labels.title)
+                });
+            });
+
+            const trajectoryLabels = initialLabels['t'];
+            const trajectoryDatasets = datasets.map(d => d.trajectory);
+            
+            let minVal = Infinity, maxVal = -Infinity;
+            trajectoryDatasets.forEach(dataset => {
+                dataset.data.forEach(point => {
+                    minVal = Math.min(minVal, point.x, point.y);
+                    maxVal = Math.max(maxVal, point.x, point.y);
+                });
+            });
+            const range = maxVal - minVal;
+            const padding = range === 0 ? 1 : range * 0.1;
+            const finalMin = minVal - padding;
+            const finalMax = maxVal + padding;
+
+            const trajectoryOptions = getChartOptions(trajectoryLabels.y, trajectoryLabels.x, trajectoryLabels.title);
+            trajectoryOptions.scales.x.min = finalMin;
+            trajectoryOptions.scales.x.max = finalMax;
+            trajectoryOptions.scales.y.min = finalMin;
+            trajectoryOptions.scales.y.max = finalMax;
+            trajectoryOptions.aspectRatio = 1;
+
+            chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), { 
+                type: 'scatter', 
+                data: { datasets: trajectoryDatasets },
+                options: trajectoryOptions
+            });
+            
+            handleStyleChange({target: document.getElementById('style-casual')});
         }
 
-        function updateGraphAppearance() {
-            if (Object.keys(chartInstances).length === 0) return;
-            const width = document.getElementById('chart-width').value + 'px';
-            const height = document.getElementById('chart-height').value + 'px';
-            const labelInfo = {
-                'velocity-chart': { title: document.getElementById('v-chart-title').value, x: document.getElementById('v-chart-xlabel').value, y: document.getElementById('v-chart-ylabel').value },
-                'slip-chart': { title: document.getElementById('s-chart-title').value, x: document.getElementById('s-chart-xlabel').value, y: document.getElementById('s-chart-ylabel').value },
-                'vertical-chart': { title: document.getElementById('z-chart-title').value, x: document.getElementById('z-chart-xlabel').value, y: document.getElementById('z-chart-ylabel').value }
-            };
-            for (const [chartId, chart] of Object.entries(chartInstances)) {
-                const wrapper = chart.canvas.parentElement.parentElement;
-                wrapper.style.width = width;
-                wrapper.style.height = height;
-                const labels = labelInfo[chartId];
-                if (labels) {
-                    chart.options = getChartOptions(labels.y, labels.x, labels.title);
-                }
-                chart.resize();
-                chart.update('none');
-            }
-            const currentStyleBtn = document.querySelector('.style-btn.bg-blue-600, .style-btn.bg-black') || document.getElementById('style-casual');
-            handleStyleChange({ target: currentStyleBtn });
+        function updateAllChartLabels() {
+            document.querySelectorAll('.chart-label-input').forEach(input => {
+                 const chartId = input.dataset.chartId;
+                 const labelType = input.dataset.labelType;
+                 const chart = chartInstances[chartId];
+                 if(!chart || !chart.options) return;
+
+                 if(labelType === 'title') chart.options.plugins.title.text = input.value;
+                 if(labelType === 'x') chart.options.scales.x.title.text = input.value;
+                 if(labelType === 'y') chart.options.scales.y.title.text = input.value;
+            });
+            Object.values(chartInstances).forEach(chart => chart.update('none'));
         }
 
         function getChartOptions(yLabel, xLabel, title) {
             return {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
-                    y: { title: { display: true, text: yLabel } },
-                    x: { type: 'linear', position: 'bottom', title: { display: true, text: xLabel } }
+                    y: { title: { display: true, text: yLabel, font: { size: 14 } }, ticks: { font: { size: 12 } } },
+                    x: { type: 'linear', position: 'bottom', title: { display: true, text: xLabel, font: { size: 14 } }, ticks: { font: { size: 12 } } }
                 },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 20 } },
-                    title: { display: true, text: title, font: { size: 16 } }
+                    title: { display: true, text: title, font: { size: 18, weight: '600' } }
                 },
                 animation: { duration: 0 }
             };
@@ -718,60 +780,51 @@
             formalBtn.classList.toggle('text-gray-700', mode === 'casual');
             const isFormal = mode === 'formal';
             const formalStyles = {
-                scales: {
-                    y: { title: { color: '#000', font: { weight: 'bold', size: 16 } }, ticks: { color: '#000' }, grid: { display: false }, border: { color: '#000', width: 2 } },
-                    x: { title: { color: '#000', font: { weight: 'bold', size: 16 } }, ticks: { color: '#000' }, grid: { display: false }, border: { color: '#000', width: 2 } }
-                },
-                plugins: {
-                    legend: { labels: { color: '#000', font: { size: 12 } } },
-                    title: { color: '#000', font: { size: 18, weight: 'bold' } }
-                }
+                color: '#000', font: { weight: 'bold' }
             };
             const casualStyles = {
-                scales: {
-                    y: { title: { color: '#374151' }, ticks: { color: '#6b7280' }, grid: { color: '#e5e7eb' }, border: { color: '#d1d5db' } },
-                    x: { title: { color: '#374151' }, ticks: { color: '#6b7280' }, grid: { color: '#e5e7eb' }, border: { color: '#d1d5db' } }
-                },
-                plugins: {
-                    legend: { labels: { color: '#374151' } },
-                    title: { color: '#111827' }
-                }
+                color: '#374151', font: { weight: 'normal' }
             };
             const newStyles = isFormal ? formalStyles : casualStyles;
+            
             Object.values(chartInstances).forEach(chart => {
-                if (!chart.options) return;
+                if (!chart || !chart.options || !chart.options.plugins || !chart.options.scales) return;
                 
-                const currentXLabel = chart.options.scales.x.title.text;
-                const currentYLabel = chart.options.scales.y.title.text;
-
-                Object.assign(chart.options.plugins.title, newStyles.plugins.title);
-                Object.assign(chart.options.plugins.legend.labels, newStyles.plugins.legend.labels);
-                Object.assign(chart.options.scales.x.ticks, newStyles.scales.x.ticks);
-                Object.assign(chart.options.scales.x.grid, newStyles.scales.x.grid);
-                chart.options.scales.x.border = newStyles.scales.x.border;
-                Object.assign(chart.options.scales.x.title, newStyles.scales.x.title);
-
-
-                Object.assign(chart.options.scales.y.ticks, newStyles.scales.y.ticks);
-                Object.assign(chart.options.scales.y.grid, newStyles.scales.y.grid);
-                chart.options.scales.y.border = newStyles.scales.y.border;
-                Object.assign(chart.options.scales.y.title, newStyles.scales.y.title);
-
-                chart.options.scales.x.title.text = currentXLabel;
-                chart.options.scales.y.title.text = currentYLabel;
+                chart.options.plugins.title.color = newStyles.color;
+                chart.options.plugins.title.font.weight = newStyles.font.weight;
+                chart.options.plugins.legend.labels.color = newStyles.color;
                 
+                chart.options.scales.x.title.color = newStyles.color;
+                chart.options.scales.x.title.font.weight = newStyles.font.weight;
+                chart.options.scales.x.ticks.color = newStyles.color;
+                
+                chart.options.scales.y.title.color = newStyles.color;
+                chart.options.scales.y.title.font.weight = newStyles.font.weight;
+                chart.options.scales.y.ticks.color = newStyles.color;
+
                 if (isFormal) {
+                    chart.options.scales.x.grid.display = false;
+                    chart.options.scales.y.grid.display = false;
+                    chart.options.scales.x.border = { color: '#000', width: 2 };
+                    chart.options.scales.y.border = { color: '#000', width: 2 };
                     chart.data.datasets.forEach(dataset => {
-                        Object.assign(dataset, { borderColor: '#000', backgroundColor: '#000', borderWidth: 1, pointRadius: 2.5 });
+                        Object.assign(dataset, { borderColor: '#000', backgroundColor: 'rgba(0,0,0,0.1)', borderWidth: 1, pointRadius: 2.5 });
                     });
                 } else {
+                    chart.options.scales.x.grid.display = true;
+                    chart.options.scales.y.grid.display = true;
+                    chart.options.scales.x.grid.color = '#e5e7eb';
+                    chart.options.scales.y.grid.color = '#e5e7eb';
+                    chart.options.scales.x.border = { color: '#d1d5db' };
+                    chart.options.scales.y.border = { color: '#d1d5db' };
+
                     const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
                     chart.data.datasets.forEach((dataset, i) => {
                         const color = colors[i % colors.length];
                         Object.assign(dataset, { borderColor: color, backgroundColor: color, borderWidth: 1.5, pointRadius: 3 });
                     });
                 }
-                chart.update();
+                chart.update('none');
             });
         }
 
@@ -793,27 +846,47 @@
         async function handleDownload(event) {
             const { chartId, format } = event.target.dataset;
             const chart = chartInstances[chartId];
-            if (!chart) {
-                console.error('Chart instance not found for ID:', chartId);
-                return;
-            }
-            const chartElement = chart.canvas;
-            const canvas = await html2canvas(chartElement, {
-                backgroundColor: null,
-                scale: 2
+            if (!chart) return;
+
+            downloadOverlay.classList.remove('hidden');
+
+            const exportWidth = document.getElementById('export-width').value;
+            const exportHeight = document.getElementById('export-height').value;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = exportWidth;
+            tempCanvas.height = exportHeight;
+            
+            tempCanvas.style.position = 'absolute';
+            tempCanvas.style.left = '-9999px';
+            tempCanvas.style.top = '0px';
+            document.body.appendChild(tempCanvas);
+            
+            const tempChart = new Chart(tempCanvas, {
+                 type: chart.config.type,
+                 data: chart.config.data,
+                 options: { ...chart.config.options, animation: false, responsive: false, maintainAspectRatio: false }
             });
-            if (format === 'png') {
-                const image = canvas.toDataURL('image/png', 1.0);
-                const link = document.createElement('a');
-                link.href = image;
-                link.download = `${chartId}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } else if (format === 'pdf') {
-                try {
+            
+            await new Promise(resolve => setTimeout(resolve, 500)); 
+
+            try {
+                const canvas = await html2canvas(tempCanvas, {
+                    backgroundColor: '#FFFFFF',
+                    scale: 2
+                });
+
+                if (format === 'png') {
+                    const image = canvas.toDataURL('image/png', 1.0);
+                    const link = document.createElement('a');
+                    link.href = image;
+                    link.download = `${chartId}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else if (format === 'pdf') {
                     if (!window.jspdf || !window.jspdf.jsPDF) {
-                        alert('PDF generation library (jsPDF) is not loaded. Please reload the page.');
+                        alert('PDF generation library (jsPDF) is not loaded.');
                         return;
                     }
                     const { jsPDF } = window.jspdf;
@@ -825,10 +898,14 @@
                     });
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                     pdf.save(`${chartId}.pdf`);
-                } catch (e) {
-                    console.error("Failed to generate PDF:", e);
-                    alert("An error occurred while generating the PDF. Please check the console for details.");
                 }
+            } catch (e) {
+                console.error("Failed to generate download:", e);
+                alert("An error occurred during download. Please check the console.");
+            } finally {
+                tempChart.destroy();
+                document.body.removeChild(tempCanvas);
+                downloadOverlay.classList.add('hidden');
             }
         }
     </script>
