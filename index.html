@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>モーションキャプチャデータ解析ツール</title>
+    <title>Mocap Plus | モーションキャプチャ統合解析ツール</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -11,12 +11,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FFFFFF">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
         }
         .chart-container {
             position: relative;
@@ -24,916 +23,1464 @@
             height: 100%;
         }
         .loader, .download-loader {
-            border: 8px solid #e5e7eb; /* light gray */
+            border: 6px solid #e5e7eb;
             border-radius: 50%;
-            border-top: 8px solid #3b82f6; /* blue */
-            width: 60px;
-            height: 60px;
-            animation: spin 2s linear infinite;
+            border-top: 6px solid #3b82f6;
+            width: 50px;
+            height: 50px;
+            animation: spin 1.5s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        input[type="number"], input[type="text"], select {
-             border-color: #d1d5db;
+        .page {
+            display: none;
         }
-        input:focus, select:focus {
-             --tw-ring-color: #2563eb;
-             border-color: #2563eb;
+        .page.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
         }
-        details > summary {
-            cursor: pointer;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .nav-link.active {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #1e293b; /* slate-800 */
+        }
+        /* macOS like scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* slate-300 */
+            border-radius: 20px;
+            border: 3px solid #f1f5f9; /* slate-100 */
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
-    <div class="max-w-7xl mx-auto">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">モーションキャプチャデータ解析ツール</h1>
-            <p class="text-gray-600 mt-2">CSVファイルをアップロードして、剛体の運動を解析します。</p>
+<body class="antialiased text-slate-700">
+    <div id="loading" class="hidden fixed top-0 left-0 w-full h-full bg-white/80 backdrop-blur-sm flex justify-center items-center z-50">
+        <div class="text-center"><div class="loader mx-auto"></div><p class="text-slate-700 mt-4">解析中...</p></div>
+    </div>
+    <div id="download-overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
+         <div class="text-center"><div class="download-loader mx-auto"></div><p class="text-white mt-4">エクスポート用の画像を生成中...</p></div>
+    </div>
 
-        </header>
-        <div class="bg-gray-200 p-6 rounded-lg shadow-md mb-8">
-             <h2 class="text-lg font-semibold mb-2 text-gray-500">注意事項・免責事項</h2>
-             <ul class="text-sm list-disc pl-2">
-                <li>OptiTrackの解析ソフト「Motive」からエクスポートされたcsvファイルにのみ対応しています。</li>
-                <li>本Webアプリのデータ処理は全てブラウザ内で完結し、添付したデータはどこにも送信されません。</li>
-                <li>本ツールの利用によって生じた直接的または間接的な損害について、製作者は一切責任を負いません。</li>
-                <li>詳しい使い方は<a href="https://github.com/minoru-saito-chuo/mocap?tab=readme-ov-file" target="_blank" style="color: #2563eb;">こちらのREADME.md</a>をご覧ください。</li>
-                <li>不具合報告や仕様上の疑問点等は國井研B4の西藤まで。（Last Update : 2025/06/21）</li>
-             </ul>
-        </div>
+    <div class="flex h-screen bg-slate-100">
+        <!-- Sidebar -->
+        <aside class="hidden lg:flex flex-col w-60 bg-slate-200/50 backdrop-blur-xl border-r border-slate-300/50">
+            <div class="flex items-center justify-center h-16 border-b border-slate-300/50 px-4">
+                <img src="icons/icon-192.png" style="width: 25px; height: auto;">
+                <h1 class="text-lg font-bold text-slate-800 ml-2">Mocap Plus</h1>
+            </div>
+            <nav class="flex-1 px-3 py-4 space-y-1">
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#home">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    <span>ホーム</span>
+                </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#data-analysis">
+<svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"></path>
+  <path stroke-linecap="round" stroke-linejoin="round" d="M18 17V9"></path>
+  <path stroke-linecap="round" stroke-linejoin="round" d="M13 17V5"></path>
+  <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-3"></path>
+</svg>                    <span>データ解析ツール</span>
+                </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#standard-velocity">
 
-        <!-- Step 1: Input Section -->
-        <div id="input-section" class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-2xl font-semibold mb-4 border-b-2 border-blue-500 pb-2">1. データ入力</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
-                <div>
-                    <label for="csv-files" class="block text-lg font-medium text-gray-700 mb-2">① CSVファイルを選択</label>
-                    <input type="file" id="csv-files" multiple accept=".csv" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>
-                    <div id="file-list" class="mt-4 space-y-3"></div>
+<svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M15.6 3.3a10 10 0 1 0 5.7 5.7"></path>
+  <circle cx="12" cy="12" r="2"></circle>
+  <path stroke-linecap="round" stroke-linejoin="round" d="M13.4 10.6 19 5"></path>
+</svg>                    <span>基準速度算出ツール</span>
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-300/60">
+                    <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#how-to-use">
+<svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" />
+  <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 17h.01" />
+</svg>                        <span>使い方ガイド</span>
+                    </a>
+                    <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#about">
+                         <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>このツールについて</span>
+                    </a>
                 </div>
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">③④ 方向の定義</label>
-                    <div class="flex space-x-4">
-                        <div class="flex-1">
-                            <label for="travel-axis" class="block text-sm font-medium text-gray-500">進行方向</label>
-                            <select id="travel-axis" class="w-full mt-1 bg-white border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="X">X</option>
-                                <option value="Y">Y</option>
-                                <option value="Z" selected>Z</option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <label for="vertical-axis" class="block text-sm font-medium text-gray-500">鉛直方向</label>
-                            <select id="vertical-axis" class="w-full mt-1 bg-white border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="X">X</option>
-                                <option value="Y" selected>Y</option>
-                                <option value="Z">Z</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="md:col-span-2">
-                     <details class="bg-gray-50 border rounded-lg p-4">
-                        <summary class="font-semibold text-gray-700">
-                            動作検出の高度な設定
-                        </summary>
-                        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                            <div class="md:col-span-2">
-                                <label for="motion-threshold-multiplier" class="block text-sm font-medium text-gray-600">静止範囲の倍率</label>
-                                <input type="number" id="motion-threshold-multiplier" value="0.001" step="0.001" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-gray-300">
-                                <p class="text-xs text-gray-500 mt-1">データ全体の振れ幅(最大値-最小値)にこの倍率を掛けた値を、静止範囲のマージンとして使用します。</p>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div id="main-content-area" class="flex flex-col flex-1 overflow-y-auto">
+             <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between bg-white/70 backdrop-blur-lg p-4 border-b sticky top-0 z-10">
+                <button id="mobile-menu-btn" class="p-2 -ml-2">
+                    <svg class="h-6 w-6 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h1 id="mobile-title" class="text-lg font-semibold text-slate-800">ホーム</h1>
+                <div class="w-6"></div> <!-- Spacer -->
+            </header>
+
+            <!-- Mobile Menu (hidden by default) -->
+            <div id="mobile-menu" class="hidden lg:hidden bg-slate-100 border-b">
+                 <nav class="p-2 space-y-1">
+                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#home">ホーム</a>
+                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
+                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
+                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方</a>
+                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
+                </nav>
+            </div>
+
+            <main class="p-4 sm:p-6 md:p-8">
+                <!-- Home Page -->
+                <div id="home" class="page">
+                    <div class="max-w-5xl mx-auto">
+                        <div class="bg-white p-8 rounded-xl shadow-sm border">
+                            <h1 class="text-3xl font-bold text-slate-800 mb-2">Mocap Plus へようこそ</h1>
+                            <p class="text-slate-600 mb-8">OptiTrackの解析ソフト「Motive」からエクスポートされたcsvファイルを添付するだけで、モーションキャプチャのデータを簡単に解析することができる統合ツールです。</p>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <a href="#data-analysis" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-blue-300 hover:-translate-y-1">
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">データの解析</h2>
+                                    <p class="text-slate-600">複数の剛体データから、速度、スリップ率、変位などを計算し、グラフで可視化します。</p>
+                                </a>
+                                <a href="#standard-velocity" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-green-300 hover:-translate-y-1">
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">基準速度の算出</h2>
+                                    <p class="text-slate-600">車輪の剛体データと半径から、回転周期を算出し、基準となる速度を計算します。</p>
+                                </a>
                             </div>
                         </div>
-                     </details>
-                </div>
-            </div>
-        </div>
 
-        <!-- Step 2: Rigid Body Selection -->
-        <div id="rigidbody-selection-section" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-semibold mb-4 border-b-2 border-blue-500 pb-2">2. 解析対象の剛体を選択</h2>
-            <div id="rigidbody-list" class="space-y-4"></div>
-            <div class="mt-6 text-center">
-                <button id="start-analysis-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                    解析開始
-                </button>
-            </div>
-        </div>
-        
-        <!-- Loading Indicators -->
-        <div id="loading" class="hidden fixed top-0 left-0 w-full h-full bg-white bg-opacity-70 flex justify-center items-center z-50">
-            <div class="text-center">
-                <div class="loader mx-auto"></div>
-                <p class="text-gray-700 text-xl mt-4">解析中... これには数分かかる場合があります。</p>
-            </div>
-        </div>
-        <div id="download-overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-             <div class="text-center">
-                <div class="download-loader mx-auto"></div>
-                <p class="text-white text-lg mt-4">エクスポート用の画像を生成中...</p>
-            </div>
-        </div>
-
-
-        <!-- Step 3: Results and Graphs -->
-        <div id="results-section" class="hidden">
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <h2 class="text-2xl font-semibold mb-4 border-b-2 border-blue-500 pb-2">3. 解析結果</h2>
-                <div id="avg-velo-filter-section" class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                    <h4 class="font-semibold text-gray-700 mb-3">平均速度の計算設定</h4>
-                    <div class="flex items-center space-x-3">
-                        <input type="checkbox" id="filter-velocity-checkbox" class="form-checkbox h-5 w-5 border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <label for="filter-velocity-checkbox" class="text-sm font-medium text-gray-700">微小な速度を計算から除外する</label>
-                    </div>
-                    <div id="filter-range-inputs" class="hidden mt-3 flex items-center space-x-4 pl-8">
-                        <div>
-                            <label for="filter-lower-bound" class="block text-xs font-medium text-gray-600">下限値 (m/s)</label>
-                            <input type="number" id="filter-lower-bound" value="-0.01" step="0.01" class="mt-1 block w-40 rounded-md shadow-sm p-1 text-sm border-gray-300">
-                        </div>
-                        <div>
-                            <label for="filter-upper-bound" class="block text-xs font-medium text-gray-600">上限値 (m/s)</label>
-                            <input type="number" id="filter-upper-bound" value="0.01" step="0.01" class="mt-1 block w-40 rounded-md shadow-sm p-1 text-sm border-gray-300">
-                        </div>
-                        <div class="pt-5">
-                             <button id="recalculate-avg-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md text-xs shadow-md">再計算</button>
+                        <div class="mt-10">
+                            <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
+                            <div class="space-y-4">
+                                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/06/28</p>
+                                    <p class="font-semibold text-slate-800 mt-1">大幅アップデートを実施しました</p>
+                                    <p class="text-sm text-slate-600 mt-2">スリップ率の算出に必要な基準速度を簡単に算出できるツールを追加し、これまでの解析ツールと併せて1つのアプリに統合しました。サイドバーから各ツールにアクセスすることができます。</p>
+                                </div>
+                                <!--<div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/06/21</p>
+                                    <p class="font-semibold text-slate-800 mt-1">v1.0.0 初期版リリース</p>
+                                    <p class="text-sm text-slate-600 mt-2">モーションキャプチャのデータ解析ツールをリリース。</p>
+                                </div>-->
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="average-velocities" class="mb-6"></div>
-                <p class="text-xs text-gray-500 mb-4">※平均速度及び平均スリップ率は、静止範囲として設定している倍率により大きく変動します。例えば加減速を含めるか、安定状態の値を取るかで平均値は変わります。</p>
+                <!-- Data Analysis Tool Page -->
+                <div class="page" id="data-analysis">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">データ解析ツール</h1>
+                            <p class="text-slate-500 mt-2">CSVファイルをアップロードして、剛体の運動を解析します。</p>
+                        </header>
+                        
+                        <section class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <div>
+                                    <label for="csv-files" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを選択</label>
+                                    <input type="file" id="csv-files" multiple accept=".csv" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"/>
+                                    <div id="file-list" class="mt-4 space-y-2"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">③④ 方向の定義</label>
+                                    <div class="flex space-x-4">
+                                        <div class="flex-1">
+                                            <label for="travel-axis" class="block text-xs font-medium text-slate-500">進行方向</label>
+                                            <select id="travel-axis" class="mt-1 w-full bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                                <option value="X">X</option><option value="Y">Y</option><option value="Z" selected>Z</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label for="vertical-axis" class="block text-xs font-medium text-slate-500">鉛直方向</label>
+                                            <select id="vertical-axis" class="mt-1 w-full bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                                <option value="X">X</option><option value="Y" selected>Y</option><option value="Z">Z</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                     <details class="bg-slate-50/70 border rounded-md p-4">
+                                        <summary class="font-medium text-slate-700 text-sm">動作検出の高度な設定</summary>
+                                        <div class="mt-4 pt-4 border-t">
+                                            <label for="motion-threshold-multiplier" class="block text-sm font-medium text-slate-600">静止範囲の倍率</label>
+                                            <input type="number" id="motion-threshold-multiplier" value="0.001" step="0.001" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                            <p class="text-xs text-slate-500 mt-1">データ全体の振れ幅(最大値-最小値)にこの倍率を掛けた値を、静止範囲のマージンとして使用します。</p>
+                                        </div>
+                                     </details>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <section id="rigidbody-selection-section" class="bg-white p-6 rounded-lg shadow-sm border hidden">
+                            <h2 class="text-xl font-semibold text-center mb-6">2. 解析対象の剛体を選択</h2>
+                            <div id="rigidbody-list" class="space-y-4"></div>
+                            <div class="mt-6 text-center">
+                                <button id="start-analysis-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-8 rounded-md shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    解析開始
+                                </button>
+                            </div>
+                        </section>
                 
-                <button id="download-velocity-csv" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">
-                    微小速度データをCSVでダウンロード
-                </button>
+                        <div id="results-section" class="hidden space-y-8">
+                            <section class="bg-white p-6 rounded-lg shadow-sm border">
+                                <h2 class="text-xl font-semibold text-center mb-6">3. 解析結果</h2>
+                                <div id="avg-velo-filter-section" class="mb-6 p-4 bg-slate-50/70 rounded-md border">
+                                    <h4 class="font-medium text-slate-700 mb-3 text-sm">平均速度の計算設定</h4>
+                                    <div class="flex items-center space-x-3"><input type="checkbox" id="filter-velocity-checkbox" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"><label for="filter-velocity-checkbox" class="text-sm font-medium text-slate-700">微小な速度を計算から除外する</label></div>
+                                    <div id="filter-range-inputs" class="hidden mt-3 flex items-center space-x-4 pl-7">
+                                        <div><label for="filter-lower-bound" class="block text-xs font-medium text-slate-600">下限値 (m/s)</label><input type="number" id="filter-lower-bound" value="-0.01" step="0.01" class="mt-1 block w-32 rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></div>
+                                        <div><label for="filter-upper-bound" class="block text-xs font-medium text-slate-600">上限値 (m/s)</label><input type="number" id="filter-upper-bound" value="0.01" step="0.01" class="mt-1 block w-32 rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></div>
+                                        <div class="pt-5"><button id="recalculate-avg-btn" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-1 px-3 rounded-md text-xs shadow-sm">再計算</button></div>
+                                    </div>
+                                </div>
+                                <div id="average-velocities" class="mb-6"></div>
+                                <p class="text-xs text-slate-500 mb-4">※平均速度及び平均スリップ率は、静止範囲として設定している倍率により大きく変動します。</p>
+                                <button id="download-velocity-csv" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm text-sm">微小速度データをCSVでダウンロード</button>
+                            </section>
+                
+                            <section class="bg-white p-6 rounded-lg shadow-sm border">
+                                <div class="flex flex-wrap justify-between items-center mb-6 text-center border-b pb-4">
+                                    <h2 class="text-xl font-semibold w-full sm:w-auto text-center sm:text-left">4. グラフ</h2>
+                                    <div class="flex items-center space-x-2 mt-4 sm:mt-0 mx-auto sm:mx-0">
+                                        <span class="text-sm text-slate-600">スタイル:</span>
+                                        <button id="style-casual" class="style-btn bg-blue-600 text-white px-3 py-1 rounded-l-md text-sm font-medium">カジュアル</button>
+                                        <button id="style-formal" class="style-btn bg-slate-200 text-slate-700 px-3 py-1 rounded-r-md text-sm font-medium">フォーマル</button>
+                                    </div>
+                                </div>
+                                <div id="graph-customization" class="mt-6">
+                                    <div class="mb-8 p-4 bg-slate-50/70 rounded-md border">
+                                         <h4 class="font-medium text-slate-700 mb-3 text-sm">エクスポート設定</h4>
+                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div><label for="export-width" class="block text-sm font-medium text-slate-600">画像の幅 (px)</label><input type="number" id="export-width" value="800" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></div>
+                                            <div><label for="export-height" class="block text-sm font-medium text-slate-600">画像の高さ (px)</label><input type="number" id="export-height" value="450" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></div>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-lg font-semibold mb-4 text-slate-700">グラフのラベル編集</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        <div class="space-y-2 p-3 border rounded-md bg-slate-50/50"><h4 class="font-semibold text-center text-slate-700 text-sm">速度 vs 距離</h4><div><label class="text-xs font-medium text-slate-600">タイトル</label><input type="text" id="v-chart-title" data-chart-id="velocity-chart" data-label-type="title" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">X軸</label><input type="text" id="v-chart-xlabel" data-chart-id="velocity-chart" data-label-type="x" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">Y軸</label><input type="text" id="v-chart-ylabel" data-chart-id="velocity-chart" data-label-type="y" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div></div>
+                                        <div class="space-y-2 p-3 border rounded-md bg-slate-50/50"><h4 class="font-semibold text-center text-slate-700 text-sm">スリップ率 vs 距離</h4><div><label class="text-xs font-medium text-slate-600">タイトル</label><input type="text" id="s-chart-title" data-chart-id="slip-chart" data-label-type="title" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">X軸</label><input type="text" id="s-chart-xlabel" data-chart-id="slip-chart" data-label-type="x" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">Y軸</label><input type="text" id="s-chart-ylabel" data-chart-id="slip-chart" data-label-type="y" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div></div>
+                                        <div class="space-y-2 p-3 border rounded-md bg-slate-50/50"><h4 class="font-semibold text-center text-slate-700 text-sm">鉛直変位 vs 距離</h4><div><label class="text-xs font-medium text-slate-600">タイトル</label><input type="text" id="z-chart-title" data-chart-id="vertical-chart" data-label-type="title" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">X軸</label><input type="text" id="z-chart-xlabel" data-chart-id="vertical-chart" data-label-type="x" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">Y軸</label><input type="text" id="z-chart-ylabel" data-chart-id="vertical-chart" data-label-type="y" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div></div>
+                                        <div class="space-y-2 p-3 border rounded-md bg-slate-50/50"><h4 class="font-semibold text-center text-slate-700 text-sm">平面移動軌跡</h4><div><label class="text-xs font-medium text-slate-600">タイトル</label><input type="text" id="t-chart-title" data-chart-id="trajectory-chart" data-label-type="title" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">X軸</label><input type="text" id="t-chart-xlabel" data-chart-id="trajectory-chart" data-label-type="x" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div><div><label class="text-xs font-medium text-slate-600">Y軸</label><input type="text" id="t-chart-ylabel" data-chart-id="trajectory-chart" data-label-type="y" class="chart-label-input mt-1 w-full rounded-md p-1.5 text-sm border-slate-300"></div></div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 mt-8">
+                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="velocity-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="velocity-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="velocity-chart" data-format="pdf">PDF</button></div></div>
+                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="slip-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="slip-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="slip-chart" data-format="pdf">PDF</button></div></div>
+                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="vertical-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="vertical-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="vertical-chart" data-format="pdf">PDF</button></div></div>
+                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="trajectory-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="trajectory-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="trajectory-chart" data-format="pdf">PDF</button></div></div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page" id="standard-velocity">
+                    <div class="max-w-3xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">基準速度算出ツール</h1>
+                            <p class="text-slate-500 mt-2">モーションキャプチャのCSVデータから車輪の基準速度を計算します。</p>
+                        </header>
+                
+                        <section id="step-1-file-upload-std" class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
+                            <div class="mt-4 flex flex-col items-center gap-3">
+                                 <label for="csv-file-input-std" class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-2 px-5 border border-slate-300 rounded-md shadow-sm transition-colors">
+                                    ファイルを選択
+                                </label>
+                                <input type="file" id="csv-file-input-std" class="hidden" accept=".csv">
+                                <p id="file-name-display-std" class="text-sm text-slate-500 mt-2">ファイルが選択されていません</p>
+                            </div>
+                        </section>
+            
+                         <div id="loading-indicator-std" class="hidden flex-col items-center justify-center py-10"><div class="loader"></div><p class="text-slate-600 mt-4">ファイルを解析中...</p></div>
+            
+                        <section id="step-2-parameters-std" class="hidden bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">2. パラメータ設定</h2>
+                             <div class="mt-4 space-y-5 max-w-sm mx-auto">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">② 車輪の剛体を選択</label>
+                                    <div id="rigidbody-radio-container-std" class="mt-2 space-y-2 max-h-40 overflow-y-auto border p-3 rounded-md bg-slate-50/70"></div>
+                                </div>
+                                <div>
+                                    <label for="radius-input-std" class="block text-sm font-medium text-slate-700">③ 車輪の半径 (cm)</label>
+                                    <input type="number" id="radius-input-std" value="10" step="1" class="mt-1 block w-full border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                                </div>
+                                 <div>
+                                    <label for="axis-select-std" class="block text-sm font-medium text-slate-700">④ 車輪の回転軸</label>
+                                    <select id="axis-select-std" class="mt-1 block w-full bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                                        <option value="X">X軸</option><option value="Y" selected>Y軸</option><option value="Z">Z軸</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-center mt-8">
+                                <button id="calculate-btn-std" class="w-full max-w-sm bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-md shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    計算開始
+                                </button>
+                            </div>
+                        </section>
+            
+                        <section id="step-3-results-std" class="hidden bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">3. 計算結果</h2>
+                            <div id="result-display-std" class="hidden mt-6 p-6 bg-slate-50/70 rounded-lg text-center border">
+                                 <p class="text-sm text-slate-600">算出された基準速度 (v)</p>
+                                <p class="text-4xl font-bold text-slate-800 my-2 tracking-tight">
+                                    <span id="result-value-std">0.00000000</span> m/s
+                                </p>
+                                 <button id="copy-btn-std" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors" data-copy-value="">
+                                    結果をコピー
+                                </button>
+                            </div>
+                             <div id="error-display-std" class="hidden mt-6 p-4 bg-red-50 text-red-800 border-l-4 border-red-400 rounded-md"></div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="page" id="how-to-use">
+                    <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
+
+        <div class="space-y-10">
+            <!-- データ解析ツール -->
+            <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                <div class="p-6 sm:p-8">
+                    <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                        <span>データ解析ツール</span>
+                    </h2>
+
+                    <div class="space-y-6">
+                        <!-- ステップ 1: データ入力 -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-3">データ入力</h3>
+                                <div class="space-y-3 text-gray-600 text-sm">
+                                    <p><strong>① CSVファイルを選択:</strong> 解析したいMotiveのCSVファイルを1つ以上選択します。</p>
+                                    <p><strong>② 基準速度:</strong> 各ファイルに対応する車輪などの基準速度を入力します（スリップ率の計算に用います）。</p>
+                                    <p><strong>③④ 方向の定義:</strong> 座標系における進行方向と鉛直方向を定義します。</p>
+                                    <div class="mt-3 p-3 bg-gray-100/80 rounded-md border border-gray-200/80">
+                                        <p class="font-medium text-gray-700 text-xs">【高度な設定】静止範囲の倍率:</p>
+                                        <p class="text-xs mt-1">対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ステップ 2: 剛体を選択 -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-2">解析対象の剛体を選択</h3>
+                                <p class="text-gray-600 text-sm">ファイル内に含まれる剛体の一覧が表示されるので、解析したいものをチェックします。凡例名はグラフのラベルとして使用されます。</p>
+                            </div>
+                        </div>
+
+                        <!-- ステップ 3: 解析開始 -->
+                        <div class="flex items-start gap-4">
+                           <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-2">解析開始</h3>
+                                <p class="text-gray-600 text-sm">ボタンを押すと解析が実行されます。</p>
+                            </div>
+                        </div>
+
+                        <!-- ステップ 4: 結果確認と調整 -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-3">結果確認と調整</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600 text-sm">
+                                    <li>平均速度、スリップ率が表示されます。</li>
+                                    <li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li>
+                                    <li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li>
+                                    <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <div class="flex flex-wrap justify-between items-center mb-4 border-b pb-4">
-                    <h2 class="text-2xl font-semibold">4. グラフ</h2>
-                    <div class="flex items-center space-x-2 mt-4 sm:mt-0">
-                        <span class="text-gray-600">スタイル:</span>
-                        <button id="style-casual" class="style-btn bg-blue-600 text-white px-3 py-1 rounded-l-md text-sm">カジュアル</button>
-                        <button id="style-formal" class="style-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-r-md text-sm">フォーマル</button>
-                    </div>
-                </div>
+            <!-- 基準速度算出ツール -->
+            <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                <div class="p-6 sm:p-8">
+                    <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M15.6 3.3a10 10 0 1 0 5.7 5.7"/><circle cx="12" cy="12" r="2"/><path d="M13.4 10.6 19 5"/></svg>
+                        <span>基準速度算出ツール</span>
+                    </h2>
 
-                <div id="graph-customization" class="mt-6">
-                    <div class="mb-8 p-4 bg-gray-50 rounded-lg border">
-                         <h4 class="font-semibold text-gray-700 mb-3">エクスポート設定</h4>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-6">
+                        <!-- ステップ 1: データ入力 -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
                             <div>
-                                <label for="export-width" class="block text-sm font-medium text-gray-600">画像の幅 (px)</label>
-                                <input type="number" id="export-width" value="800" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-gray-300">
-                            </div>
-                             <div>
-                                <label for="export-height" class="block text-sm font-medium text-gray-600">画像の高さ (px)</label>
-                                <input type="number" id="export-height" value="450" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-gray-300">
+                                <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
+                                <p class="text-gray-600 text-sm">解析したいMotiveのCSVファイルを1つ選択します。</p>
                             </div>
                         </div>
-                    </div>
 
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">グラフのラベル編集</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="space-y-3 p-4 border rounded-lg">
-                            <h4 class="font-bold text-center text-gray-700">速度 vs 距離</h4>
+                        <!-- ステップ 2: パラメータ設定 -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
                             <div>
-                                <label for="v-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="v-chart-title" data-chart-id="velocity-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="v-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="v-chart-xlabel" data-chart-id="velocity-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="v-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="v-chart-ylabel" data-chart-id="velocity-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
+                                <h3 class="text-base font-medium text-gray-800 mb-3">パラメータ設定</h3>
+                                <div class="space-y-3 text-gray-600 text-sm">
+                                    <p><strong>② 車輪の剛体を選択:</strong> ファイル内の剛体から、回転を計測したい車輪を選択します。</p>
+                                    <p><strong>③ 車輪の半径 (cm):</strong> 選択した車輪の半径をセンチメートル単位で入力します。</p>
+                                    <p><strong>④ 車輪の回転軸:</strong> 車輪がどの軸周りに回転しているかを選択します。</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="space-y-3 p-4 border rounded-lg">
-                            <h4 class="font-bold text-center text-gray-700">スリップ率 vs 距離</h4>
-                            <div>
-                                <label for="s-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="s-chart-title" data-chart-id="slip-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="s-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="s-chart-xlabel" data-chart-id="slip-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="s-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="s-chart-ylabel" data-chart-id="slip-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                        </div>
-                        <div class="space-y-3 p-4 border rounded-lg">
-                            <h4 class="font-bold text-center text-gray-700">鉛直変位 vs 距離</h4>
-                            <div>
-                                <label for="z-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="z-chart-title" data-chart-id="vertical-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="z-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="z-chart-xlabel" data-chart-id="vertical-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="z-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="z-chart-ylabel" data-chart-id="vertical-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                        </div>
-                        <div class="space-y-3 p-4 border rounded-lg">
-                            <h4 class="font-bold text-center text-gray-700">平面移動軌跡</h4>
-                            <div>
-                                <label for="t-chart-title" class="block text-xs font-medium text-gray-600">グラフタイトル</label>
-                                <input type="text" id="t-chart-title" data-chart-id="trajectory-chart" data-label-type="title" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="t-chart-xlabel" class="block text-xs font-medium text-gray-600">X軸ラベル</label>
-                                <input type="text" id="t-chart-xlabel" data-chart-id="trajectory-chart" data-label-type="x" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                            <div>
-                                <label for="t-chart-ylabel" class="block text-xs font-medium text-gray-600">Y軸ラベル</label>
-                                <input type="text" id="t-chart-ylabel" data-chart-id="trajectory-chart" data-label-type="y" class="chart-label-input mt-1 block w-full rounded-md shadow-sm p-2 text-sm">
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 mt-8">
-                    <div>
-                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
-                           <div class="chart-container"><canvas id="velocity-chart"></canvas></div>
+                        <!-- ステップ 3: 計算開始 -->
+                         <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-2">計算開始</h3>
+                                <p class="text-gray-600 text-sm">ボタンを押すと、データから回転の周期を算出し、基準速度（周速度）を計算します。</p>
+                            </div>
                         </div>
-                        <div class="text-center mt-3">
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="velocity-chart" data-format="png">PNG</button>
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="velocity-chart" data-format="pdf">PDF</button>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
-                            <div class="chart-container"><canvas id="slip-chart"></canvas></div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="slip-chart" data-format="png">PNG</button>
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="slip-chart" data-format="pdf">PDF</button>
-                        </div>
-                    </div>
-                    <div>
-                         <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
-                            <div class="chart-container"><canvas id="vertical-chart"></canvas></div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="vertical-chart" data-format="png">PNG</button>
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="vertical-chart" data-format="pdf">PDF</button>
-                        </div>
-                    </div>
-                     <div>
-                         <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm">
-                            <div class="chart-container"><canvas id="trajectory-chart"></canvas></div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="trajectory-chart" data-format="png">PNG</button>
-                            <button class="download-btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-md" data-chart-id="trajectory-chart" data-format="pdf">PDF</button>
+
+                        <!-- ステップ 4: 結果確認 -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-2">結果確認</h3>
+                                <p class="text-gray-600 text-sm">計算された基準速度が表示され、結果をクリップボードにコピーできます。</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+                    <!--<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-sm border">
+                        <h1 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">使い方</h1>
+                        <div class="mb-8 prose prose-slate max-w-none">
+                            <h2 class="text-blue-700">データ解析ツール</h2>
+                            <ol>
+                                <li><strong>データ入力:</strong><ul><li><strong>① CSVファイルを選択:</strong> 解析したいMotiveのCSVファイルを1つ以上選択します。</li><li><strong>② 基準速度:</strong> 各ファイルに対応する車輪などの基準速度を入力します（スリップ率の計算に用います）。</li><li><strong>③④ 方向の定義:</strong> 座標系における進行方向と鉛直方向を定義します。</li><li><strong>(高度な設定) 静止範囲の倍率:</strong> 動作開始・終了を判定する際の感度を調整します。値を大きくすると、より大きな動き出しでないと動作として検出しなくなります。</li></ul></li>
+                                <li><strong>解析対象の剛体を選択:</strong> ファイル内に含まれる剛体の一覧が表示されるので、解析したいものをチェックします。凡例名はグラフのラベルとして使用されます。</li>
+                                <li><strong>解析開始:</strong> ボタンを押すと解析が実行されます。</li>
+                                <li><strong>結果確認と調整:</strong><ul><li>平均速度、スリップ率が表示されます。</li><li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li><li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li><li>各グラフはPNGまたはPDF形式でダウンロードできます。</li></ul></li>
+                            </ol>
+                        </div>
+                        <div class="prose prose-slate max-w-none">
+                            <h2 class="text-green-700">基準速度算出ツール</h2>
+                            <ol>
+                                <li><strong>データ入力:</strong> 解析したいMotiveのCSVファイルを1つ選択します。</li>
+                                <li><strong>パラメータ設定:</strong><ul><li><strong>② 車輪の剛体を選択:</strong> ファイル内の剛体から、回転を計測したい車輪を選択します。</li><li><strong>③ 車輪の半径 (cm):</strong> 選択した車輪の半径をセンチメートル単位で入力します。</li><li><strong>④ 車輪の回転軸:</strong> 車輪がどの軸周りに回転しているかを選択します。</li></ul></li>
+                                <li><strong>計算開始:</strong> ボタンを押すと、データから回転の周期を算出し、基準速度（周速度）を計算します。</li>
+                                <li><strong>結果確認:</strong> 計算された基準速度が表示され、結果をクリップボードにコピーできます。</li>
+                            </ol>
+                        </div>
+                    </div>-->
+                </div>
+
+                <div class="page" id="about">
+                    <div class="max-w-4xl mx-auto space-y-8">
+                        <div class="bg-white p-8 rounded-lg shadow-sm border">
+                            <h1 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">このツールについて</h1>
+                            <div class="prose prose-slate max-w-none">
+                                <!--<h3>基本情報</h3>
+                                <p>この「Mocap Plus」は、OptiTrack社のモーションキャプチャシステムから出力されたCSVデータを手軽に解析するために開発されたWebアプリケーションです。</p>
+                                
+                                <h3>更新履歴</h3>
+                                <ul class="space-y-4">
+                                    <li><strong>v1.2.0 (2025/06/28):</strong> macOS風UIデザインにアップデート。</li>
+                                    <li><strong>v1.1.0 (2025/06/28):</strong> 2つの解析ツールを統合しSPA化。</li>
+                                    <li><strong>v1.0.0 (2025/06/21):</strong> 各ツールの初期バージョンを公開。</li>
+                                </ul>
+
+                                <h3>注意事項・免責事項</h3>
+                                <div class="bg-yellow-50 text-yellow-800 border-l-4 border-yellow-400 rounded p-4 text-sm">
+                                    <ul class="list-disc pl-5 space-y-2">
+                                        <li>本ツールは、OptiTrack社の「Motive」からエクスポートされたCSVファイルに特化しています。</li>
+                                        <li>データ処理は全てブラウザ内で完結し、外部サーバーにデータが送信されることはありません。</li>
+                                        <li>本ツールの利用によって生じた損害について、製作者は一切の責任を負いません。</li>
+                                        <li>不具合報告や改善要望は、製作者までご連絡ください。</li>
+                                    </ul>
+                                </div>-->
+                                <div>
+                        <h2 class="text-xl font-semibold text-slate-700">基本情報</h2>
+                        <div class="mt-3 grid grid-cols-1 gap-y-2 text-sm">
+                            <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap Plus</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.1.0</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学國井研究室　西藤 実</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">その他の詳細:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" style="color: #3b82f6;">こちらのGitHubのリポジトリ</a>をご覧ください</p>
+
+                        </div>
+                    </div>
+                    <br>
+                    <div>
+                        <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
+                        <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                            <li><span class="font-semibold">2025-06-28:</span> 基準速度の算出ツールを作成、データ解析ツールに統合。</li>
+                            <li><span class="font-semibold">2025-06-21:</span> データ解析ツールの初期リリース。</li>
+                        </ul>
+                    </div>
+                    <br>
+                    <div>
+                         <h2 class="text-xl font-semibold text-slate-700">注意事項・免責事項</h2>
+                         <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
+                            <li>本ツールは、OptiTrackの解析ソフト「Motive」からエクスポートされたCSVファイルに最適化されています。</li>
+                            <li>データ処理は全てブラウザ内で完結し、添付したデータが外部に送信されることはありません。</li>
+                            <li>本ツールの利用によって生じた直接的または間接的な損害について、製作者は一切責任を負いません。</li>
+                            <li>本ツールの作成にあたっては、複数のLLMを利用しています。</li>
+                         </ul>
+                    </div>
+                            </div>
+                        </div>
+                        <p class="text-center text-slate-500 text-sm">© 2025 SAITO Minoru.</p>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
-        <p class="text-gray-500 text-center mt-4">© 2025 SAITO Minoru.</p>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
-            .then(reg => console.log('Service Worker registered:', reg))
-            .catch(err => console.error('Service Worker registration failed:', err));
-        }
-        // --- Global State ---
-        const fileDataStore = {};
-        const chartInstances = {};
-        let allInstantaneousVelocities = [];
-        let lastProcessedData = [];
-
-        // --- DOM Elements ---
-        const csvFileInput = document.getElementById('csv-files');
-        const fileListDiv = document.getElementById('file-list');
-        const travelAxisSelect = document.getElementById('travel-axis');
-        const verticalAxisSelect = document.getElementById('vertical-axis');
-        const rigidbodySelectionSection = document.getElementById('rigidbody-selection-section');
-        const rigidbodyListDiv = document.getElementById('rigidbody-list');
-        const startAnalysisBtn = document.getElementById('start-analysis-btn');
-        const resultsSection = document.getElementById('results-section');
-        const loadingDiv = document.getElementById('loading');
-        const downloadOverlay = document.getElementById('download-overlay');
-        const filterVelocityCheckbox = document.getElementById('filter-velocity-checkbox');
-        const filterRangeInputs = document.getElementById('filter-range-inputs');
-        const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
-        
-        // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
-            csvFileInput.addEventListener('change', handleFileSelect);
-            startAnalysisBtn.addEventListener('click', startAnalysis);
-            
-            rigidbodyListDiv.addEventListener('change', (event) => {
-                if (event.target.classList.contains('rigidbody-checkbox')) {
-                    const checkbox = event.target;
-                    const itemContainer = checkbox.closest('.rigidbody-item-container');
-                    const legendInputContainer = itemContainer.querySelector('.legend-input-container');
-                    if (legendInputContainer) {
-                        legendInputContainer.classList.toggle('hidden', !checkbox.checked);
-                    }
+            // --- SPA Navigation ---
+            const navLinks = document.querySelectorAll('.nav-link, .nav-card');
+            const pages = document.querySelectorAll('.page');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileTitle = document.getElementById('mobile-title');
+            const mainContentArea = document.getElementById('main-content-area');
+
+            function showPage(pageId) {
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                });
+                const targetPage = document.getElementById(pageId);
+                if(targetPage) {
+                    targetPage.classList.add('active');
                 }
-            });
 
-            filterVelocityCheckbox.addEventListener('change', () => {
-                filterRangeInputs.classList.toggle('hidden', !filterVelocityCheckbox.checked);
-            });
-            recalculateAvgBtn.addEventListener('click', recalculateAverages);
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const linkPageId = link.getAttribute('href').substring(1);
+                    const isActive = linkPageId === pageId;
+                    link.classList.toggle('active', isActive);
 
-            document.querySelectorAll('.style-btn').forEach(btn => btn.addEventListener('click', handleStyleChange));
-            document.querySelectorAll('.download-btn').forEach(btn => btn.addEventListener('click', handleDownload));
-            document.getElementById('download-velocity-csv').addEventListener('click', downloadVelocityCSV);
-            document.querySelectorAll('.chart-label-input').forEach(input => {
-                input.addEventListener('input', updateAllChartLabels);
-            });
-        });
+                    if(isActive){
+                         const titleText = link.querySelector('span')?.textContent.trim() || link.textContent.trim();
+                         if(mobileTitle) mobileTitle.textContent = titleText;
+                    }
+                });
+                if(mobileMenu) mobileMenu.classList.add('hidden');
+                if(mainContentArea) mainContentArea.scrollTop = 0;
+            }
 
-        // --- Core Functions ---
-
-        function handleFileSelect(event) {
-            fileListDiv.innerHTML = '';
-            rigidbodySelectionSection.classList.add('hidden');
-            rigidbodyListDiv.innerHTML = '';
-            const files = Array.from(event.target.files);
-            if (files.length === 0) return;
-            rigidbodySelectionSection.classList.remove('hidden');
-            files.forEach(file => {
-                const fileId = `file-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
-                const fileElement = document.createElement('div');
-                fileElement.className = 'bg-gray-50 p-3 rounded-md flex items-center justify-between border';
-                fileElement.innerHTML = `
-                    <span class="text-gray-700 truncate pr-4">${file.name}</span>
-                    <div class="flex items-center">
-                        <label for="speed-${fileId}" class="text-sm text-gray-500 mr-2 whitespace-nowrap">② 基準速度 (m/s):</label>
-                        <input type="number" id="speed-${fileId}" data-filename="${file.name}" class="reference-speed-input bg-white border border-gray-300 rounded-md w-24 p-1 text-right" step="0.1" value="1.0">
-                    </div>
-                `;
-                fileListDiv.appendChild(fileElement);
-                Papa.parse(file, {
-                    complete: (results) => {
-                        try {
-                            const rigidBodies = extractRigidBodies(results.data);
-                            fileDataStore[file.name] = { rawData: results.data, rigidBodies };
-                            displayRigidBodySelector(file.name, rigidBodies);
-                        } catch (error) {
-                            alert(`ファイル "${file.name}" の解析中にエラーが発生しました: ${error.message}`);
-                        }
-                    },
-                    error: (error) => alert(`ファイル "${file.name}" の読み込みに失敗しました: ${error.message}`)
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.getAttribute('href').substring(1);
+                    showPage(pageId);
+                    window.location.hash = pageId;
                 });
             });
-        }
 
-        function extractRigidBodies(data) {
-            let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataStartIndex = -1;
-            for(let i=0; i < 15 && i < data.length; i++){
-                 if(data[i][1] === 'Type') typeRowIndex = i;
-                 if(data[i][1] === 'Name') nameRowIndex = i;
-                 if(data[i][2] === 'Rotation' || data[i][2] === 'Position') propertyRowIndex = i;
-                 if(data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') dataStartIndex = i + 1;
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
             }
-            if(typeRowIndex === -1 || nameRowIndex === -1 || propertyRowIndex === -1 || dataStartIndex === -1) throw new Error("CSVのヘッダー形式が不正です。");
-            
-            const [typeRow, nameRow, propertyRow] = [data[typeRowIndex], data[nameRowIndex], data[propertyRowIndex]];
-            const rigidBodies = {};
 
-            for (let i = 2; i < typeRow.length; i++) {
-                if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                    const name = nameRow[i];
-                    if (!rigidBodies[name]) rigidBodies[name] = { name: name, posIndices: {} };
-                    rigidBodies[name].posIndices = { X: i, Y: i + 1, Z: i + 2 };
-                    i += 2;
-                }
-            }
-            
-            const actualData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
-            Object.values(rigidBodies).forEach(body => {
-                body.data = actualData.map(row => ({
-                    time: parseFloat(row[1]),
-                    pos: {
-                        X: parseFloat(row[body.posIndices.X]) / 1000,
-                        Y: parseFloat(row[body.posIndices.Y]) / 1000,
-                        Z: parseFloat(row[body.posIndices.Z]) / 1000
-                    }
-                })).filter(d => !isNaN(d.time) && !isNaN(d.pos.X));
-            });
-            return Object.values(rigidBodies);
-        }
-
-        function displayRigidBodySelector(filename, rigidBodies) {
-            const fileGroupContainer = document.createElement('div');
-            fileGroupContainer.className = 'mb-4';
-            let listHTML = `<h3 class="text-lg font-semibold text-blue-600 mb-2">[${filename}] に含まれる剛体一覧</h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">`;
-            if (rigidBodies.length === 0) {
-                listHTML += `<p class="text-gray-500 col-span-full">このファイルには剛体データが見つかりませんでした。</p>`;
+            const initialPage = window.location.hash ? window.location.hash.substring(1) : 'home';
+            if(document.getElementById(initialPage)) {
+                 showPage(initialPage);
             } else {
-                rigidBodies.forEach(body => {
-                    const defaultLabel = `${filename} - ${body.name}`;
-                    listHTML += `
-                    <div class="rigidbody-item-container">
-                        <label class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer w-full">
-                            <input type="checkbox" class="rigidbody-checkbox form-checkbox h-5 w-5 border-gray-300 text-blue-600 focus:ring-blue-500" data-filename="${filename}" data-bodyname="${body.name}">
-                            <span class="text-gray-800">${body.name}</span>
-                        </label>
-                        <div class="legend-input-container hidden pl-8 mt-1">
-                            <label class="text-xs text-gray-500">凡例名:</label>
-                            <input type="text" class="legend-label-input mt-1 block w-full rounded-md shadow-sm p-1 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" data-filename="${filename}" data-bodyname="${body.name}" value="${defaultLabel}">
-                        </div>
-                    </div>`;
-                });
-            }
-            listHTML += `</div>`;
-            fileGroupContainer.innerHTML = listHTML;
-            rigidbodyListDiv.appendChild(fileGroupContainer);
-        }
-
-        function startAnalysis() {
-            const travelAxis = travelAxisSelect.value;
-            const verticalAxis = verticalAxisSelect.value;
-            if (travelAxis === verticalAxis) {
-                alert('進行方向と鉛直方向は異なる軸を選択してください。');
-                return;
+                 showPage('home');
             }
             
-            const motionDetectionSettings = {
-                multiplier: parseFloat(document.getElementById('motion-threshold-multiplier').value)
-            };
+            // --- DATA ANALYSIS TOOL SCRIPT ---
+            const fileDataStore = {};
+            const chartInstances = {};
+            let allInstantaneousVelocities = [];
+            let lastProcessedData = [];
 
-            const selectedBodies = [];
-            document.querySelectorAll('.rigidbody-checkbox:checked').forEach(cb => {
-                const filename = cb.dataset.filename;
-                const bodyName = cb.dataset.bodyname;
-                const labelInput = document.querySelector(`.legend-label-input[data-filename="${filename}"][data-bodyname="${bodyName}"]`);
-                const label = labelInput ? labelInput.value : `${filename} - ${bodyName}`;
-                selectedBodies.push({ filename, bodyName, label });
-            });
-            if (selectedBodies.length === 0) {
-                alert('解析する剛体を少なくとも1つ選択してください。');
-                return;
-            }
-            loadingDiv.classList.remove('hidden');
-            resultsSection.classList.add('hidden');
-            setTimeout(() => {
-                try {
-                    lastProcessedData = processAllBodies(selectedBodies, travelAxis, verticalAxis, motionDetectionSettings);
-                    displayResults(lastProcessedData);
-                    renderAllCharts(lastProcessedData, travelAxis, verticalAxis);
-                    resultsSection.classList.remove('hidden');
-                } catch (error) {
-                    console.error("解析エラー:", error);
-                    alert(`解析中にエラーが発生しました: ${error.message}`);
-                } finally {
-                    loadingDiv.classList.add('hidden');
-                }
-            }, 50);
-        }
-        
-        function recalculateAverages() {
-             const useFilter = filterVelocityCheckbox.checked;
-             const lowerBound = parseFloat(document.getElementById('filter-lower-bound').value);
-             const upperBound = parseFloat(document.getElementById('filter-upper-bound').value);
-
-            if(useFilter && (isNaN(lowerBound) || isNaN(upperBound))){
-                alert('有効な除外範囲を入力してください。');
-                return;
-            }
-
-            const updatedData = lastProcessedData.map(bodyData => {
-                 let newAvgVelocity;
-                 if (useFilter) {
-                    let filteredDistance = 0;
-                    let filteredTime = 0;
-                    for (let i = 1; i < bodyData.data.length; i++) {
-                        const vel = bodyData.data[i].instVelocity;
-                        if (vel < lowerBound || vel > upperBound) {
-                            filteredDistance += (bodyData.data[i].distance - bodyData.data[i-1].distance);
-                            filteredTime += (bodyData.data[i].time - bodyData.data[i-1].time);
+            const csvFileInput = document.getElementById('csv-files');
+            const fileListDiv = document.getElementById('file-list');
+            const travelAxisSelect = document.getElementById('travel-axis');
+            const verticalAxisSelect = document.getElementById('vertical-axis');
+            const rigidbodySelectionSection = document.getElementById('rigidbody-selection-section');
+            const rigidbodyListDiv = document.getElementById('rigidbody-list');
+            const startAnalysisBtn = document.getElementById('start-analysis-btn');
+            const resultsSection = document.getElementById('results-section');
+            const loadingDiv = document.getElementById('loading');
+            const downloadOverlay = document.getElementById('download-overlay');
+            const filterVelocityCheckbox = document.getElementById('filter-velocity-checkbox');
+            const filterRangeInputs = document.getElementById('filter-range-inputs');
+            const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
+            
+            if (csvFileInput) {
+                csvFileInput.addEventListener('change', handleFileSelect);
+                startAnalysisBtn.addEventListener('click', startAnalysis);
+                
+                rigidbodyListDiv.addEventListener('change', (event) => {
+                    if (event.target.classList.contains('rigidbody-checkbox')) {
+                        const checkbox = event.target;
+                        const itemContainer = checkbox.closest('.rigidbody-item-container');
+                        const legendInputContainer = itemContainer.querySelector('.legend-input-container');
+                        if (legendInputContainer) {
+                            legendInputContainer.classList.toggle('hidden', !checkbox.checked);
                         }
                     }
-                    newAvgVelocity = filteredTime > 0 ? filteredDistance / filteredTime : 0;
-                } else {
-                    const totalTime = bodyData.data[bodyData.data.length - 1].time;
-                    const totalDistance = bodyData.data[bodyData.data.length - 1].distance;
-                    newAvgVelocity = totalTime > 0 ? totalDistance / totalTime : 0;
+                });
+
+                fileListDiv.addEventListener('click', async (event) => {
+                    const pasteBtn = event.target.closest('.paste-btn');
+                    if (!pasteBtn) return;
+
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        const targetId = pasteBtn.dataset.targetId;
+                        const targetInput = document.getElementById(targetId);
+                        if (targetInput && !isNaN(parseFloat(text))) {
+                            targetInput.value = parseFloat(text);
+                        } else {
+                            console.warn("Pasted content is not a valid number.");
+                        }
+                    } catch (err) {
+                        console.error('Failed to read clipboard contents: ', err);
+                        alert("クリップボードの読み取りに失敗しました。ブラウザの権限設定を確認してください。");
+                    }
+                });
+
+                filterVelocityCheckbox.addEventListener('change', () => {
+                    filterRangeInputs.classList.toggle('hidden', !filterVelocityCheckbox.checked);
+                });
+                recalculateAvgBtn.addEventListener('click', recalculateAverages);
+
+                document.querySelectorAll('.style-btn').forEach(btn => btn.addEventListener('click', handleStyleChange));
+                document.querySelectorAll('.download-btn').forEach(btn => btn.addEventListener('click', handleDownload));
+                document.getElementById('download-velocity-csv').addEventListener('click', downloadVelocityCSV);
+                document.querySelectorAll('.chart-label-input').forEach(input => {
+                    input.addEventListener('input', updateAllChartLabels);
+                });
+            }
+
+            function handleFileSelect(event) {
+                fileListDiv.innerHTML = '';
+                rigidbodySelectionSection.classList.add('hidden');
+                rigidbodyListDiv.innerHTML = '';
+                const files = Array.from(event.target.files);
+                if (files.length === 0) return;
+                rigidbodySelectionSection.classList.remove('hidden');
+                files.forEach(file => {
+                    const fileId = `file-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
+                    const fileElement = document.createElement('div');
+                    fileElement.className = 'bg-slate-50 p-2.5 rounded-md flex items-center justify-between border text-sm';
+                    fileElement.innerHTML = `
+                        <span class="text-slate-700 truncate pr-4">${file.name}</span>
+                        <div class="flex items-center flex-shrink-0">
+                            <label for="speed-${fileId}" class="text-xs text-slate-500 mr-2 whitespace-nowrap">基準速度(m/s):</label>
+                            <div class="flex">
+                                <input type="number" id="speed-${fileId}" data-filename="${file.name}" class="reference-speed-input bg-white border border-slate-300 rounded-l-md w-20 p-1 text-right text-sm" step="0.1" value="1.0">
+                                <button type="button" class="paste-btn p-1.5 bg-slate-100 hover:bg-slate-200 border border-l-0 border-slate-300 rounded-r-md" data-target-id="speed-${fileId}" title="ペースト">
+                                    <svg class="h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    fileListDiv.appendChild(fileElement);
+                    Papa.parse(file, {
+                        complete: (results) => {
+                            try {
+                                const rigidBodies = extractRigidBodies(results.data);
+                                fileDataStore[file.name] = { rawData: results.data, rigidBodies };
+                                displayRigidBodySelector(file.name, rigidBodies);
+                            } catch (error) {
+                                alert(`ファイル "${file.name}" の解析中にエラーが発生しました: ${error.message}`);
+                            }
+                        },
+                        error: (error) => alert(`ファイル "${file.name}" の読み込みに失敗しました: ${error.message}`)
+                    });
+                });
+            }
+
+            function extractRigidBodies(data) {
+                let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataStartIndex = -1;
+                for(let i=0; i < 15 && i < data.length; i++){
+                     if(data[i][1] === 'Type') typeRowIndex = i;
+                     if(data[i][1] === 'Name') nameRowIndex = i;
+                     if(data[i][2] === 'Rotation' || data[i][2] === 'Position') propertyRowIndex = i;
+                     if(data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') dataStartIndex = i + 1;
                 }
-
-                let newAvgSlipRate = 0;
-                const u = bodyData.referenceSpeed;
-                const v = newAvgVelocity;
-                if (u > 0 && v >= 0) {
-                     newAvgSlipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
-                }
-
-                return {...bodyData, avgVelocity: newAvgVelocity, avgSlipRate: newAvgSlipRate};
-            });
-            
-            displayResults(updatedData);
-        }
-
-        function processAllBodies(selectedBodies, travelAxis, verticalAxis, motionDetectionSettings) {
-            allInstantaneousVelocities = [];
-            return selectedBodies.map(selection => {
-                const { filename, bodyName, label } = selection;
-                const body = fileDataStore[filename].rigidBodies.find(b => b.name === bodyName);
-                const referenceSpeed = parseFloat(document.querySelector(`input[data-filename="${filename}"]`).value);
-                if (!body || !referenceSpeed) throw new Error(`データが見つかりません: ${filename} - ${bodyName}`);
+                if(typeRowIndex === -1 || nameRowIndex === -1 || propertyRowIndex === -1 || dataStartIndex === -1) throw new Error("CSVのヘッダー形式が不正です。");
                 
-                const motionRange = findMotionRange(body.data, travelAxis, motionDetectionSettings);
-                if (!motionRange) {
-                    console.warn(`${label} の有効な動作が見つかりませんでした。スキップします。`);
+                const [typeRow, nameRow, propertyRow] = [data[typeRowIndex], data[nameRowIndex], data[propertyRowIndex]];
+                const rigidBodies = {};
+
+                for (let i = 2; i < typeRow.length; i++) {
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                        const name = nameRow[i];
+                        if (!rigidBodies[name]) rigidBodies[name] = { name: name, posIndices: {} };
+                        rigidBodies[name].posIndices = { X: i, Y: i + 1, Z: i + 2 };
+                        i += 2;
+                    }
+                }
+                
+                const actualData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
+                Object.values(rigidBodies).forEach(body => {
+                    body.data = actualData.map(row => ({
+                        time: parseFloat(row[1]),
+                        pos: {
+                            X: parseFloat(row[body.posIndices.X]) / 1000,
+                            Y: parseFloat(row[body.posIndices.Y]) / 1000,
+                            Z: parseFloat(row[body.posIndices.Z]) / 1000
+                        }
+                    })).filter(d => !isNaN(d.time) && !isNaN(d.pos.X));
+                });
+                return Object.values(rigidBodies);
+            }
+
+            function displayRigidBodySelector(filename, rigidBodies) {
+                const fileGroupContainer = document.createElement('div');
+                fileGroupContainer.className = 'mb-4';
+                let listHTML = `<h3 class="text-md font-semibold text-slate-700 mb-2 border-b pb-2">[${filename}] の剛体</h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">`;
+                if (rigidBodies.length === 0) {
+                    listHTML += `<p class="text-slate-500 col-span-full text-sm">剛体データが見つかりませんでした。</p>`;
+                } else {
+                    rigidBodies.forEach(body => {
+                        const defaultLabel = `${filename} - ${body.name}`;
+                        listHTML += `
+                        <div class="rigidbody-item-container">
+                            <label class="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 cursor-pointer w-full">
+                                <input type="checkbox" class="rigidbody-checkbox form-checkbox h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" data-filename="${filename}" data-bodyname="${body.name}">
+                                <span class="text-slate-800 text-sm">${body.name}</span>
+                            </label>
+                            <div class="legend-input-container hidden pl-7 mt-1">
+                                <label class="text-xs text-slate-500">凡例名:</label>
+                                <input type="text" class="legend-label-input mt-1 block w-full rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" data-filename="${filename}" data-bodyname="${body.name}" value="${defaultLabel}">
+                            </div>
+                        </div>`;
+                    });
+                }
+                listHTML += `</div>`;
+                fileGroupContainer.innerHTML = listHTML;
+                rigidbodyListDiv.appendChild(fileGroupContainer);
+            }
+
+            function startAnalysis() {
+                const travelAxis = travelAxisSelect.value;
+                const verticalAxis = verticalAxisSelect.value;
+                if (travelAxis === verticalAxis) {
+                    alert('進行方向と鉛直方向は異なる軸を選択してください。');
+                    return;
+                }
+                
+                const motionDetectionSettings = {
+                    multiplier: parseFloat(document.getElementById('motion-threshold-multiplier').value)
+                };
+
+                const selectedBodies = [];
+                document.querySelectorAll('.rigidbody-checkbox:checked').forEach(cb => {
+                    const filename = cb.dataset.filename;
+                    const bodyName = cb.dataset.bodyname;
+                    const labelInput = document.querySelector(`.legend-label-input[data-filename="${filename}"][data-bodyname="${bodyName}"]`);
+                    const label = labelInput ? labelInput.value : `${filename} - ${bodyName}`;
+                    selectedBodies.push({ filename, bodyName, label });
+                });
+                if (selectedBodies.length === 0) {
+                    alert('解析する剛体を少なくとも1つ選択してください。');
+                    return;
+                }
+                loadingDiv.classList.remove('hidden');
+                resultsSection.classList.add('hidden');
+                setTimeout(() => {
+                    try {
+                        lastProcessedData = processAllBodies(selectedBodies, travelAxis, verticalAxis, motionDetectionSettings);
+                        displayResults(lastProcessedData);
+                        renderAllCharts(lastProcessedData, travelAxis, verticalAxis);
+                        resultsSection.classList.remove('hidden');
+                        setTimeout(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                    } catch (error) {
+                        console.error("解析エラー:", error);
+                        alert(`解析中にエラーが発生しました: ${error.message}`);
+                    } finally {
+                        loadingDiv.classList.add('hidden');
+                    }
+                }, 50);
+            }
+            
+            function recalculateAverages() {
+                 const useFilter = filterVelocityCheckbox.checked;
+                 const lowerBound = parseFloat(document.getElementById('filter-lower-bound').value);
+                 const upperBound = parseFloat(document.getElementById('filter-upper-bound').value);
+
+                if(useFilter && (isNaN(lowerBound) || isNaN(upperBound))){
+                    alert('有効な除外範囲を入力してください。');
+                    return;
+                }
+
+                const updatedData = lastProcessedData.map(bodyData => {
+                     let newAvgVelocity;
+                     if (useFilter) {
+                        let filteredDistance = 0;
+                        let filteredTime = 0;
+                        for (let i = 1; i < bodyData.data.length; i++) {
+                            const vel = bodyData.data[i].instVelocity;
+                            if (vel < lowerBound || vel > upperBound) {
+                                filteredDistance += (bodyData.data[i].distance - bodyData.data[i-1].distance);
+                                filteredTime += (bodyData.data[i].time - bodyData.data[i-1].time);
+                            }
+                        }
+                        newAvgVelocity = filteredTime > 0 ? filteredDistance / filteredTime : 0;
+                    } else {
+                        const totalTime = bodyData.data[bodyData.data.length - 1].time;
+                        const totalDistance = bodyData.data[bodyData.data.length - 1].distance;
+                        newAvgVelocity = totalTime > 0 ? totalDistance / totalTime : 0;
+                    }
+
+                    let newAvgSlipRate = 0;
+                    const u = bodyData.referenceSpeed;
+                    const v = newAvgVelocity;
+                    if (u > 0 && v >= 0) {
+                         newAvgSlipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
+                    }
+
+                    return {...bodyData, avgVelocity: newAvgVelocity, avgSlipRate: newAvgSlipRate};
+                });
+                
+                displayResults(updatedData);
+            }
+
+            function processAllBodies(selectedBodies, travelAxis, verticalAxis, motionDetectionSettings) {
+                allInstantaneousVelocities = [];
+                return selectedBodies.map(selection => {
+                    const { filename, bodyName, label } = selection;
+                    const body = fileDataStore[filename].rigidBodies.find(b => b.name === bodyName);
+                    const referenceSpeedInput = document.querySelector(`input[data-filename="${filename}"]`);
+                    if (!referenceSpeedInput) throw new Error(`基準速度の入力が見つかりません: ${filename}`);
+                    const referenceSpeed = parseFloat(referenceSpeedInput.value);
+
+                    if (!body || isNaN(referenceSpeed)) throw new Error(`データまたは基準速度が見つかりません: ${filename} - ${bodyName}`);
+                    
+                    const motionRange = findMotionRange(body.data, travelAxis, motionDetectionSettings);
+                    if (!motionRange) {
+                        console.warn(`${label} の有効な動作が見つかりませんでした。スキップします。`);
+                        return null;
+                    }
+
+                    let workingData = body.data.slice(motionRange.start, motionRange.end);
+                    if (workingData.length < 2) return null;
+
+                    const startTime = workingData[0].time;
+                    const initialPos = workingData[0].pos;
+                    const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
+
+                    workingData.forEach((d, i) => {
+                        d.time = d.time - startTime;
+                        const d_h1 = d.pos[horizontalAxes[0]] - initialPos[horizontalAxes[0]];
+                        const d_h2 = d.pos[horizontalAxes[1]] - initialPos[horizontalAxes[1]];
+                        d.distance = Math.sqrt(d_h1 ** 2 + d_h2 ** 2);
+                        d.verticalDisp = d.pos[verticalAxis] - initialPos[verticalAxis];
+                        
+                        const chartXAxisName = travelAxis;
+                        const chartYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
+                        d.trajectory_x = d.pos[chartXAxisName] - initialPos[chartXAxisName];
+                        d.trajectory_y = d.pos[chartYAxisName] - initialPos[chartYAxisName];
+                        
+                        if (i === 0) { d.instVelocity = 0; } else {
+                            const dt = d.time - workingData[i - 1].time;
+                            const dd = d.distance - workingData[i - 1].distance;
+                            d.instVelocity = dt > 0 ? dd / dt : 0;
+                        }
+                        const u = referenceSpeed, v = d.instVelocity;
+                        if (u > 0 && v >= 0) d.slipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
+                        else d.slipRate = 0;
+                    });
+                    
+                    const totalTime = workingData[workingData.length - 1].time;
+                    const totalDistance = workingData[workingData.length - 1].distance;
+                    const avgVelocity = totalTime > 0 ? totalDistance / totalTime : 0;
+                    let avgSlipRate = 0;
+                    if (referenceSpeed > 0 && avgVelocity >= 0) {
+                         avgSlipRate = (referenceSpeed > avgVelocity) ? (1 - (avgVelocity / referenceSpeed)) * 100 : (1 - (referenceSpeed / avgVelocity)) * 100;
+                    }
+
+                    workingData.forEach(d => {
+                        allInstantaneousVelocities.push({
+                            "ファイル名": filename, "剛体名": bodyName, "凡例名": label, "時間 (s)": d.time.toFixed(3),
+                            "距離 (m)": d.distance.toFixed(4), "微小速度 (m/s)": d.instVelocity.toFixed(4),
+                            "スリップ率 (%)": d.slipRate.toFixed(2), "鉛直変位 (m)": d.verticalDisp.toFixed(4),
+                        });
+                    });
+                    return { name: label, data: workingData, avgVelocity, avgSlipRate, referenceSpeed };
+                }).filter(d => d !== null);
+            }
+
+            function findMotionRange(data, travelAxis, settings) {
+                const pos = data.map(d => d.pos[travelAxis]);
+                if (pos.length < 20) return { start: 0, end: pos.length };
+
+                const overallMax = Math.max(...pos);
+                const overallMin = Math.min(...pos);
+                const overallRange = overallMax - overallMin;
+                if (overallRange === 0) return null; 
+
+                const margin = overallRange * settings.multiplier;
+
+                const initialValue = pos[0];
+                const startLowerBound = initialValue - margin;
+                const startUpperBound = initialValue + margin;
+
+                let startIndex = 0;
+                for (let i = 1; i < pos.length; i++) {
+                    if (pos[i] < startLowerBound || pos[i] > startUpperBound) {
+                        startIndex = i;
+                        break;
+                    }
+                }
+                if (startIndex === 0) {
+                    console.warn("動作開始が検出できませんでした。");
+                    return null; 
+                }
+
+                const finalValue = pos[pos.length - 1];
+                const endLowerBound = finalValue - margin;
+                const endUpperBound = finalValue + margin;
+                
+                let endIndex = pos.length;
+                for (let i = pos.length - 1; i >= startIndex; i--) {
+                    if (pos[i] < endLowerBound || pos[i] > endUpperBound) {
+                        endIndex = i + 1;
+                        break;
+                    }
+                }
+                
+                if (startIndex >= endIndex) {
+                    console.warn("有効な動作区間が見つかりませんでした (開始点が終了点以降)。");
                     return null;
                 }
 
-                let workingData = body.data.slice(motionRange.start, motionRange.end);
-                if (workingData.length < 2) return null;
+                return { start: startIndex, end: endIndex };
+            }
 
-                const startTime = workingData[0].time;
-                const initialPos = workingData[0].pos;
+            function displayResults(processedData) {
+                const container = document.getElementById('average-velocities');
+                container.innerHTML = '<h3 class="text-md font-semibold mb-3 text-slate-800">平均値</h3>';
+                const list = document.createElement('div');
+                list.className = 'space-y-3';
+                processedData.forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = 'p-3 bg-slate-50/70 rounded-md border';
+                    item.innerHTML = `
+                        <div class="font-semibold text-sm text-blue-700">${result.name}</div>
+                        <div class="mt-1 pl-2 text-sm text-slate-700">
+                            <span>平均速度: <span class="font-medium">${result.avgVelocity.toFixed(3)} m/s</span></span>
+                            <span class="mx-2 text-slate-300">|</span>
+                            <span>平均スリップ率: <span class="font-medium">${result.avgSlipRate.toFixed(2)} %</span></span>
+                        </div>
+                         <div class="mt-1 pl-2 text-xs text-slate-500">(基準速度: ${result.referenceSpeed} m/s)</div>
+                    `;
+                    list.appendChild(item);
+                });
+                container.appendChild(list);
+            }
+            function renderAllCharts(processedData, travelAxis, verticalAxis) {
+                Object.values(chartInstances).forEach(chart => { if(chart && chart.destroy) chart.destroy() });
+                
                 const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
+                const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
 
-                workingData.forEach((d, i) => {
-                    d.time = d.time - startTime;
-                    const d_h1 = d.pos[horizontalAxes[0]] - initialPos[horizontalAxes[0]];
-                    const d_h2 = d.pos[horizontalAxes[1]] - initialPos[horizontalAxes[1]];
-                    d.distance = Math.sqrt(d_h1 ** 2 + d_h2 ** 2);
-                    d.verticalDisp = d.pos[verticalAxis] - initialPos[verticalAxis];
+                const initialLabels = {
+                    'velocity': { id: 'velocity-chart', title: '速度 vs 距離', x: '距離 (m)', y: '速度 (m/s)' },
+                    'slip': { id: 'slip-chart', title: 'スリップ率 vs 距離', x: '距離 (m)', y: 'スリップ率 (%)' },
+                    'vertical': { id: 'vertical-chart', title: '鉛直変位 vs 距離', x: '距離 (m)', y: `鉛直変位 (${verticalAxis}軸) (m)` },
+                    'trajectory': { id: 'trajectory-chart', title: '平面移動軌跡', x: `${travelAxis}軸 変位 (m)`, y: `${trajectoryYAxisName}軸 変位 (m)` }
+                };
+                
+                const labelMapping = { 'v': 'velocity', 's': 'slip', 'z': 'vertical', 't': 'trajectory' };
+                
+                for (const [prefix, fullKey] of Object.entries(labelMapping)) {
+                    const labels = initialLabels[fullKey];
+                    document.getElementById(`${prefix}-chart-title`).value = labels.title;
+                    document.getElementById(`${prefix}-chart-xlabel`).value = labels.x;
+                    document.getElementById(`${prefix}-chart-ylabel`).value = labels.y;
+                }
+
+                const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
+                const pointStyles = ['circle', 'rect', 'cross', 'star', 'triangle', 'rectRot'];
+                const datasets = processedData.map((result, index) => {
+                    const color = colors[index % colors.length];
+                    const style = pointStyles[index % pointStyles.length];
+                    const base = {
+                        label: result.name, borderColor: color, backgroundColor: color,
+                        pointRadius: 3, pointStyle: style, showLine: true, tension: 0.1, borderWidth: 1.5
+                    };
+                    return {
+                        velocity: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.instVelocity })) },
+                        slip: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.slipRate })) },
+                        vertical: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.verticalDisp })) },
+                        trajectory: { ...base, data: result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }))}
+                    };
+                });
+                
+                ['velocity', 'slip', 'vertical'].forEach(key => {
+                    const chartId = `${key}-chart`;
+                    const chartData = datasets.map(d => d[key]);
+                    const labels = initialLabels[key];
+                    chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
+                        type: 'scatter', 
+                        data: { datasets: chartData },
+                        options: getChartOptions(labels.y, labels.x, labels.title)
+                    });
+                });
+
+                const trajectoryLabels = initialLabels['trajectory'];
+                const trajectoryDatasets = datasets.map(d => d.trajectory);
+                
+                let minVal = Infinity, maxVal = -Infinity;
+                trajectoryDatasets.forEach(dataset => {
+                    dataset.data.forEach(point => {
+                        minVal = Math.min(minVal, point.x, point.y);
+                        maxVal = Math.max(maxVal, point.x, point.y);
+                    });
+                });
+                const range = maxVal - minVal;
+                const padding = range === 0 ? 1 : range * 0.1;
+                const finalMin = minVal - padding;
+                const finalMax = maxVal + padding;
+
+                const trajectoryOptions = getChartOptions(trajectoryLabels.y, trajectoryLabels.x, trajectoryLabels.title);
+                trajectoryOptions.scales.x.min = finalMin;
+                trajectoryOptions.scales.x.max = finalMax;
+                trajectoryOptions.scales.y.min = finalMin;
+                trajectoryOptions.scales.y.max = finalMax;
+                trajectoryOptions.aspectRatio = 1;
+
+                chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), { 
+                    type: 'scatter', 
+                    data: { datasets: trajectoryDatasets },
+                    options: trajectoryOptions
+                });
+                
+                handleStyleChange({target: document.getElementById('style-casual')});
+            }
+            function updateAllChartLabels() {
+                document.querySelectorAll('.chart-label-input').forEach(input => {
+                     const chartId = input.dataset.chartId;
+                     const labelType = input.dataset.labelType;
+                     const chart = chartInstances[chartId];
+                     if(!chart || !chart.options) return;
+
+                     if(labelType === 'title') chart.options.plugins.title.text = input.value;
+                     if(labelType === 'x') chart.options.scales.x.title.text = input.value;
+                     if(labelType === 'y') chart.options.scales.y.title.text = input.value;
+                });
+                Object.values(chartInstances).forEach(chart => chart.update('none'));
+            }
+
+            function getChartOptions(yLabel, xLabel, title) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { title: { display: true, text: yLabel, font: { size: 13 } }, ticks: { font: { size: 12 } } },
+                        x: { type: 'linear', position: 'bottom', title: { display: true, text: xLabel, font: { size: 13 } }, ticks: { font: { size: 12 } } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 20, font: {size: 13} } },
+                        title: { display: true, text: title, font: { size: 16, weight: '600' } }
+                    },
+                    animation: { duration: 0 }
+                };
+            }
+
+            function handleStyleChange(event) {
+                if (!event || !event.target) return;
+                const mode = event.target.id.includes('formal') ? 'formal' : 'casual';
+                const casualBtn = document.getElementById('style-casual');
+                const formalBtn = document.getElementById('style-formal');
+                casualBtn.classList.toggle('bg-blue-600', mode === 'casual');
+                casualBtn.classList.toggle('text-white', mode === 'casual');
+                casualBtn.classList.toggle('bg-slate-200', mode === 'formal');
+                casualBtn.classList.toggle('text-slate-700', mode === 'formal');
+                formalBtn.classList.toggle('bg-blue-600', mode === 'formal');
+                formalBtn.classList.toggle('text-white', mode === 'formal');
+                formalBtn.classList.toggle('bg-slate-200', mode === 'casual');
+                formalBtn.classList.toggle('text-slate-700', mode === 'casual');
+                const isFormal = mode === 'formal';
+                const formalStyles = { color: '#000', font: { weight: 'bold' } };
+                const casualStyles = { color: '#334155', font: { weight: 'normal' } }; // slate-700
+                const newStyles = isFormal ? formalStyles : casualStyles;
+                
+                Object.values(chartInstances).forEach(chart => {
+                    if (!chart || !chart.options || !chart.options.plugins || !chart.options.scales) return;
                     
-                    const chartXAxisName = travelAxis;
-                    const chartYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
-                    d.trajectory_x = d.pos[chartXAxisName] - initialPos[chartXAxisName];
-                    d.trajectory_y = d.pos[chartYAxisName] - initialPos[chartYAxisName];
+                    chart.options.plugins.title.color = newStyles.color;
+                    chart.options.plugins.title.font.weight = newStyles.font.weight;
+                    chart.options.plugins.legend.labels.color = newStyles.color;
+                    chart.options.scales.x.title.color = newStyles.color;
+                    chart.options.scales.x.title.font.weight = newStyles.font.weight;
+                    chart.options.scales.x.ticks.color = newStyles.color;
+                    chart.options.scales.y.title.color = newStyles.color;
+                    chart.options.scales.y.title.font.weight = newStyles.font.weight;
+                    chart.options.scales.y.ticks.color = newStyles.color;
+
+                    if (isFormal) {
+                        chart.options.scales.x.grid.display = false;
+                        chart.options.scales.y.grid.display = false;
+                        chart.options.scales.x.border = { color: '#000', width: 2 };
+                        chart.options.scales.y.border = { color: '#000', width: 2 };
+                        chart.data.datasets.forEach(dataset => {
+                            Object.assign(dataset, { borderColor: '#000', backgroundColor: 'rgba(0,0,0,0.1)', borderWidth: 1, pointRadius: 2.5 });
+                        });
+                    } else {
+                        chart.options.scales.x.grid.display = true;
+                        chart.options.scales.y.grid.display = true;
+                        chart.options.scales.x.grid.color = '#e2e8f0'; // slate-200
+                        chart.options.scales.y.grid.color = '#e2e8f0'; // slate-200
+                        chart.options.scales.x.border = { color: '#cbd5e1' }; // slate-300
+                        chart.options.scales.y.border = { color: '#cbd5e1' }; // slate-300
+
+                        const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
+                        chart.data.datasets.forEach((dataset, i) => {
+                            const color = colors[i % colors.length];
+                            Object.assign(dataset, { borderColor: color, backgroundColor: color, borderWidth: 1.5, pointRadius: 3 });
+                        });
+                    }
+                    chart.update('none');
+                });
+            }
+
+            function downloadVelocityCSV() {
+                if (allInstantaneousVelocities.length === 0) {
+                    alert('ダウンロードするデータがありません。');
+                    return;
+                }
+                const csv = Papa.unparse(allInstantaneousVelocities);
+                const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', 'instantaneous_velocities.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            async function handleDownload(event) {
+                const { chartId, format } = event.target.dataset;
+                const chart = chartInstances[chartId];
+                if (!chart) return;
+
+                downloadOverlay.classList.remove('hidden');
+
+                const exportWidth = document.getElementById('export-width').value;
+                const exportHeight = document.getElementById('export-height').value;
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = exportWidth;
+                tempCanvas.height = exportHeight;
+                
+                tempCanvas.style.position = 'absolute';
+                tempCanvas.style.left = '-9999px';
+                tempCanvas.style.top = '0px';
+                document.body.appendChild(tempCanvas);
+                
+                const tempChart = new Chart(tempCanvas, {
+                     type: chart.config.type,
+                     data: chart.config.data,
+                     options: { ...chart.config.options, animation: false, responsive: false, maintainAspectRatio: false }
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 500)); 
+
+                try {
+                    const canvas = await html2canvas(tempCanvas, { backgroundColor: '#FFFFFF', scale: 2 });
+
+                    if (format === 'png') {
+                        const image = canvas.toDataURL('image/png', 1.0);
+                        const link = document.createElement('a');
+                        link.href = image;
+                        link.download = `${chartId}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } else if (format === 'pdf') {
+                        if (!window.jspdf || !window.jspdf.jsPDF) {
+                            alert('PDF generation library (jsPDF) is not loaded.'); return;
+                        }
+                        const { jsPDF } = window.jspdf;
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jsPDF({
+                            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                            unit: 'px',
+                            format: [canvas.width, canvas.height]
+                        });
+                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                        pdf.save(`${chartId}.pdf`);
+                    }
+                } catch (e) {
+                    console.error("Failed to generate download:", e);
+                    alert("An error occurred during download. Please check the console.");
+                } finally {
+                    tempChart.destroy();
+                    document.body.removeChild(tempCanvas);
+                    downloadOverlay.classList.add('hidden');
+                }
+            }
+            
+            // --- STANDARD VELOCITY TOOL SCRIPT ---
+            const fileInputStd = document.getElementById('csv-file-input-std');
+            const fileNameDisplayStd = document.getElementById('file-name-display-std');
+            const loadingIndicatorStd = document.getElementById('loading-indicator-std');
+            const parametersSectionStd = document.getElementById('step-2-parameters-std');
+            const resultsSectionStd = document.getElementById('step-3-results-std');
+            const rigidbodyContainerStd = document.getElementById('rigidbody-radio-container-std');
+            const radiusInputStd = document.getElementById('radius-input-std');
+            const axisSelectStd = document.getElementById('axis-select-std');
+            const calculateBtnStd = document.getElementById('calculate-btn-std');
+            const resultDisplayStd = document.getElementById('result-display-std');
+            const resultValueStd = document.getElementById('result-value-std');
+            const copyBtnStd = document.getElementById('copy-btn-std');
+            const errorDisplayStd = document.getElementById('error-display-std');
+
+            let parsedCsvDataStd = null; 
+
+            if (fileInputStd) {
+                fileInputStd.addEventListener('change', handleFileSelectStd);
+                calculateBtnStd.addEventListener('click', handleCalculationStd);
+                copyBtnStd.addEventListener('click', handleCopyStd);
+            }
+
+            function handleFileSelectStd(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                fileNameDisplayStd.textContent = file.name;
+                parametersSectionStd.classList.add('hidden');
+                resultsSectionStd.classList.add('hidden');
+                errorDisplayStd.classList.add('hidden');
+                loadingIndicatorStd.classList.remove('hidden');
+
+                Papa.parse(file, {
+                    complete: (results) => {
+                        try {
+                            parseCsvAndSetupUIStd(results.data);
+                        } catch (e) {
+                            showErrorStd(`ファイル解析エラー: ${e.message}`);
+                        } finally {
+                            loadingIndicatorStd.classList.add('hidden');
+                        }
+                    },
+                    error: (error) => {
+                        showErrorStd(`CSVファイルの読み込みに失敗しました: ${error.message}`);
+                        loadingIndicatorStd.classList.add('hidden');
+                    }
+                });
+            }
+
+            function parseCsvAndSetupUIStd(csvData) {
+                let dataStartIndex = -1, propertyRowIndex = -1, nameRowIndex = -1, typeRowIndex = -1;
+
+                for (let i = 0; i < Math.min(15, csvData.length); i++) {
+                    if (csvData[i][0] === 'Frame' && csvData[i][1] === 'Time (Seconds)') dataStartIndex = i + 1;
+                    if (csvData[i][2] === 'Rotation' || csvData[i][2] === 'Position') propertyRowIndex = i;
+                    if (csvData[i][1] === 'Name') nameRowIndex = i;
+                    if (csvData[i][1] === 'Type') typeRowIndex = i;
+                }
+                
+                if (dataStartIndex === -1 || propertyRowIndex === -1 || nameRowIndex === -1 || typeRowIndex === -1) {
+                    throw new Error("CSVのヘッダー形式がMotiveエクスポート形式と異なります。");
+                }
+
+                const headerInfo = { dataStartIndex, propertyRowIndex, nameRowIndex, typeRowIndex };
+                const rigidBodies = extractRigidBodiesStd(csvData, headerInfo);
+                if (Object.keys(rigidBodies).length === 0) {
+                     throw new Error("ファイル内に有効な剛体(Rigid Body)データが見つかりませんでした。");
+                }
+
+                parsedCsvDataStd = {
+                    headerInfo,
+                    dataRows: csvData.slice(headerInfo.dataStartIndex),
+                    rigidBodies
+                };
+
+                populateRigidBodyRadiosStd(Object.keys(rigidBodies));
+                parametersSectionStd.classList.remove('hidden');
+            }
+
+            function extractRigidBodiesStd(csvData, headerInfo) {
+                const rigidBodies = {};
+                const typeRow = csvData[headerInfo.typeRowIndex];
+                const nameRow = csvData[headerInfo.nameRowIndex];
+                const propertyRow = csvData[headerInfo.propertyRowIndex];
+                const dataHeaderRow = csvData[headerInfo.dataStartIndex - 1];
+
+                for (let i = 2; i < typeRow.length; i++) {
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Rotation') {
+                        const name = nameRow[i];
+                        if (!rigidBodies[name]) {
+                            rigidBodies[name] = {
+                                name: name,
+                                rotation: {
+                                    [dataHeaderRow[i]]: i,
+                                    [dataHeaderRow[i+1]]: i+1,
+                                    [dataHeaderRow[i+2]]: i+2
+                                }
+                            };
+                        }
+                    }
+                }
+                return rigidBodies;
+            }
+
+            function populateRigidBodyRadiosStd(bodyNames) {
+                rigidbodyContainerStd.innerHTML = '';
+                const keywords = ['wheel', 'tire'];
+                let defaultIndex = 0; 
+                const firstMatchIndex = bodyNames.findIndex(name =>
+                    keywords.some(keyword => name.toLowerCase().includes(keyword))
+                );
+                if (firstMatchIndex !== -1) { defaultIndex = firstMatchIndex; }
+                bodyNames.forEach((name, index) => {
+                    const id = `body-radio-std-${name.replace(/\s+/g, '-')}`;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center';
+                    div.innerHTML = `
+                        <input id="${id}" type="radio" value="${name}" name="rigidbody-select-std" class="rigidbody-radio-std h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500" ${index === defaultIndex ? 'checked' : ''}>
+                        <label for="${id}" class="ml-3 block text-sm text-slate-900">${name}</label>
+                    `;
+                    rigidbodyContainerStd.appendChild(div);
+                });
+            }
+
+            function handleCalculationStd() {
+                if (!parsedCsvDataStd) {
+                    showErrorStd("先にファイルを解析してください。"); return;
+                }
+                resultsSectionStd.classList.add('hidden');
+                resultDisplayStd.classList.add('hidden');
+                errorDisplayStd.classList.add('hidden');
+                
+                const selectedRadio = document.querySelector('.rigidbody-radio-std:checked');
+                if (!selectedRadio) {
+                    showErrorStd("解析する剛体を選択してください。"); return;
+                }
+                const radiusCm = parseFloat(radiusInputStd.value);
+                if (isNaN(radiusCm) || radiusCm <= 0) {
+                    showErrorStd("半径には正の数値を入力してください。"); return;
+                }
+                const radiusM = radiusCm / 100.0;
+                const selectedAxis = axisSelectStd.value;
+                const selectedBodyName = selectedRadio.value;
+                
+                try {
+                    const bodyInfo = parsedCsvDataStd.rigidBodies[selectedBodyName];
+                    const rotationColumnIndex = bodyInfo.rotation[selectedAxis];
                     
-                    if (i === 0) { d.instVelocity = 0; } else {
-                        const dt = d.time - workingData[i - 1].time;
-                        const dd = d.distance - workingData[i - 1].distance;
-                        d.instVelocity = dt > 0 ? dd / dt : 0;
+                    if (rotationColumnIndex === undefined) {
+                        throw new Error(`選択された剛体に'${selectedAxis}'軸の回転データが存在しません。`);
                     }
-                    const u = referenceSpeed, v = d.instVelocity;
-                    if (u > 0 && v >= 0) d.slipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
-                    else d.slipRate = 0;
-                });
-                
-                const totalTime = workingData[workingData.length - 1].time;
-                const totalDistance = workingData[workingData.length - 1].distance;
-                const avgVelocity = totalTime > 0 ? totalDistance / totalTime : 0;
-                let avgSlipRate = 0;
-                if (referenceSpeed > 0 && avgVelocity >= 0) {
-                     avgSlipRate = (referenceSpeed > avgVelocity) ? (1 - (avgVelocity / referenceSpeed)) * 100 : (1 - (referenceSpeed / avgVelocity)) * 100;
-                }
+                    const timeData = parsedCsvDataStd.dataRows.map(row => parseFloat(row[1])).filter(t => !isNaN(t));
+                    const angleData = parsedCsvDataStd.dataRows.map(row => parseFloat(row[rotationColumnIndex])).filter(a => !isNaN(a));
 
-                workingData.forEach(d => {
-                    allInstantaneousVelocities.push({
-                        "ファイル名": filename, "剛体名": bodyName, "凡例名": label, "時間 (s)": d.time.toFixed(3),
-                        "距離 (m)": d.distance.toFixed(4), "微小速度 (m/s)": d.instVelocity.toFixed(4),
-                        "スリップ率 (%)": d.slipRate.toFixed(2), "鉛直変位 (m)": d.verticalDisp.toFixed(4),
-                    });
-                });
-                return { name: label, data: workingData, avgVelocity, avgSlipRate, referenceSpeed };
-            }).filter(d => d !== null);
-        }
-
-        function findMotionRange(data, travelAxis, settings) {
-            const pos = data.map(d => d.pos[travelAxis]);
-            if (pos.length < 20) return { start: 0, end: pos.length };
-
-            const overallMax = Math.max(...pos);
-            const overallMin = Math.min(...pos);
-            const overallRange = overallMax - overallMin;
-            if (overallRange === 0) return null; 
-
-            const margin = overallRange * settings.multiplier;
-
-            const initialValue = pos[0];
-            const startLowerBound = initialValue - margin;
-            const startUpperBound = initialValue + margin;
-
-            let startIndex = 0;
-            for (let i = 1; i < pos.length; i++) {
-                if (pos[i] < startLowerBound || pos[i] > startUpperBound) {
-                    startIndex = i;
-                    break;
-                }
-            }
-            if (startIndex === 0) {
-                console.warn("動作開始が検出できませんでした。");
-                return null; 
-            }
-
-            const finalValue = pos[pos.length - 1];
-            const endLowerBound = finalValue - margin;
-            const endUpperBound = finalValue + margin;
-            
-            let endIndex = pos.length;
-            for (let i = pos.length - 1; i >= startIndex; i--) {
-                if (pos[i] < endLowerBound || pos[i] > endUpperBound) {
-                    endIndex = i + 1;
-                    break;
-                }
-            }
-            
-            if (startIndex >= endIndex) {
-                console.warn("有効な動作区間が見つかりませんでした (開始点が終了点以降)。");
-                return null;
-            }
-
-            return { start: startIndex, end: endIndex };
-        }
-
-
-        function displayResults(processedData) {
-            const container = document.getElementById('average-velocities');
-            container.innerHTML = '<h3 class="text-xl font-semibold mb-3 text-gray-800">平均値</h3>';
-            const list = document.createElement('div');
-            list.className = 'space-y-3';
-            processedData.forEach(result => {
-                const item = document.createElement('div');
-                item.className = 'p-3 bg-gray-50 rounded-lg border';
-                item.innerHTML = `
-                    <div class="font-semibold text-blue-700">${result.name}</div>
-                    <div class="mt-1 pl-2 text-sm text-gray-700">
-                        <span>平均速度: <span class="font-medium">${result.avgVelocity.toFixed(3)} m/s</span></span>
-                        <span class="mx-2 text-gray-300">|</span>
-                        <span>平均スリップ率: <span class="font-medium">${result.avgSlipRate.toFixed(2)} %</span></span>
-                    </div>
-                     <div class="mt-1 pl-2 text-xs text-gray-500">
-                        (基準速度: ${result.referenceSpeed} m/s)
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-            container.appendChild(list);
-        }
-function renderAllCharts(processedData, travelAxis, verticalAxis) {
-    Object.values(chartInstances).forEach(chart => chart.destroy());
-    
-    const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
-    const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
-
-    const initialLabels = {
-        'velocity': { id: 'velocity-chart', title: '速度 vs 距離', x: '距離 (m)', y: '速度 (m/s)' },
-        'slip': { id: 'slip-chart', title: 'スリップ率 vs 距離', x: '距離 (m)', y: 'スリップ率 (%)' },
-        'vertical': { id: 'vertical-chart', title: '鉛直変位 vs 距離', x: '距離 (m)', y: `鉛直変位 (${verticalAxis}軸) (m)` },
-        'trajectory': { id: 'trajectory-chart', title: '平面移動軌跡', x: `${travelAxis}軸 変位 (m)`, y: `${trajectoryYAxisName}軸 変位 (m)` }
-    };
-    
-    // ラベル設定のマッピングを修正
-    const labelMapping = {
-        'v': 'velocity',
-        's': 'slip', 
-        'z': 'vertical',
-        't': 'trajectory'
-    };
-    
-    for (const [prefix, fullKey] of Object.entries(labelMapping)) {
-        const labels = initialLabels[fullKey];
-        document.getElementById(`${prefix}-chart-title`).value = labels.title;
-        document.getElementById(`${prefix}-chart-xlabel`).value = labels.x;
-        document.getElementById(`${prefix}-chart-ylabel`).value = labels.y;
-    }
-
-    const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
-    const pointStyles = ['circle', 'rect', 'cross', 'star', 'triangle', 'rectRot'];
-    const datasets = processedData.map((result, index) => {
-        const color = colors[index % colors.length];
-        const style = pointStyles[index % pointStyles.length];
-        const base = {
-            label: result.name, borderColor: color, backgroundColor: color,
-            pointRadius: 3, pointStyle: style, showLine: true, tension: 0.1, borderWidth: 1.5
-        };
-        return {
-            velocity: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.instVelocity })) },
-            slip: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.slipRate })) },
-            vertical: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.verticalDisp })) },
-            trajectory: { ...base, data: result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }))}
-        };
-    });
-    
-    ['velocity', 'slip', 'vertical'].forEach(key => {
-        const chartId = `${key}-chart`;
-        const chartData = datasets.map(d => d[key]);
-        const labels = initialLabels[key];
-        chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
-            type: 'scatter', 
-            data: { datasets: chartData },
-            options: getChartOptions(labels.y, labels.x, labels.title)
-        });
-    });
-
-    const trajectoryLabels = initialLabels['trajectory'];
-    const trajectoryDatasets = datasets.map(d => d.trajectory);
-    
-    let minVal = Infinity, maxVal = -Infinity;
-    trajectoryDatasets.forEach(dataset => {
-        dataset.data.forEach(point => {
-            minVal = Math.min(minVal, point.x, point.y);
-            maxVal = Math.max(maxVal, point.x, point.y);
-        });
-    });
-    const range = maxVal - minVal;
-    const padding = range === 0 ? 1 : range * 0.1;
-    const finalMin = minVal - padding;
-    const finalMax = maxVal + padding;
-
-    const trajectoryOptions = getChartOptions(trajectoryLabels.y, trajectoryLabels.x, trajectoryLabels.title);
-    trajectoryOptions.scales.x.min = finalMin;
-    trajectoryOptions.scales.x.max = finalMax;
-    trajectoryOptions.scales.y.min = finalMin;
-    trajectoryOptions.scales.y.max = finalMax;
-    trajectoryOptions.aspectRatio = 1;
-
-    chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), { 
-        type: 'scatter', 
-        data: { datasets: trajectoryDatasets },
-        options: trajectoryOptions
-    });
-    
-    handleStyleChange({target: document.getElementById('style-casual')});
-}
-        function updateAllChartLabels() {
-            document.querySelectorAll('.chart-label-input').forEach(input => {
-                 const chartId = input.dataset.chartId;
-                 const labelType = input.dataset.labelType;
-                 const chart = chartInstances[chartId];
-                 if(!chart || !chart.options) return;
-
-                 if(labelType === 'title') chart.options.plugins.title.text = input.value;
-                 if(labelType === 'x') chart.options.scales.x.title.text = input.value;
-                 if(labelType === 'y') chart.options.scales.y.title.text = input.value;
-            });
-            Object.values(chartInstances).forEach(chart => chart.update('none'));
-        }
-
-        function getChartOptions(yLabel, xLabel, title) {
-            return {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { title: { display: true, text: yLabel, font: { size: 14 } }, ticks: { font: { size: 12 } } },
-                    x: { type: 'linear', position: 'bottom', title: { display: true, text: xLabel, font: { size: 14 } }, ticks: { font: { size: 12 } } }
-                },
-                plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 20 } },
-                    title: { display: true, text: title, font: { size: 18, weight: '600' } }
-                },
-                animation: { duration: 0 }
-            };
-        }
-
-        function handleStyleChange(event) {
-            if (!event || !event.target) return;
-            const mode = event.target.id.includes('formal') ? 'formal' : 'casual';
-            const casualBtn = document.getElementById('style-casual');
-            const formalBtn = document.getElementById('style-formal');
-            casualBtn.classList.toggle('bg-blue-600', mode === 'casual');
-            casualBtn.classList.toggle('text-white', mode === 'casual');
-            casualBtn.classList.toggle('bg-gray-200', mode === 'formal');
-            casualBtn.classList.toggle('text-gray-700', mode === 'formal');
-            formalBtn.classList.toggle('bg-blue-600', mode === 'formal');
-            formalBtn.classList.toggle('text-white', mode === 'formal');
-            formalBtn.classList.toggle('bg-gray-200', mode === 'casual');
-            formalBtn.classList.toggle('text-gray-700', mode === 'casual');
-            const isFormal = mode === 'formal';
-            const formalStyles = {
-                color: '#000', font: { weight: 'bold' }
-            };
-            const casualStyles = {
-                color: '#374151', font: { weight: 'normal' }
-            };
-            const newStyles = isFormal ? formalStyles : casualStyles;
-            
-            Object.values(chartInstances).forEach(chart => {
-                if (!chart || !chart.options || !chart.options.plugins || !chart.options.scales) return;
-                
-                chart.options.plugins.title.color = newStyles.color;
-                chart.options.plugins.title.font.weight = newStyles.font.weight;
-                chart.options.plugins.legend.labels.color = newStyles.color;
-                
-                chart.options.scales.x.title.color = newStyles.color;
-                chart.options.scales.x.title.font.weight = newStyles.font.weight;
-                chart.options.scales.x.ticks.color = newStyles.color;
-                
-                chart.options.scales.y.title.color = newStyles.color;
-                chart.options.scales.y.title.font.weight = newStyles.font.weight;
-                chart.options.scales.y.ticks.color = newStyles.color;
-
-                if (isFormal) {
-                    chart.options.scales.x.grid.display = false;
-                    chart.options.scales.y.grid.display = false;
-                    chart.options.scales.x.border = { color: '#000', width: 2 };
-                    chart.options.scales.y.border = { color: '#000', width: 2 };
-                    chart.data.datasets.forEach(dataset => {
-                        Object.assign(dataset, { borderColor: '#000', backgroundColor: 'rgba(0,0,0,0.1)', borderWidth: 1, pointRadius: 2.5 });
-                    });
-                } else {
-                    chart.options.scales.x.grid.display = true;
-                    chart.options.scales.y.grid.display = true;
-                    chart.options.scales.x.grid.color = '#e5e7eb';
-                    chart.options.scales.y.grid.color = '#e5e7eb';
-                    chart.options.scales.x.border = { color: '#d1d5db' };
-                    chart.options.scales.y.border = { color: '#d1d5db' };
-
-                    const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
-                    chart.data.datasets.forEach((dataset, i) => {
-                        const color = colors[i % colors.length];
-                        Object.assign(dataset, { borderColor: color, backgroundColor: color, borderWidth: 1.5, pointRadius: 3 });
-                    });
-                }
-                chart.update('none');
-            });
-        }
-
-        function downloadVelocityCSV() {
-            if (allInstantaneousVelocities.length === 0) {
-                alert('ダウンロードするデータがありません。');
-                return;
-            }
-            const csv = Papa.unparse(allInstantaneousVelocities);
-            const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', 'instantaneous_velocities.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        async function handleDownload(event) {
-            const { chartId, format } = event.target.dataset;
-            const chart = chartInstances[chartId];
-            if (!chart) return;
-
-            downloadOverlay.classList.remove('hidden');
-
-            const exportWidth = document.getElementById('export-width').value;
-            const exportHeight = document.getElementById('export-height').value;
-
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = exportWidth;
-            tempCanvas.height = exportHeight;
-            
-            tempCanvas.style.position = 'absolute';
-            tempCanvas.style.left = '-9999px';
-            tempCanvas.style.top = '0px';
-            document.body.appendChild(tempCanvas);
-            
-            const tempChart = new Chart(tempCanvas, {
-                 type: chart.config.type,
-                 data: chart.config.data,
-                 options: { ...chart.config.options, animation: false, responsive: false, maintainAspectRatio: false }
-            });
-            
-            await new Promise(resolve => setTimeout(resolve, 500)); 
-
-            try {
-                const canvas = await html2canvas(tempCanvas, {
-                    backgroundColor: '#FFFFFF',
-                    scale: 2
-                });
-
-                if (format === 'png') {
-                    const image = canvas.toDataURL('image/png', 1.0);
-                    const link = document.createElement('a');
-                    link.href = image;
-                    link.download = `${chartId}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } else if (format === 'pdf') {
-                    if (!window.jspdf || !window.jspdf.jsPDF) {
-                        alert('PDF generation library (jsPDF) is not loaded.');
-                        return;
+                    if (timeData.length !== angleData.length || timeData.length < 2) {
+                        throw new Error("有効な時間または角度データが不足しています。");
                     }
-                    const { jsPDF } = window.jspdf;
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF({
-                        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-                        unit: 'px',
-                        format: [canvas.width, canvas.height]
-                    });
-                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    pdf.save(`${chartId}.pdf`);
+                    
+                    const unwrappedAngles = unwrapAnglesStd(angleData);
+                    const period = findRotationPeriodStd(timeData, unwrappedAngles);
+
+                    if (period === null) {
+                        throw new Error("データ内で1回転以上の回転を検出できませんでした。回転軸の選択が間違っている可能性があります。");
+                    }
+                    const omega = (2 * Math.PI) / period;
+                    const velocity = radiusM * omega;
+                    const velocityStr = velocity.toFixed(8);
+
+                    resultValueStd.textContent = velocityStr;
+                    copyBtnStd.dataset.copyValue = velocityStr;
+                    resultDisplayStd.classList.remove('hidden');
+                    resultsSectionStd.classList.remove('hidden');
+                    setTimeout(() => resultsSectionStd.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+                } catch (e) {
+                    showErrorStd(`[${selectedBodyName}] ${e.message}`);
                 }
-            } catch (e) {
-                console.error("Failed to generate download:", e);
-                alert("An error occurred during download. Please check the console.");
-            } finally {
-                tempChart.destroy();
-                document.body.removeChild(tempCanvas);
-                downloadOverlay.classList.add('hidden');
             }
-        }
+
+            function unwrapAnglesStd(angles) {
+                const unwrapped = [angles[0]];
+                let offset = 0;
+                for (let i = 1; i < angles.length; i++) {
+                    const diff = angles[i] - angles[i-1];
+                    if (diff > 180) { offset -= 360; } 
+                    else if (diff < -180) { offset += 360; }
+                    unwrapped.push(angles[i] + offset);
+                }
+                return unwrapped;
+            }
+
+            function findRotationPeriodStd(times, unwrappedAngles) {
+                let motionStartIndex = -1;
+                for (let i = 1; i < unwrappedAngles.length; i++) {
+                    if (Math.abs(unwrappedAngles[i] - unwrappedAngles[0]) > 5) {
+                        motionStartIndex = i; break;
+                    }
+                }
+                if (motionStartIndex === -1 || motionStartIndex > unwrappedAngles.length - 10) return null;
+
+                const sampleEndIndex = Math.min(motionStartIndex + 20, unwrappedAngles.length - 1);
+                const angleChange = unwrappedAngles[sampleEndIndex] - unwrappedAngles[motionStartIndex];
+                if (Math.abs(angleChange) < 10) return null; 
+                
+                const direction = Math.sign(angleChange);
+                const targetAngle = unwrappedAngles[motionStartIndex] + (360 * direction);
+                let endIndex = -1;
+                for (let i = motionStartIndex + 1; i < unwrappedAngles.length; i++) {
+                    if ((direction > 0 && unwrappedAngles[i] >= targetAngle) || (direction < 0 && unwrappedAngles[i] <= targetAngle)) {
+                        endIndex = i; break;
+                    }
+                }
+                if (endIndex === -1) return null;
+
+                const T_start = times[motionStartIndex];
+                const angle_before = unwrappedAngles[endIndex - 1], angle_after = unwrappedAngles[endIndex];
+                const time_before = times[endIndex - 1], time_after = times[endIndex];
+
+                if (angle_after === angle_before) return time_after - T_start;
+                
+                const fraction = (targetAngle - angle_before) / (angle_after - angle_before);
+                return (time_before + fraction * (time_after - time_before)) - T_start;
+            }
+            
+            function handleCopyStd() {
+                const textToCopy = copyBtnStd.dataset.copyValue;
+                if (!textToCopy) return;
+
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    copyBtnStd.textContent = 'コピーしました！';
+                    setTimeout(() => { copyBtnStd.textContent = '結果をコピー'; }, 2000);
+                } catch (err) {
+                    copyBtnStd.textContent = 'コピー失敗';
+                }
+                document.body.removeChild(textArea);
+            }
+            
+            function showErrorStd(message) {
+                errorDisplayStd.textContent = message;
+                errorDisplayStd.classList.remove('hidden');
+                resultsSectionStd.classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>
