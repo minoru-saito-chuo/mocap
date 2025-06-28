@@ -1,4 +1,5 @@
-const CACHE_NAME = 'mp-pwa-cache-v1';
+// キャッシュ名をユニークにするためにバージョンを付けます。ファイルを更新した際には、このバージョン番号を上げてください。
+const CACHE_NAME = 'mp-pwa-cache-v2'; 
 const urlsToCache = [
   './',
   './index.html',
@@ -6,16 +7,48 @@ const urlsToCache = [
   './icons/icon-512.png'
 ];
 
+// Service Workerのインストール時に実行される
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        // 新しいService Workerをすぐに有効化する
+        return self.skipWaiting();
+      })
   );
 });
 
+// Service Workerが有効化されたときに実行される
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          // 新しいキャッシュ名でなければ、古いキャッシュを削除する
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+        // ページをすぐに制御下に置く
+        return self.clients.claim();
+    })
+  );
+});
+
+// リクエストがあった場合に実行される
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => response || fetch(event.request))
+      .then(response => {
+        // キャッシュにヒットすればそれを返す。なければネットワークから取得する。
+        return response || fetch(event.request);
+      })
   );
 });
