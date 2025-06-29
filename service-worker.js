@@ -1,5 +1,5 @@
 // キャッシュ名をユニークにするためにバージョンを付けます。ファイルを更新した際には、このバージョン番号を上げてください。
-const CACHE_NAME = 'mp-pwa-cache-v3'; 
+const CACHE_NAME = 'mp-pwa-cache-v4'; 
 const urlsToCache = [
   './',
   './index.html',
