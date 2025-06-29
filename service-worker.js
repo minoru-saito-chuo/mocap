@@ -1,10 +1,15 @@
 // キャッシュ名をユニークにするためにバージョンを付けます。ファイルを更新した際には、このバージョン番号を上げてください。
-const CACHE_NAME = 'mp-pwa-cache-v2'; 
+const CACHE_NAME = 'mp-pwa-cache-v3'; 
 const urlsToCache = [
   './',
   './index.html',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './img/simpleForward.png',
+  './img/simpleHopping.png',
+  './img/complex.png',
+  './img/simpleUpDown.png',
+  './img/v-caputure.png'
 ];
 
 // Service Workerのインストール時に実行される

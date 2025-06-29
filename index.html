@@ -135,7 +135,7 @@
                     <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#home">ホーム</a>
                     <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
                     <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
-                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方</a>
+                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
                     <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
                 </nav>
             </div>
@@ -360,6 +360,46 @@
                     </h2>
 
                     <div class="space-y-6">
+                                <!-- ステップ 0: データの収集 -->
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
+            <div class="flex-1">
+                <h3 class="text-base font-medium text-gray-800 mb-3">データの収集</h3>
+                <div class="space-y-3 text-gray-600 text-sm">
+                    <p class="text-gray-600 text-sm">解析したい運動のトラッキングデータをキャプチャします。このとき、本ツールでは対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
+
+                    <!-- 画像グリッド -->
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4" style="max-width: 900px;">
+                        <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
+                            <div class="text-center">
+                                <img src="img/simpleForward.png">
+                                <div class="text-xs font-medium text-gray-700">向いている</div>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
+                            <div class="text-center">
+                                <img src="img/simpleHopping.png">
+                                <div class="text-xs font-medium text-gray-700">向いている</div>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gradient-to-br  from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
+                            <div class="text-center">
+                                <img src="img/simpleUpDown.png">
+                                <div class="text-xs font-medium text-gray-700">向いている</div>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg shadow-md flex items-center justify-center">
+                            <div class="text-center">
+                                <img src="img/complex.png">
+                                <div class="text-xs font-medium text-gray-700">誤検出の可能性有り</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+ 
+                </div>
+            </div>
+        </div>
                         <!-- ステップ 1: データ入力 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
@@ -421,6 +461,16 @@
                     </h2>
 
                     <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
+                            <div>
+                                <h3 class="text-base font-medium text-gray-800 mb-2">データの収集</h3>
+                                <p class="text-gray-600 text-sm">基準速度を算出したい回転系について、あらゆる負荷がかからない状態で固定して回転させたトラッキングデータをキャプチャします。例えば2輪ローバであれば、片方の車輪が鉛直方向を向くように立てかけて、上側の車輪にマーカをつけ、旋回動作をさせて上側車輪だけを回すことで無負荷の回転データを得ることができます。</p>
+                                <img src="img/v-caputure.png" style="max-width: 200px;height: auto;">
+                            </div>
+                        </div>
+
+
                         <!-- ステップ 1: データ入力 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
