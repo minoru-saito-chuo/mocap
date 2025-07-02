@@ -163,15 +163,15 @@
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/07/03</p>
+                                    <p class="font-semibold text-slate-800 mt-1">グラフ拡大機能を追加しました</p>
+                                    <p class="text-sm text-slate-600 mt-2">データ解析ツールの各グラフに拡大表示機能を追加しました。ダウンロードボタンの左にある虫眼鏡アイコンからご利用いただけます。</p>
+                                </div>
+                                <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/06/28</p>
                                     <p class="font-semibold text-slate-800 mt-1">大幅アップデートを実施しました</p>
                                     <p class="text-sm text-slate-600 mt-2">スリップ率の算出に必要な基準速度を簡単に算出できるツールを追加し、これまでの解析ツールと併せて1つのアプリに統合しました。サイドバーから各ツールにアクセスすることができます。</p>
                                 </div>
-                                <!--<div class="bg-white p-5 rounded-xl shadow-sm border">
-                                    <p class="text-sm text-slate-500">2025/06/21</p>
-                                    <p class="font-semibold text-slate-800 mt-1">v1.0.0 初期版リリース</p>
-                                    <p class="text-sm text-slate-600 mt-2">モーションキャプチャのデータ解析ツールをリリース。</p>
-                                </div>-->
                             </div>
                         </div>
                     </div>
@@ -276,10 +276,46 @@
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 mt-8">
-                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="velocity-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="velocity-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="velocity-chart" data-format="pdf">PDF</button></div></div>
-                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="slip-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="slip-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="slip-chart" data-format="pdf">PDF</button></div></div>
-                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="vertical-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="vertical-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="vertical-chart" data-format="pdf">PDF</button></div></div>
-                                    <div><div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="trajectory-chart"></canvas></div></div><div class="text-center mt-3"><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md" data-chart-id="trajectory-chart" data-format="png">PNG</button><button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs px-3 py-1 rounded-md ml-2" data-chart-id="trajectory-chart" data-format="pdf">PDF</button></div></div>
+                                    <div>
+                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="velocity-chart"></canvas></div></div>
+                                        <div class="text-center mt-3 flex justify-center items-center space-x-2">
+                                            <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="velocity-chart" title="拡大表示">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                            </button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="velocity-chart" data-format="png">PNG</button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="velocity-chart" data-format="pdf">PDF</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="slip-chart"></canvas></div></div>
+                                        <div class="text-center mt-3 flex justify-center items-center space-x-2">
+                                            <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="slip-chart" title="拡大表示">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                            </button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="slip-chart" data-format="png">PNG</button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="slip-chart" data-format="pdf">PDF</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="vertical-chart"></canvas></div></div>
+                                        <div class="text-center mt-3 flex justify-center items-center space-x-2">
+                                            <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="vertical-chart" title="拡大表示">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                            </button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="vertical-chart" data-format="png">PNG</button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="vertical-chart" data-format="pdf">PDF</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="trajectory-chart"></canvas></div></div>
+                                        <div class="text-center mt-3 flex justify-center items-center space-x-2">
+                                            <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="trajectory-chart" title="拡大表示">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                            </button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="trajectory-chart" data-format="png">PNG</button>
+                                            <button class="download-btn bg-slate-600 hover:bg-slate-700 text-white text-xs h-8 px-3 flex items-center justify-center rounded-md" data-chart-id="trajectory-chart" data-format="pdf">PDF</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
                         </div>
@@ -445,6 +481,7 @@
                                     <li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li>
                                     <li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li>
                                     <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
+                                    <li>虫眼鏡アイコンからグラフを拡大表示できます。</li>
                                 </ul>
                             </div>
                         </div>
@@ -466,7 +503,7 @@
                             <div>
                                 <h3 class="text-base font-medium text-gray-800 mb-2">データの収集</h3>
                                 <p class="text-gray-600 text-sm">基準速度を算出したい回転系について、あらゆる負荷がかからない状態で固定して回転させたトラッキングデータをキャプチャします。例えば2輪ローバであれば、片方の車輪が鉛直方向を向くように立てかけて、上側の車輪にマーカをつけ、旋回動作をさせて上側車輪だけを回すことで無負荷の回転データを得ることができます。</p>
-                                <img src="img/v-caputure.png" style="max-width: 150px;height: auto;">
+                                <img src="img/v-caputure2.png" style="max-width: 150px;height: auto;">
                             </div>
                         </div>
 
@@ -514,27 +551,6 @@
                 </div>
             </div>
         </div>
-                    <!--<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-sm border">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">使い方</h1>
-                        <div class="mb-8 prose prose-slate max-w-none">
-                            <h2 class="text-blue-700">データ解析ツール</h2>
-                            <ol>
-                                <li><strong>データ入力:</strong><ul><li><strong>① CSVファイルを選択:</strong> 解析したいMotiveのCSVファイルを1つ以上選択します。</li><li><strong>② 基準速度:</strong> 各ファイルに対応する車輪などの基準速度を入力します（スリップ率の計算に用います）。</li><li><strong>③④ 方向の定義:</strong> 座標系における進行方向と鉛直方向を定義します。</li><li><strong>(高度な設定) 静止範囲の倍率:</strong> 動作開始・終了を判定する際の感度を調整します。値を大きくすると、より大きな動き出しでないと動作として検出しなくなります。</li></ul></li>
-                                <li><strong>解析対象の剛体を選択:</strong> ファイル内に含まれる剛体の一覧が表示されるので、解析したいものをチェックします。凡例名はグラフのラベルとして使用されます。</li>
-                                <li><strong>解析開始:</strong> ボタンを押すと解析が実行されます。</li>
-                                <li><strong>結果確認と調整:</strong><ul><li>平均速度、スリップ率が表示されます。</li><li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li><li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li><li>各グラフはPNGまたはPDF形式でダウンロードできます。</li></ul></li>
-                            </ol>
-                        </div>
-                        <div class="prose prose-slate max-w-none">
-                            <h2 class="text-green-700">基準速度算出ツール</h2>
-                            <ol>
-                                <li><strong>データ入力:</strong> 解析したいMotiveのCSVファイルを1つ選択します。</li>
-                                <li><strong>パラメータ設定:</strong><ul><li><strong>② 車輪の剛体を選択:</strong> ファイル内の剛体から、回転を計測したい車輪を選択します。</li><li><strong>③ 車輪の半径 (cm):</strong> 選択した車輪の半径をセンチメートル単位で入力します。</li><li><strong>④ 車輪の回転軸:</strong> 車輪がどの軸周りに回転しているかを選択します。</li></ul></li>
-                                <li><strong>計算開始:</strong> ボタンを押すと、データから回転の周期を算出し、基準速度（周速度）を計算します。</li>
-                                <li><strong>結果確認:</strong> 計算された基準速度が表示され、結果をクリップボードにコピーできます。</li>
-                            </ol>
-                        </div>
-                    </div>-->
                 </div>
 
                 <div class="page" id="about">
@@ -542,30 +558,11 @@
                         <div class="bg-white p-8 rounded-lg shadow-sm border">
                             <h1 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">このツールについて</h1>
                             <div class="prose prose-slate max-w-none">
-                                <!--<h3>基本情報</h3>
-                                <p>この「Mocap Plus」は、OptiTrack社のモーションキャプチャシステムから出力されたCSVデータを手軽に解析するために開発されたWebアプリケーションです。</p>
-                                
-                                <h3>更新履歴</h3>
-                                <ul class="space-y-4">
-                                    <li><strong>v1.2.0 (2025/06/28):</strong> macOS風UIデザインにアップデート。</li>
-                                    <li><strong>v1.1.0 (2025/06/28):</strong> 2つの解析ツールを統合しSPA化。</li>
-                                    <li><strong>v1.0.0 (2025/06/21):</strong> 各ツールの初期バージョンを公開。</li>
-                                </ul>
-
-                                <h3>注意事項・免責事項</h3>
-                                <div class="bg-yellow-50 text-yellow-800 border-l-4 border-yellow-400 rounded p-4 text-sm">
-                                    <ul class="list-disc pl-5 space-y-2">
-                                        <li>本ツールは、OptiTrack社の「Motive」からエクスポートされたCSVファイルに特化しています。</li>
-                                        <li>データ処理は全てブラウザ内で完結し、外部サーバーにデータが送信されることはありません。</li>
-                                        <li>本ツールの利用によって生じた損害について、製作者は一切の責任を負いません。</li>
-                                        <li>不具合報告や改善要望は、製作者までご連絡ください。</li>
-                                    </ul>
-                                </div>-->
                                 <div>
                         <h2 class="text-xl font-semibold text-slate-700">基本情報</h2>
                         <div class="mt-3 grid grid-cols-1 gap-y-2 text-sm">
                             <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap Plus</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.1.0</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.3.0</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学國井研究室　西藤 実</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">その他の詳細:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" style="color: #3b82f6;">こちらのGitHubのリポジトリ</a>をご覧ください</p>
 
@@ -575,6 +572,7 @@
                     <div>
                         <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                         <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                            <li><span class="font-semibold">2025-07-03:</span> データ解析ツールにグラフ拡大機能を追加。</li>
                             <li><span class="font-semibold">2025-06-28:</span> 基準速度の算出ツールを作成、データ解析ツールに統合。</li>
                             <li><span class="font-semibold">2025-06-21:</span> データ解析ツールの初期リリース。</li>
                         </ul>
@@ -598,8 +596,28 @@
         </div>
     </div>
 
+    <!-- Modal for Chart Zoom -->
+    <div id="chart-zoom-modal" class="hidden fixed top-0 left-0 w-full h-full bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-end p-2">
+                <button id="modal-close-btn" class="p-2 text-slate-500 hover:text-slate-800 rounded-full hover:bg-slate-100 transition-colors">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex-1 min-h-0 p-4 pt-0">
+                <canvas id="modal-chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Global Variables ---
+            let modalChartInstance = null;
+
             // --- SPA Navigation ---
             const navLinks = document.querySelectorAll('.nav-link, .nav-card');
             const pages = document.querySelectorAll('.page');
@@ -635,16 +653,15 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const pageId = link.getAttribute('href').substring(1);
+                    history.pushState(null, '', '#' + pageId);
                     showPage(pageId);
-                    window.location.hash = pageId;
                 });
             });
 
-            if (mobileMenuBtn) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
+            window.addEventListener('popstate', () => {
+                const pageId = window.location.hash ? window.location.hash.substring(1) : 'home';
+                showPage(pageId);
+            });
 
             const initialPage = window.location.hash ? window.location.hash.substring(1) : 'home';
             if(document.getElementById(initialPage)) {
@@ -672,6 +689,11 @@
             const filterVelocityCheckbox = document.getElementById('filter-velocity-checkbox');
             const filterRangeInputs = document.getElementById('filter-range-inputs');
             const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
+
+            // --- Modal Elements ---
+            const chartZoomModal = document.getElementById('chart-zoom-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalChartCanvas = document.getElementById('modal-chart-canvas');
             
             if (csvFileInput) {
                 csvFileInput.addEventListener('change', handleFileSelect);
@@ -713,12 +735,71 @@
                 recalculateAvgBtn.addEventListener('click', recalculateAverages);
 
                 document.querySelectorAll('.style-btn').forEach(btn => btn.addEventListener('click', handleStyleChange));
-                document.querySelectorAll('.download-btn').forEach(btn => btn.addEventListener('click', handleDownload));
                 document.getElementById('download-velocity-csv').addEventListener('click', downloadVelocityCSV);
                 document.querySelectorAll('.chart-label-input').forEach(input => {
                     input.addEventListener('input', updateAllChartLabels);
                 });
+
+                // --- Event Delegation for action buttons (Zoom, Download) ---
+                resultsSection.addEventListener('click', (event) => {
+                    const button = event.target.closest('button');
+                    if (!button) return;
+
+                    if (button.classList.contains('zoom-btn')) {
+                        handleZoom(button.dataset.chartId);
+                    } else if (button.classList.contains('download-btn')) {
+                        handleDownload(button.dataset.chartId, button.dataset.format);
+                    }
+                });
             }
+
+            // --- Modal Logic ---
+            if (modalCloseBtn) {
+                modalCloseBtn.addEventListener('click', closeZoomModal);
+            }
+            if (chartZoomModal) {
+                chartZoomModal.addEventListener('click', (e) => {
+                    if (e.target === chartZoomModal) { // Close if clicking on the background overlay
+                        closeZoomModal();
+                    }
+                });
+            }
+
+            function handleZoom(chartId) {
+                const originalChart = chartInstances[chartId];
+                if (!originalChart) return;
+
+                if (modalChartInstance) {
+                    modalChartInstance.destroy();
+                }
+
+                // Deep copy options and increase font sizes for better visibility
+                const modalChartOptions = JSON.parse(JSON.stringify(originalChart.options));
+                modalChartOptions.maintainAspectRatio = false;
+                modalChartOptions.plugins.title.font.size = 20;
+                modalChartOptions.plugins.legend.labels.font.size = 14;
+                modalChartOptions.scales.x.title.font.size = 16;
+                modalChartOptions.scales.y.title.font.size = 16;
+                modalChartOptions.scales.x.ticks.font.size = 14;
+                modalChartOptions.scales.y.ticks.font.size = 14;
+
+                modalChartInstance = new Chart(modalChartCanvas, {
+                    type: originalChart.config.type,
+                    data: originalChart.config.data,
+                    options: modalChartOptions
+                });
+
+                chartZoomModal.classList.remove('hidden');
+            }
+
+            function closeZoomModal() {
+                if (modalChartInstance) {
+                    modalChartInstance.destroy();
+                    modalChartInstance = null;
+                }
+                chartZoomModal.classList.add('hidden');
+            }
+
 
             function handleFileSelect(event) {
                 fileListDiv.innerHTML = '';
@@ -1221,8 +1302,7 @@
                 document.body.removeChild(link);
             }
 
-            async function handleDownload(event) {
-                const { chartId, format } = event.target.dataset;
+            async function handleDownload(chartId, format) {
                 const chart = chartInstances[chartId];
                 if (!chart) return;
 
@@ -1530,6 +1610,7 @@
                 errorDisplayStd.textContent = message;
                 errorDisplayStd.classList.remove('hidden');
                 resultsSectionStd.classList.remove('hidden');
+                setTimeout(() => resultsSectionStd.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
             }
         });
 
