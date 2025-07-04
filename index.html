@@ -50,6 +50,23 @@
             background-color: #e2e8f0; /* slate-200 */
             color: #1e293b; /* slate-800 */
         }
+        
+        /* Mobile Menu Overlay */
+        #mobile-menu-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #mobile-menu-content {
+            transition: transform 0.3s ease-in-out;
+        }
+        body.mobile-menu-open {
+            overflow: hidden;
+        }
+
+        #redraw-charts-btn:active {
+            transform: scale(0.95);
+            transition: transform 0.1s ease-in-out;
+        }
+
         /* macOS like scrollbar */
         ::-webkit-scrollbar {
             width: 12px;
@@ -73,7 +90,6 @@
     </div>
 
     <div class="flex h-screen bg-slate-100">
-        <!-- Sidebar -->
         <aside class="hidden lg:flex flex-col w-60 bg-slate-200/50 backdrop-blur-xl border-r border-slate-300/50">
             <div class="flex items-center justify-center h-16 border-b border-slate-300/50 px-4">
                 <img src="icons/icon-192.png" style="width: 25px; height: auto;">
@@ -116,32 +132,17 @@
             </nav>
         </aside>
 
-        <!-- Main content -->
         <div id="main-content-area" class="flex flex-col flex-1 overflow-y-auto">
-             <!-- Mobile Header -->
-            <header class="lg:hidden flex items-center justify-between bg-white/70 backdrop-blur-lg p-4 border-b sticky top-0 z-10">
+             <header class="lg:hidden flex items-center justify-between bg-white/70 backdrop-blur-lg p-4 border-b sticky top-0 z-10">
                 <button id="mobile-menu-btn" class="p-2 -ml-2">
                     <svg class="h-6 w-6 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
                 <h1 id="mobile-title" class="text-lg font-semibold text-slate-800">ホーム</h1>
-                <div class="w-6"></div> <!-- Spacer -->
-            </header>
-
-            <!-- Mobile Menu (hidden by default) -->
-            <div id="mobile-menu" class="hidden lg:hidden bg-slate-100 border-b">
-                 <nav class="p-2 space-y-1">
-                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#home">ホーム</a>
-                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
-                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
-                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
-                    <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
-                </nav>
-            </div>
+                <div class="w-6"></div> </header>
 
             <main class="p-4 sm:p-6 md:p-8">
-                <!-- Home Page -->
                 <div id="home" class="page">
                     <div class="max-w-5xl mx-auto">
                         <div class="bg-white p-8 rounded-xl shadow-sm border">
@@ -163,6 +164,11 @@
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/07/04</p>
+                                    <p class="font-semibold text-slate-800 mt-1">UIの改善と機能追加</p>
+                                    <p class="text-sm text-slate-600 mt-2">データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加しました。</p>
+                                </div>
+                                <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/07/03</p>
                                     <p class="font-semibold text-slate-800 mt-1">グラフ拡大機能を追加しました</p>
                                     <p class="text-sm text-slate-600 mt-2">データ解析ツールの各グラフに拡大表示機能を追加しました。ダウンロードボタンの左にある虫眼鏡アイコンからご利用いただけます。</p>
@@ -177,7 +183,6 @@
                     </div>
                 </div>
 
-                <!-- Data Analysis Tool Page -->
                 <div class="page" id="data-analysis">
                     <div class="max-w-7xl mx-auto space-y-8">
                         <header class="text-center">
@@ -260,6 +265,21 @@
                                     </div>
                                 </div>
                                 <div id="graph-customization" class="mt-6">
+                                    <div class="mb-8 p-4 bg-slate-50/70 rounded-md border">
+                                        <h4 class="font-medium text-slate-700 mb-3 text-sm">グラフ描画設定</h4>
+                                        <div class="flex items-center flex-wrap gap-x-4 gap-y-2">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" id="lowpass-filter-toggle" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                                <label for="lowpass-filter-toggle" class="text-sm font-medium text-slate-700">ローパスフィルタを有効にする</label>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                 <label for="lowpass-window-size" class="text-sm font-medium text-slate-700">平滑化の度合い:</label>
+                                                <input type="number" id="lowpass-window-size" value="10" min="2" max="50" step="1" class="block w-20 rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <button id="redraw-charts-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition-all duration-150">再描画</button>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-2">フィルタ設定を変更後、再描画ボタンを押してください。値が大きいほど滑らかになります。</p>
+                                    </div>
                                     <div class="mb-8 p-4 bg-slate-50/70 rounded-md border">
                                          <h4 class="font-medium text-slate-700 mb-3 text-sm">エクスポート設定</h4>
                                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -387,7 +407,6 @@
                     <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
 
         <div class="space-y-10">
-            <!-- データ解析ツール -->
             <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
                 <div class="p-6 sm:p-8">
                     <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
@@ -396,15 +415,13 @@
                     </h2>
 
                     <div class="space-y-6">
-                                <!-- ステップ 0: データの収集 -->
-        <div class="flex items-start gap-4">
+                                <div class="flex items-start gap-4">
             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
             <div class="flex-1">
                 <h3 class="text-base font-medium text-gray-800 mb-3">データの収集</h3>
                 <div class="space-y-3 text-gray-600 text-sm">
                     <p class="text-gray-600 text-sm">解析したい運動のトラッキングデータをキャプチャします。このとき、本ツールでは対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
 
-                    <!-- 画像グリッド -->
                     <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4" style="max-width: 900px;">
                         <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
                             <div class="text-center">
@@ -436,7 +453,6 @@
                 </div>
             </div>
         </div>
-                        <!-- ステップ 1: データ入力 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
                             <div>
@@ -453,7 +469,6 @@
                             </div>
                         </div>
 
-                        <!-- ステップ 2: 剛体を選択 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
                             <div>
@@ -462,7 +477,6 @@
                             </div>
                         </div>
 
-                        <!-- ステップ 3: 解析開始 -->
                         <div class="flex items-start gap-4">
                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
                             <div>
@@ -471,14 +485,14 @@
                             </div>
                         </div>
 
-                        <!-- ステップ 4: 結果確認と調整 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
                             <div>
                                 <h3 class="text-base font-medium text-gray-800 mb-3">結果確認と調整</h3>
                                 <ul class="list-disc list-inside space-y-2 text-gray-600 text-sm">
-                                    <li>平均速度、スリップ率が表示されます。</li>
+                                    <li>平均速度、スリップ率、およびそれらの分散が表示されます。</li>
                                     <li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li>
+                                    <li>ローパスフィルタ機能で、グラフのノイズを低減して表示を滑らかにできます。平滑化の度合いも調整可能です。</li>
                                     <li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li>
                                     <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
                                     <li>虫眼鏡アイコンからグラフを拡大表示できます。</li>
@@ -489,7 +503,6 @@
                 </div>
             </div>
 
-            <!-- 基準速度算出ツール -->
             <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
                 <div class="p-6 sm:p-8">
                     <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
@@ -508,7 +521,6 @@
                         </div>
 
 
-                        <!-- ステップ 1: データ入力 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
                             <div>
@@ -517,7 +529,6 @@
                             </div>
                         </div>
 
-                        <!-- ステップ 2: パラメータ設定 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
                             <div>
@@ -530,8 +541,7 @@
                             </div>
                         </div>
 
-                        <!-- ステップ 3: 計算開始 -->
-                         <div class="flex items-start gap-4">
+                        <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
                             <div>
                                 <h3 class="text-base font-medium text-gray-800 mb-2">計算開始</h3>
@@ -539,7 +549,6 @@
                             </div>
                         </div>
 
-                        <!-- ステップ 4: 結果確認 -->
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
                             <div>
@@ -562,7 +571,7 @@
                         <h2 class="text-xl font-semibold text-slate-700">基本情報</h2>
                         <div class="mt-3 grid grid-cols-1 gap-y-2 text-sm">
                             <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap Plus</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.3.0</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.5.3</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学國井研究室　西藤 実</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">その他の詳細:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" style="color: #3b82f6;">こちらのGitHubのリポジトリ</a>をご覧ください</p>
 
@@ -572,6 +581,7 @@
                     <div>
                         <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                         <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                            <li><span class="font-semibold">2025-07-04:</span> データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加。UI/UXの改善。</li>
                             <li><span class="font-semibold">2025-07-03:</span> データ解析ツールにグラフ拡大機能を追加。</li>
                             <li><span class="font-semibold">2025-06-28:</span> 基準速度の算出ツールを作成、データ解析ツールに統合。</li>
                             <li><span class="font-semibold">2025-06-21:</span> データ解析ツールの初期リリース。</li>
@@ -595,8 +605,29 @@
             </main>
         </div>
     </div>
+    
+    <div id="mobile-menu-overlay" class="lg:hidden fixed inset-0 z-40 hidden opacity-0">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div id="mobile-menu-content" class="relative bg-slate-100 w-64 h-full shadow-lg p-4 transform -translate-x-full">
+            <button id="mobile-menu-close-btn" class="absolute top-4 right-4 p-2">
+                <svg class="h-6 w-6 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="flex items-center mb-6">
+                <img src="icons/icon-192.png" style="width: 25px; height: auto;">
+                <h1 class="text-lg font-bold text-slate-800 ml-2">Mocap Plus</h1>
+            </div>
+             <nav class="space-y-2" id="mobile-nav-links">
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#home">ホーム</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
+            </nav>
+        </div>
+    </div>
 
-    <!-- Modal for Chart Zoom -->
     <div id="chart-zoom-modal" class="hidden fixed top-0 left-0 w-full h-full bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col">
             <div class="flex justify-end p-2">
@@ -619,12 +650,34 @@
             let modalChartInstance = null;
 
             // --- SPA Navigation ---
-            const navLinks = document.querySelectorAll('.nav-link, .nav-card');
             const pages = document.querySelectorAll('.page');
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const mobileMenuContent = document.getElementById('mobile-menu-content');
+            const mobileMenuCloseBtn = document.getElementById('mobile-menu-close-btn');
+            const mobileNavLinks = document.getElementById('mobile-nav-links');
             const mobileTitle = document.getElementById('mobile-title');
             const mainContentArea = document.getElementById('main-content-area');
+            
+            function openMobileMenu() {
+                if (!mobileMenuOverlay) return;
+                document.body.classList.add('mobile-menu-open');
+                mobileMenuOverlay.classList.remove('hidden');
+                setTimeout(() => {
+                    mobileMenuOverlay.classList.remove('opacity-0');
+                    if(mobileMenuContent) mobileMenuContent.classList.remove('-translate-x-full');
+                }, 10);
+            }
+
+            function closeMobileMenu() {
+                if (!mobileMenuOverlay) return;
+                document.body.classList.remove('mobile-menu-open');
+                mobileMenuOverlay.classList.add('opacity-0');
+                if(mobileMenuContent) mobileMenuContent.classList.add('-translate-x-full');
+                setTimeout(() => {
+                    mobileMenuOverlay.classList.add('hidden');
+                }, 300);
+            }
 
             function showPage(pageId) {
                 pages.forEach(page => {
@@ -641,20 +694,29 @@
                     link.classList.toggle('active', isActive);
 
                     if(isActive){
-                         const titleText = link.querySelector('span')?.textContent.trim() || link.textContent.trim();
+                         const titleText = link.querySelector('span')?.textContent || link.textContent.trim();
                          if(mobileTitle) mobileTitle.textContent = titleText;
                     }
                 });
-                if(mobileMenu) mobileMenu.classList.add('hidden');
                 if(mainContentArea) mainContentArea.scrollTop = 0;
             }
+            
+            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
+            if (mobileMenuCloseBtn) mobileMenuCloseBtn.addEventListener('click', closeMobileMenu);
+            if (mobileMenuOverlay) {
+                 mobileMenuOverlay.addEventListener('click', (e) => {
+                     if (e.target === mobileMenuOverlay) closeMobileMenu();
+                 });
+            }
 
-            navLinks.forEach(link => {
+             const allNavLinks = document.querySelectorAll('.nav-link, .nav-card');
+             allNavLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const pageId = link.getAttribute('href').substring(1);
                     history.pushState(null, '', '#' + pageId);
                     showPage(pageId);
+                    closeMobileMenu(); 
                 });
             });
 
@@ -689,12 +751,43 @@
             const filterVelocityCheckbox = document.getElementById('filter-velocity-checkbox');
             const filterRangeInputs = document.getElementById('filter-range-inputs');
             const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
+            const lowpassFilterToggle = document.getElementById('lowpass-filter-toggle');
+            const redrawChartsBtn = document.getElementById('redraw-charts-btn');
+            const lowpassWindowSizeInput = document.getElementById('lowpass-window-size');
 
             // --- Modal Elements ---
             const chartZoomModal = document.getElementById('chart-zoom-modal');
             const modalCloseBtn = document.getElementById('modal-close-btn');
             const modalChartCanvas = document.getElementById('modal-chart-canvas');
             
+            // --- Low Pass Filter Helper ---
+            function applyLowPassFilter(dataPoints, windowSize) {
+                if (windowSize <= 1 || dataPoints.length < windowSize) return dataPoints;
+
+                const smoothedPoints = [];
+                const halfWindow = Math.floor(windowSize / 2);
+
+                for (let i = 0; i < dataPoints.length; i++) {
+                    const start = Math.max(0, i - halfWindow);
+                    const end = Math.min(dataPoints.length - 1, i + halfWindow);
+                    let sumY = 0;
+                    for (let j = start; j <= end; j++) {
+                        sumY += dataPoints[j].y;
+                    }
+                    const avgY = sumY / (end - start + 1);
+                    smoothedPoints.push({ x: dataPoints[i].x, y: avgY });
+                }
+                return smoothedPoints;
+            }
+            
+            function rerenderCharts() {
+                 if (lastProcessedData && lastProcessedData.length > 0) {
+                    renderAllCharts(lastProcessedData, travelAxisSelect.value, verticalAxisSelect.value);
+                } else {
+                    alert('先に解析を実行してください。');
+                }
+            }
+
             if (csvFileInput) {
                 csvFileInput.addEventListener('change', handleFileSelect);
                 startAnalysisBtn.addEventListener('click', startAnalysis);
@@ -733,6 +826,9 @@
                     filterRangeInputs.classList.toggle('hidden', !filterVelocityCheckbox.checked);
                 });
                 recalculateAvgBtn.addEventListener('click', recalculateAverages);
+                
+                if (redrawChartsBtn) redrawChartsBtn.addEventListener('click', rerenderCharts);
+
 
                 document.querySelectorAll('.style-btn').forEach(btn => btn.addEventListener('click', handleStyleChange));
                 document.getElementById('download-velocity-csv').addEventListener('click', downloadVelocityCSV);
@@ -980,7 +1076,8 @@
                     if (u > 0 && v >= 0) {
                          newAvgSlipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
                     }
-
+                    
+                    // Note: Variances are not recalculated here, as they are based on the full dataset, not the filtered one for average velocity.
                     return {...bodyData, avgVelocity: newAvgVelocity, avgSlipRate: newAvgSlipRate};
                 });
                 
@@ -1036,9 +1133,30 @@
                     const totalTime = workingData[workingData.length - 1].time;
                     const totalDistance = workingData[workingData.length - 1].distance;
                     const avgVelocity = totalTime > 0 ? totalDistance / totalTime : 0;
+                    
                     let avgSlipRate = 0;
                     if (referenceSpeed > 0 && avgVelocity >= 0) {
                          avgSlipRate = (referenceSpeed > avgVelocity) ? (1 - (avgVelocity / referenceSpeed)) * 100 : (1 - (referenceSpeed / avgVelocity)) * 100;
+                    }
+                    
+                    const n = workingData.length;
+                    let velocitySampleVariance = 0, velocityUnbiasedVariance = 0;
+                    if (n > 1) {
+                        const velocityValues = workingData.map(d => d.instVelocity);
+                        const meanVel = velocityValues.reduce((a, b) => a + b, 0) / n;
+                        const sumOfSquares = velocityValues.map(v => (v - meanVel) ** 2).reduce((a, b) => a + b, 0);
+                        velocitySampleVariance = sumOfSquares / n;
+                        velocityUnbiasedVariance = sumOfSquares / (n - 1);
+                    }
+
+                    let slipRateSampleVariance = 0, slipRateUnbiasedVariance = 0;
+                    const slipRateValues = workingData.map(d => d.slipRate).filter(sr => sr !== undefined && !isNaN(sr));
+                    const m = slipRateValues.length;
+                    if (m > 1) {
+                        const meanSlip = slipRateValues.reduce((a, b) => a + b, 0) / m;
+                        const sumOfSquares = slipRateValues.map(s => (s - meanSlip) ** 2).reduce((a, b) => a + b, 0);
+                        slipRateSampleVariance = sumOfSquares / m;
+                        slipRateUnbiasedVariance = sumOfSquares / (m - 1);
                     }
 
                     workingData.forEach(d => {
@@ -1048,7 +1166,7 @@
                             "スリップ率 (%)": d.slipRate.toFixed(2), "鉛直変位 (m)": d.verticalDisp.toFixed(4),
                         });
                     });
-                    return { name: label, data: workingData, avgVelocity, avgSlipRate, referenceSpeed };
+                    return { name: label, data: workingData, avgVelocity, avgSlipRate, velocitySampleVariance, velocityUnbiasedVariance, slipRateSampleVariance, slipRateUnbiasedVariance, referenceSpeed };
                 }).filter(d => d !== null);
             }
 
@@ -1101,7 +1219,7 @@
 
             function displayResults(processedData) {
                 const container = document.getElementById('average-velocities');
-                container.innerHTML = '<h3 class="text-md font-semibold mb-3 text-slate-800">平均値</h3>';
+                container.innerHTML = '<h3 class="text-md font-semibold mb-3 text-slate-800">平均値・分散</h3>';
                 const list = document.createElement('div');
                 list.className = 'space-y-3';
                 processedData.forEach(result => {
@@ -1109,20 +1227,29 @@
                     item.className = 'p-3 bg-slate-50/70 rounded-md border';
                     item.innerHTML = `
                         <div class="font-semibold text-sm text-blue-700">${result.name}</div>
-                        <div class="mt-1 pl-2 text-sm text-slate-700">
-                            <span>平均速度: <span class="font-medium">${result.avgVelocity.toFixed(3)} m/s</span></span>
-                            <span class="mx-2 text-slate-300">|</span>
-                            <span>平均スリップ率: <span class="font-medium">${result.avgSlipRate.toFixed(2)} %</span></span>
+                        <div class="mt-2 pl-2 text-sm text-slate-700 space-y-1">
+                            <div>
+                                平均速度: <span class="font-medium">${result.avgVelocity.toFixed(3)} m/s</span>
+                                <span class="text-xs text-slate-500 ml-2">(標本分散 σ²: ${result.velocitySampleVariance.toFixed(5)} | 不偏分散 u²: ${result.velocityUnbiasedVariance.toFixed(5)})</span>
+                            </div>
+                            <div>
+                                平均スリップ率: <span class="font-medium">${result.avgSlipRate.toFixed(2)} %</span>
+                                 <span class="text-xs text-slate-500 ml-2">(標本分散 σ²: ${result.slipRateSampleVariance.toFixed(3)} | 不偏分散 u²: ${result.slipRateUnbiasedVariance.toFixed(3)})</span>
+                            </div>
                         </div>
-                         <div class="mt-1 pl-2 text-xs text-slate-500">(基準速度: ${result.referenceSpeed} m/s)</div>
+                         <div class="mt-2 pl-2 text-xs text-slate-500">(基準速度: ${result.referenceSpeed} m/s)</div>
                     `;
                     list.appendChild(item);
                 });
                 container.appendChild(list);
             }
+
             function renderAllCharts(processedData, travelAxis, verticalAxis) {
                 Object.values(chartInstances).forEach(chart => { if(chart && chart.destroy) chart.destroy() });
                 
+                const isFilterEnabled = lowpassFilterToggle ? lowpassFilterToggle.checked : false;
+                const windowSize = lowpassWindowSizeInput ? parseInt(lowpassWindowSizeInput.value, 10) : 10;
+
                 const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
                 const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
 
@@ -1144,6 +1271,7 @@
 
                 const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
                 const pointStyles = ['circle', 'rect', 'cross', 'star', 'triangle', 'rectRot'];
+
                 const datasets = processedData.map((result, index) => {
                     const color = colors[index % colors.length];
                     const style = pointStyles[index % pointStyles.length];
@@ -1151,11 +1279,23 @@
                         label: result.name, borderColor: color, backgroundColor: color,
                         pointRadius: 3, pointStyle: style, showLine: true, tension: 0.1, borderWidth: 1.5
                     };
+
+                    let velocityData = result.data.map(d => ({ x: d.distance, y: d.instVelocity }));
+                    let slipData = result.data.map(d => ({ x: d.distance, y: d.slipRate }));
+                    let verticalData = result.data.map(d => ({ x: d.distance, y: d.verticalDisp }));
+                    const trajectoryData = result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }));
+
+                    if (isFilterEnabled) {
+                        velocityData = applyLowPassFilter(velocityData, windowSize);
+                        slipData = applyLowPassFilter(slipData, windowSize);
+                        verticalData = applyLowPassFilter(verticalData, windowSize);
+                    }
+
                     return {
-                        velocity: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.instVelocity })) },
-                        slip: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.slipRate })) },
-                        vertical: { ...base, data: result.data.map(d => ({ x: d.distance, y: d.verticalDisp })) },
-                        trajectory: { ...base, data: result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }))}
+                        velocity: { ...base, data: velocityData },
+                        slip: { ...base, data: slipData },
+                        vertical: { ...base, data: verticalData },
+                        trajectory: { ...base, data: trajectoryData }
                     };
                 });
                 
@@ -1198,8 +1338,10 @@
                     options: trajectoryOptions
                 });
                 
-                handleStyleChange({target: document.getElementById('style-casual')});
+                const currentStyle = document.querySelector('.style-btn.bg-blue-600');
+                handleStyleChange({target: currentStyle || document.getElementById('style-casual')});
             }
+
             function updateAllChartLabels() {
                 document.querySelectorAll('.chart-label-input').forEach(input => {
                      const chartId = input.dataset.chartId;
