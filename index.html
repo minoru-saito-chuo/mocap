@@ -13,6 +13,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX for LaTeX rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckCWLtvHyeiWXPfbINU/3dYRsdIOP2ap7FpWuSeCIKEMvrF" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+
     <style>
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
@@ -79,6 +85,27 @@
             border-radius: 20px;
             border: 3px solid #f1f5f9; /* slate-100 */
         }
+        .prose-styles h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            padding-bottom: 0.25em;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .prose-styles p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1em;
+        }
+        .prose-styles .formula-block {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="antialiased text-slate-700">
@@ -89,7 +116,7 @@
          <div class="text-center"><div class="download-loader mx-auto"></div><p class="text-white mt-4">エクスポート用の画像を生成中...</p></div>
     </div>
 
-    <div class="flex h-screen bg-slate-100">
+    <div class="flex min-h-screen bg-slate-100">
         <aside class="hidden lg:flex flex-col w-60 bg-slate-200/50 backdrop-blur-xl border-r border-slate-300/50">
             <div class="flex items-center justify-center h-16 border-b border-slate-300/50 px-4">
                 <img src="icons/icon-192.png" style="width: 25px; height: auto;">
@@ -101,28 +128,36 @@
                     <span>ホーム</span>
                 </a>
                 <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#data-analysis">
-<svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"></path>
-  <path stroke-linecap="round" stroke-linejoin="round" d="M18 17V9"></path>
-  <path stroke-linecap="round" stroke-linejoin="round" d="M13 17V5"></path>
-  <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-3"></path>
-</svg>                    <span>データ解析ツール</span>
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M18 17V9"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13 17V5"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-3"></path>
+                    </svg>                    
+                    <span>データ解析ツール</span>
                 </a>
                 <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#standard-velocity">
-
-<svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M15.6 3.3a10 10 0 1 0 5.7 5.7"></path>
-  <circle cx="12" cy="12" r="2"></circle>
-  <path stroke-linecap="round" stroke-linejoin="round" d="M13.4 10.6 19 5"></path>
-</svg>                    <span>基準速度算出ツール</span>
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.6 3.3a10 10 0 1 0 5.7 5.7"></path>
+                      <circle cx="12" cy="12" r="2"></circle>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.4 10.6 19 5"></path>
+                    </svg>                    
+                    <span>基準速度算出ツール</span>
                 </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#how-to-use">
-<svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-  <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" />
-  <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-  <path stroke-linecap="round" stroke-linejoin="round" d="M12 17h.01" />
-</svg>                        <span>使い方ガイド</span>
+                        <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 17h.01" />
+                        </svg>                        
+                        <span>使い方ガイド</span>
+                    </a>
+                    <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#algorithms">
+                        <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>                        
+                        <span>アルゴリズム仕様</span>
                     </a>
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#about">
                          <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -164,6 +199,11 @@
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/07/05</p>
+                                    <p class="font-semibold text-slate-800 mt-1">アルゴリズム仕様ページの追加と改善</p>
+                                    <p class="text-sm text-slate-600 mt-2">各ツールで使用されている計算アルゴリズムと数式をまとめた「アルゴリズム仕様」ページを追加しました。また、数式表示の改善やレイアウトの修正など、いくつかの改善を行いました。</p>
+                                </div>
+                                <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/07/04</p>
                                     <p class="font-semibold text-slate-800 mt-1">UIの改善と機能追加</p>
                                     <p class="text-sm text-slate-600 mt-2">データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加しました。</p>
@@ -172,11 +212,6 @@
                                     <p class="text-sm text-slate-500">2025/07/03</p>
                                     <p class="font-semibold text-slate-800 mt-1">グラフ拡大機能を追加しました</p>
                                     <p class="text-sm text-slate-600 mt-2">データ解析ツールの各グラフに拡大表示機能を追加しました。ダウンロードボタンの左にある虫眼鏡アイコンからご利用いただけます。</p>
-                                </div>
-                                <div class="bg-white p-5 rounded-xl shadow-sm border">
-                                    <p class="text-sm text-slate-500">2025/06/28</p>
-                                    <p class="font-semibold text-slate-800 mt-1">大幅アップデートを実施しました</p>
-                                    <p class="text-sm text-slate-600 mt-2">スリップ率の算出に必要な基準速度を簡単に算出できるツールを追加し、これまでの解析ツールと併せて1つのアプリに統合しました。サイドバーから各ツールにアクセスすることができます。</p>
                                 </div>
                             </div>
                         </div>
@@ -406,160 +441,281 @@
                 <div class="page" id="how-to-use">
                     <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
 
-        <div class="space-y-10">
-            <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
-                <div class="p-6 sm:p-8">
-                    <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-                        <span>データ解析ツール</span>
-                    </h2>
+                    <div class="space-y-10">
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                                    <span>データ解析ツール</span>
+                                </h2>
 
-                    <div class="space-y-6">
-                                <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
-            <div class="flex-1">
-                <h3 class="text-base font-medium text-gray-800 mb-3">データの収集</h3>
-                <div class="space-y-3 text-gray-600 text-sm">
-                    <p class="text-gray-600 text-sm">解析したい運動のトラッキングデータをキャプチャします。このとき、本ツールでは対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
+                                        <div class="flex-1">
+                                            <h3 class="text-base font-medium text-gray-800 mb-3">データの収集</h3>
+                                            <div class="space-y-3 text-gray-600 text-sm">
+                                                <p class="text-gray-600 text-sm">解析したい運動のトラッキングデータをキャプチャします。このとき、本ツールでは対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
 
-                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4" style="max-width: 900px;">
-                        <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
-                            <div class="text-center">
-                                <img src="img/simpleForward.png">
-                                <div class="text-xs font-medium text-gray-700">向いている</div>
-                            </div>
-                        </div>
-                        <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
-                            <div class="text-center">
-                                <img src="img/simpleHopping.png">
-                                <div class="text-xs font-medium text-gray-700">向いている</div>
-                            </div>
-                        </div>
-                        <div class="aspect-square bg-gradient-to-br  from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
-                            <div class="text-center">
-                                <img src="img/simpleUpDown.png">
-                                <div class="text-xs font-medium text-gray-700">向いている</div>
-                            </div>
-                        </div>
-                        <div class="aspect-square bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg shadow-md flex items-center justify-center">
-                            <div class="text-center">
-                                <img src="img/complex.png">
-                                <div class="text-xs font-medium text-gray-700">誤検出の可能性有り</div>
-                            </div>
-                        </div>
-                    </div>
-                    
- 
-                </div>
-            </div>
-        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-3">データ入力</h3>
-                                <div class="space-y-3 text-gray-600 text-sm">
-                                    <p><strong>① CSVファイルを選択:</strong> 解析したいMotiveのCSVファイルを1つ以上選択します。</p>
-                                    <p><strong>② 基準速度:</strong> 各ファイルに対応する車輪などの基準速度を入力します（スリップ率の計算に用います）。</p>
-                                    <p><strong>③④ 方向の定義:</strong> 座標系における進行方向と鉛直方向を定義します。</p>
-                                    <div class="mt-3 p-3 bg-gray-100/80 rounded-md border border-gray-200/80">
-                                        <p class="font-medium text-gray-700 text-xs">【高度な設定】静止範囲の倍率:</p>
-                                        <p class="text-xs mt-1">対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
+                                                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4" style="max-width: 900px;">
+                                                    <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
+                                                        <div class="text-center">
+                                                            <img src="img/simpleForward.png">
+                                                            <div class="text-xs font-medium text-gray-700">向いている</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
+                                                        <div class="text-center">
+                                                            <img src="img/simpleHopping.png">
+                                                            <div class="text-xs font-medium text-gray-700">向いている</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="aspect-square bg-gradient-to-br  from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
+                                                        <div class="text-center">
+                                                            <img src="img/simpleUpDown.png">
+                                                            <div class="text-xs font-medium text-gray-700">向いている</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="aspect-square bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg shadow-md flex items-center justify-center">
+                                                        <div class="text-center">
+                                                            <img src="img/complex.png">
+                                                            <div class="text-xs font-medium text-gray-700">誤検出の可能性有り</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-3">データ入力</h3>
+                                            <div class="space-y-3 text-gray-600 text-sm">
+                                                <p><strong>① CSVファイルを選択:</strong> 解析したいMotiveのCSVファイルを1つ以上選択します。</p>
+                                                <p><strong>② 基準速度:</strong> 各ファイルに対応する車輪などの基準速度を入力します（スリップ率の計算に用います）。</p>
+                                                <p><strong>③④ 方向の定義:</strong> 座標系における進行方向と鉛直方向を定義します。</p>
+                                                <div class="mt-3 p-3 bg-gray-100/80 rounded-md border border-gray-200/80">
+                                                    <p class="font-medium text-gray-700 text-xs">【高度な設定】静止範囲の倍率:</p>
+                                                    <p class="text-xs mt-1">対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">解析対象の剛体を選択</h3>
+                                            <p class="text-gray-600 text-sm">ファイル内に含まれる剛体の一覧が表示されるので、解析したいものをチェックします。凡例名はグラフのラベルとして使用されます。</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                       <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">解析開始</h3>
+                                            <p class="text-gray-600 text-sm">ボタンを押すと解析が実行されます。</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-3">結果確認と調整</h3>
+                                            <ul class="list-disc list-inside space-y-2 text-gray-600 text-sm">
+                                                <li>平均速度、スリップ率、およびそれらの分散が表示されます。</li>
+                                                <li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li>
+                                                <li>ローパスフィルタ機能で、グラフのノイズを低減して表示を滑らかにできます。平滑化の度合いも調整可能です。</li>
+                                                <li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li>
+                                                <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
+                                                <li>虫眼鏡アイコンからグラフを拡大表示できます。</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">解析対象の剛体を選択</h3>
-                                <p class="text-gray-600 text-sm">ファイル内に含まれる剛体の一覧が表示されるので、解析したいものをチェックします。凡例名はグラフのラベルとして使用されます。</p>
-                            </div>
-                        </div>
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M15.6 3.3a10 10 0 1 0 5.7 5.7"/><circle cx="12" cy="12" r="2"/><path d="M13.4 10.6 19 5"/></svg>
+                                    <span>基準速度算出ツール</span>
+                                </h2>
 
-                        <div class="flex items-start gap-4">
-                           <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">解析開始</h3>
-                                <p class="text-gray-600 text-sm">ボタンを押すと解析が実行されます。</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-3">結果確認と調整</h3>
-                                <ul class="list-disc list-inside space-y-2 text-gray-600 text-sm">
-                                    <li>平均速度、スリップ率、およびそれらの分散が表示されます。</li>
-                                    <li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li>
-                                    <li>ローパスフィルタ機能で、グラフのノイズを低減して表示を滑らかにできます。平滑化の度合いも調整可能です。</li>
-                                    <li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li>
-                                    <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
-                                    <li>虫眼鏡アイコンからグラフを拡大表示できます。</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
-                <div class="p-6 sm:p-8">
-                    <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M15.6 3.3a10 10 0 1 0 5.7 5.7"/><circle cx="12" cy="12" r="2"/><path d="M13.4 10.6 19 5"/></svg>
-                        <span>基準速度算出ツール</span>
-                    </h2>
-
-                    <div class="space-y-6">
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">データの収集</h3>
-                                <p class="text-gray-600 text-sm">基準速度を算出したい回転系について、あらゆる負荷がかからない状態で固定して回転させたトラッキングデータをキャプチャします。例えば2輪ローバであれば、片方の車輪が鉛直方向を向くように立てかけて、上側の車輪にマーカをつけ、旋回動作をさせて上側車輪だけを回すことで無負荷の回転データを得ることができます。</p>
-                                <img src="img/v-caputure2.png" style="max-width: 150px;height: auto;">
-                            </div>
-                        </div>
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">0</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">データの収集</h3>
+                                            <p class="text-gray-600 text-sm">基準速度を算出したい回転系について、あらゆる負荷がかからない状態で固定して回転させたトラッキングデータをキャプチャします。例えば2輪ローバであれば、片方の車輪が鉛直方向を向くように立てかけて、上側の車輪にマーカをつけ、旋回動作をさせて上側車輪だけを回すことで無負荷の回転データを得ることができます。</p>
+                                            <img src="img/v-caputure2.png" style="max-width: 150px;height: auto;">
+                                        </div>
+                                    </div>
 
 
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
-                                <p class="text-gray-600 text-sm">解析したいMotiveのCSVファイルを1つ選択します。</p>
-                            </div>
-                        </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
+                                            <p class="text-gray-600 text-sm">解析したいMotiveのCSVファイルを1つ選択します。</p>
+                                        </div>
+                                    </div>
 
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-3">パラメータ設定</h3>
-                                <div class="space-y-3 text-gray-600 text-sm">
-                                    <p><strong>② 車輪の剛体を選択:</strong> ファイル内の剛体から、回転を計測したい車輪を選択します。</p>
-                                    <p><strong>③ 車輪の半径 (cm):</strong> 選択した車輪の半径をセンチメートル単位で入力します。</p>
-                                    <p><strong>④ 車輪の回転軸:</strong> 車輪がどの軸周りに回転しているかを選択します。</p>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-3">パラメータ設定</h3>
+                                            <div class="space-y-3 text-gray-600 text-sm">
+                                                <p><strong>② 車輪の剛体を選択:</strong> ファイル内の剛体から、回転を計測したい車輪を選択します。</p>
+                                                <p><strong>③ 車輪の半径 (cm):</strong> 選択した車輪の半径をセンチメートル単位で入力します。</p>
+                                                <p><strong>④ 車輪の回転軸:</strong> 車輪がどの軸周りに回転しているかを選択します。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">計算開始</h3>
+                                            <p class="text-gray-600 text-sm">ボタンを押すと、データから回転の周期を算出し、基準速度（周速度）を計算します。</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">結果確認</h3>
+                                            <p class="text-gray-600 text-sm">計算された基準速度が表示され、結果をクリップボードにコピーできます。</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">計算開始</h3>
-                                <p class="text-gray-600 text-sm">ボタンを押すと、データから回転の周期を算出し、基準速度（周速度）を計算します。</p>
-                            </div>
-                        </div>
+                <div class="page" id="algorithms">
+                    <div class="max-w-4xl mx-auto space-y-8">
+                        <div class="bg-white p-8 rounded-lg shadow-sm border">
+                            <h1 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">アルゴリズム仕様</h1>
+                            <div class="prose-styles">
+                                <p>本ツールで採用されているデータ解析のアルゴリズムおよび計算式について、その詳細を以下に示します。</p>
+                                
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">データ解析ツール</h2>
+                                
+                                <h3>動作区間の自動検出</h3>
+                                <p>
+                                    本ツールでは、CSVデータに含まれる時間全体のデータから、対象物が実際に動作している区間を自動で抽出します。この処理は、ユーザーが指定した「進行方向」の座標データに基づいて行われます。
+                                    まず、進行方向軸における全データの最大値 $P_{max}$ と最小値 $P_{min}$ から、全体の振れ幅 $R$ を計算します。
+                                </p>
+                                <div class="formula-block">
+                                    $R = P_{max} - P_{min}$
+                                </div>
+                                <p>
+                                    次に、この振れ幅 $R$ とユーザーが設定可能な「静止範囲の倍率」$M$（デフォルト値: 0.001）を用いて、静止判定の閾値となるマージン $\delta$ を決定します。
+                                </p>
+                                <div class="formula-block">
+                                    $\delta = R \times M$
+                                </div>
+                                <p>
+                                    このマージン $\delta$ を用いて、データの初期値 $P_{initial}$ から $\pm \delta$ の範囲を逸脱した最初のフレームを「動作開始点」、データの最終値 $P_{final}$ から $\pm \delta$ の範囲に最初に入ったフレームを「動作終了点」として検出し、その間の区間を解析対象とします。
+                                </p>
+                                <div class="my-6 text-center">
+                                    <img src="img/exp.png" alt="動作区間検出のグラフ例" class="mx-auto rounded-lg shadow-md border">
+                                    <p class="text-sm text-slate-500 mt-2">図1: 動作区間検出の概念図。変位データが静止範囲（マージン $\pm\delta$）を逸脱・復帰する点を検出する。</p>
+                                </div>
+                                
+                                <h3>水平移動距離</h3>
+                                <p>
+                                    各時刻 $t$ における水平移動距離 $d(t)$ は、ユーザーが定義した「鉛直方向」以外の2軸（水平軸 $h_1, h_2$）の変位から算出されます。動作開始点の座標を $(h_{1,0}, h_{2,0})$ とすると、時刻 $t$ での座標 $(h_{1,t}, h_{2,t})$ との間の距離は、三平方の定理を用いて次式で計算されます。
+                                </p>
+                                <div class="formula-block">
+                                    $d(t) = \sqrt{(h_{1,t} - h_{1,0})^2 + (h_{2,t} - h_{2,0})^2}$
+                                </div>
+                                
+                                <h3>瞬時速度（微小速度）</h3>
+                                <p>
+                                    時刻 $t_i$ における瞬時速度 $v_i$ は、隣接するフレーム間の水平移動距離と時間の変化量から、後退差分を用いて近似的に算出されます。
+                                </p>
+                                <div class="formula-block">
+                                    $v_i = \frac{d(t_i) - d(t_{i-1})}{t_i - t_{i-1}} = \frac{\Delta d}{\Delta t}$
+                                </div>
+                                
+                                <h3>スリップ率</h3>
+                                <p>
+                                    スリップ率 $S$ は、ユーザーが入力した基準速度 $u$ と、算出した剛体の速度 $v$ を用いて計算されます。$u > v$ の場合は駆動輪のスリップ（加速時）、$u < v$ の場合は制動輪のスリップ（減速時）として、以下の式で定義されます。
+                                </p>
+                                <div class="formula-block">
+                                    $S [\%] = 
+                                    \begin{cases} 
+                                    (1 - \frac{v}{u}) \times 100 & (u > v, \text{ 加速スリップ}) \\
+                                    (1 - \frac{u}{v}) \times 100 & (u < v, \text{ 制動スリップ}) 
+                                    \end{cases}$
+                                </div>
+                                <p>
+                                    グラフにプロットされるのは各時刻の瞬時速度から算出されたスリップ率であり、「平均スリップ率」は平均速度を用いて算出されます。
+                                </p>
 
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
-                            <div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">結果確認</h3>
-                                <p class="text-gray-600 text-sm">計算された基準速度が表示され、結果をクリップボードにコピーできます。</p>
+                                <h3>分散</h3>
+                                <p>
+                                    速度およびスリップ率のばらつきを示す指標として、標本分散 $\sigma^2$ と不偏分散 $u^2$ の2種類を算出しています。データ数 $n$、個々のデータ値 $x_i$、平均値 $\bar{x}$ を用いて、それぞれ以下の式で計算されます。
+                                </p>
+                                <div class="formula-block">
+                                    $\text{標本分散: } \sigma^2 = \frac{1}{n} \sum_{i=1}^{n} (x_i - \bar{x})^2$
+                                </div>
+                                <div class="formula-block">
+                                    $\text{不偏分散: } u^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2$
+                                </div>
+                                
+                                <h3>ローパスフィルタ</h3>
+                                <p>
+                                    グラフのノイズを低減するために、単純移動平均（Simple Moving Average）によるローパスフィルタを実装しています。ユーザーが指定した平滑化の度合い（ウィンドウサイズ $W$）に基づき、ある点 $i$ の値 $y_i$ を、その前後 $\lfloor W/2 \rfloor$ 個のデータを含む合計 $W$ 個のデータの平均値 $\hat{y}_i$ で置き換えます。
+                                </p>
+                                <div class="formula-block">
+                                    $\hat{y}_i = \frac{1}{W} \sum_{j=i-\lfloor W/2 \rfloor}^{i+\lfloor W/2 \rfloor} y_j$
+                                </div>
+
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">基準速度算出ツール</h2>
+
+                                <h3>角度データのアンラップ</h3>
+                                <p>
+                                    Motiveから出力される回転角度データは、通常 $\pm 180^\circ$ の範囲に制限されており、回転がこの範囲を超えると値が不連続に変化（ラップ）します。正確な周期計算のため、このラップを解消（アンラップ）し、連続的な角度変化データに変換します。具体的には、隣接する角度データ $A_{i-1}$ と $A_i$ の差が $\pm 180^\circ$ を超えた場合に、$360^\circ$ のオフセットを加算または減算して補正します。
+                                </p>
+                                <div class="formula-block">
+                                    $A'_{i} = 
+                                    \begin{cases} 
+                                    A'_{i-1} + (A_i - A_{i-1}) - 360 & (A_i - A_{i-1} > 180^\circ) \\
+                                    A'_{i-1} + (A_i - A_{i-1}) + 360 & (A_i - A_{i-1} < -180^\circ) \\
+                                    A'_{i-1} + (A_i - A_{i-1}) & (\text{その他})
+                                    \end{cases}$
+                                </div>
+
+                                <h3>回転周期の算出</h3>
+                                <p>
+                                    アンラップされた角度データから、車輪が1回転（$360^\circ$）するのに要する時間（周期 $T$）を算出します。まず、回転が開始したと見なされる点（初期角度から $5^\circ$ 以上変化した点）を検出し、その時刻 $t_{start}$ と角度 $A_{start}$ を記録します。次に、角度が $A_{start} \pm 360^\circ$ に到達する時刻 $t_{end}$ を探します。
+                                    目標角度を跨ぐ2つのフレーム間で線形補間を行い、正確な到達時刻 $t_{end}$ を推定します。目標角度 $A_{target}$ を跨ぐ直前と直後の点をそれぞれ $(t_{before}, A_{before})$, $(t_{after}, A_{after})$ とした場合、到達時刻 $t_{end}$ は以下の線形補間の式で求められます。
+                                </p>
+                                <div class="formula-block">
+                                    $t_{end} = t_{before} + (t_{after} - t_{before}) \times \frac{A_{target} - A_{before}}{A_{after} - A_{before}}$
+                                </div>
+                                <p>
+                                    最終的な周期 $T$ は以下の式で得られます。
+                                </p>
+                                <div class="formula-block">
+                                    $T = t_{end} - t_{start}$
+                                </div>
+                                
+                                <h3>基準速度の算出</h3>
+                                <p>
+                                    算出された周期 $T$ と、ユーザーが入力した車輪の半径 $r$ から、車輪の周速度、すなわち基準速度 $v$ を計算します。角速度 $\omega$ は $\omega = 2\pi / T$ で与えられるため、基準速度 $v$ は次式で求められます。
+                                </p>
+                                <div class="formula-block">
+                                    $v = r \cdot \omega = \frac{2\pi r}{T}$
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
                 </div>
 
                 <div class="page" id="about">
@@ -571,7 +727,7 @@
                         <h2 class="text-xl font-semibold text-slate-700">基本情報</h2>
                         <div class="mt-3 grid grid-cols-1 gap-y-2 text-sm">
                             <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap Plus</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.5.3</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.6.3</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学國井研究室　西藤 実</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">その他の詳細:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" style="color: #3b82f6;">こちらのGitHubのリポジトリ</a>をご覧ください</p>
 
@@ -581,6 +737,7 @@
                     <div>
                         <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                         <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                            <li><span class="font-semibold">2025-07-05:</span> アルゴリズム仕様ページを追加し、数式表示の改善やレイアウト修正などの更新を実施。</li>
                             <li><span class="font-semibold">2025-07-04:</span> データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加。UI/UXの改善。</li>
                             <li><span class="font-semibold">2025-07-03:</span> データ解析ツールにグラフ拡大機能を追加。</li>
                             <li><span class="font-semibold">2025-06-28:</span> 基準速度の算出ツールを作成、データ解析ツールに統合。</li>
@@ -623,6 +780,7 @@
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#algorithms">アルゴリズム仕様</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
             </nav>
         </div>
@@ -679,6 +837,20 @@
                 }, 300);
             }
 
+            function renderMath() {
+                if (window.renderMathInElement) {
+                    renderMathInElement(document.getElementById('algorithms'), {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '\\[', right: '\\]', display: true}
+                        ],
+                        throwOnError: false
+                    });
+                }
+            }
+
             function showPage(pageId) {
                 pages.forEach(page => {
                     page.classList.remove('active');
@@ -699,6 +871,10 @@
                     }
                 });
                 if(mainContentArea) mainContentArea.scrollTop = 0;
+                
+                if (pageId === 'algorithms') {
+                   renderMath();
+                }
             }
             
             if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
