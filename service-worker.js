@@ -3,8 +3,8 @@ const CACHE_NAME = 'mp-pwa-cache-20250705';
 const urlsToCache = [
   './',
   './index.html',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+  './icons/newicon-192.png',
+  './icons/newicon-512.png',
   './img/simpleForward.png',
   './img/simpleHopping.png',
   './img/complex.png',
