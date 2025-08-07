@@ -122,7 +122,7 @@
          <div class="text-center"><div class="download-loader mx-auto"></div><p class="text-white mt-4">エクスポート用の画像を生成中...</p></div>
     </div>
 
-    <div class="flex min-h-screen bg-slate-100">
+    <div class="flex h-screen overflow-hidden bg-slate-100">
         <aside class="hidden lg:flex flex-col w-60 bg-slate-200/50 backdrop-blur-xl border-r border-slate-300/50">
             <div class="flex items-center justify-center h-16 border-b border-slate-300/50 px-4">
                 <img src="icons/icon-192.png" style="width: 25px; height: auto;">
@@ -232,7 +232,10 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div>
                                     <label for="csv-files" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを選択</label>
-                                    <input type="file" id="csv-files" multiple accept=".csv" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"/>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="csv-files" multiple accept=".csv" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"/>
+                                        <button id="clear-files-btn" class="flex-shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-xs shadow-sm">クリア</button>
+                                    </div>
                                     <div id="file-list" class="mt-4 space-y-2"></div>
                                 </div>
                                 <div>
@@ -338,7 +341,7 @@
                                 </div>
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12 mt-8">
                                     <div>
-                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="velocity-chart"></canvas></div></div>
+                                        <div class="w-full min-h-[450px] bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="velocity-chart"></canvas></div></div>
                                         <div class="text-center mt-3 flex justify-center items-center space-x-2">
                                             <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="velocity-chart" title="拡大表示">
                                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
@@ -348,7 +351,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="slip-chart"></canvas></div></div>
+                                        <div class="w-full min-h-[450px] bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="slip-chart"></canvas></div></div>
                                         <div class="text-center mt-3 flex justify-center items-center space-x-2">
                                             <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="slip-chart" title="拡大表示">
                                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
@@ -358,7 +361,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="vertical-chart"></canvas></div></div>
+                                        <div class="w-full min-h-[450px] bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="vertical-chart"></canvas></div></div>
                                         <div class="text-center mt-3 flex justify-center items-center space-x-2">
                                             <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="vertical-chart" title="拡大表示">
                                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
@@ -368,7 +371,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="trajectory-chart"></canvas></div></div>
+                                        <div class="w-full min-h-[450px] bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="trajectory-chart"></canvas></div></div>
                                         <div class="text-center mt-3 flex justify-center items-center space-x-2">
                                             <button class="zoom-btn bg-slate-200 hover:bg-slate-300 text-slate-600 h-8 w-8 flex items-center justify-center rounded-md transition-colors" data-chart-id="trajectory-chart" title="拡大表示">
                                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
@@ -939,6 +942,7 @@
 
             const csvFileInput = document.getElementById('csv-files');
             const fileListDiv = document.getElementById('file-list');
+            const clearFilesBtn = document.getElementById('clear-files-btn');
             const travelAxisSelect = document.getElementById('travel-axis');
             const verticalAxisSelect = document.getElementById('vertical-axis');
             const rigidbodySelectionSection = document.getElementById('rigidbody-selection-section');
@@ -1024,6 +1028,9 @@
             if (csvFileInput) {
                 csvFileInput.addEventListener('change', handleFileSelect);
                 startAnalysisBtn.addEventListener('click', startAnalysis);
+                if (clearFilesBtn) {
+                    clearFilesBtn.addEventListener('click', clearAllFiles);
+                }
                 
                 // MODIFICATION: Changed filter UI update logic
                 lowpassFilterTypeSelect.addEventListener('change', (e) => {
@@ -1128,14 +1135,35 @@
             }
 
 
-            function handleFileSelect(event) {
+            function clearAllFiles() {
+                // Clear the data store
+                for (const key in fileDataStore) {
+                    delete fileDataStore[key];
+                }
+
+                // Clear the UI
                 fileListDiv.innerHTML = '';
-                rigidbodySelectionSection.classList.add('hidden');
                 rigidbodyListDiv.innerHTML = '';
+                rigidbodySelectionSection.classList.add('hidden');
+                resultsSection.classList.add('hidden');
+
+                // Reset file input
+                csvFileInput.value = '';
+            }
+
+            function handleFileSelect(event) {
                 const files = Array.from(event.target.files);
                 if (files.length === 0) return;
+
                 rigidbodySelectionSection.classList.remove('hidden');
+
                 files.forEach(file => {
+                    // Check if file already exists
+                    if (fileDataStore[file.name]) {
+                        console.log(`File "${file.name}" is already loaded. Skipping.`);
+                        return; // continue to next file
+                    }
+
                     const fileId = `file-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
                     const fileElement = document.createElement('div');
                     fileElement.className = 'bg-slate-50 p-2.5 rounded-md flex items-center justify-between border text-sm';
@@ -1165,6 +1193,8 @@
                         error: (error) => alert(`ファイル "${file.name}" の読み込みに失敗しました: ${error.message}`)
                     });
                 });
+                // After adding files, clear the input so the user can select the same file again if they clear it
+                event.target.value = '';
             }
 
             function extractRigidBodies(data) {
@@ -1626,7 +1656,7 @@
                         x: { type: 'linear', position: 'bottom', title: { display: true, text: xLabel, font: { size: 13 } }, ticks: { font: { size: 12 } } }
                     },
                     plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 20, font: {size: 13} } },
+                        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyleWidth: 20, font: {size: 13} } },
                         title: { display: true, text: title, font: { size: 16, weight: '600' } }
                     },
                     animation: { duration: 0 }
