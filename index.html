@@ -93,6 +93,12 @@
             padding-bottom: 0.25em;
             border-bottom: 1px solid #e2e8f0;
         }
+        .prose-styles h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
         .prose-styles p {
             font-size: 0.95rem;
             line-height: 1.6;
@@ -198,20 +204,16 @@
                         <div class="mt-10">
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
+                                <!-- MODIFICATION: Removed recent development logs -->
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
-                                    <p class="text-sm text-slate-500">2025/07/05</p>
-                                    <p class="font-semibold text-slate-800 mt-1">アルゴリズム仕様ページの追加と改善</p>
-                                    <p class="text-sm text-slate-600 mt-2">各ツールで使用されている計算アルゴリズムと数式をまとめた「アルゴリズム仕様」ページを追加しました。また、数式表示の改善やレイアウトの修正など、いくつかの改善を行いました。</p>
+                                    <p class="text-sm text-slate-500">2025/08/05</p>
+                                    <p class="font-semibold text-slate-800 mt-1">機能改善とアルゴリズム修正</p>
+                                    <p class="text-sm text-slate-600 mt-2">ローパスフィルタに「ガウシアンフィルタ」を追加し、ユーザが選択できるようにしました。また、往復運動があるデータでも正確に動作区間を検出できるよう、アルゴリズムを修正しました。</p>
                                 </div>
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/07/04</p>
-                                    <p class="font-semibold text-slate-800 mt-1">UIの改善と機能追加</p>
+                                    <p class="font-semibold text-slate-800 mt-1">分散の表示とローパスフィルタの追加</p>
                                     <p class="text-sm text-slate-600 mt-2">データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加しました。</p>
-                                </div>
-                                <div class="bg-white p-5 rounded-xl shadow-sm border">
-                                    <p class="text-sm text-slate-500">2025/07/03</p>
-                                    <p class="font-semibold text-slate-800 mt-1">グラフ拡大機能を追加しました</p>
-                                    <p class="text-sm text-slate-600 mt-2">データ解析ツールの各グラフに拡大表示機能を追加しました。ダウンロードボタンの左にある虫眼鏡アイコンからご利用いただけます。</p>
                                 </div>
                             </div>
                         </div>
@@ -302,18 +304,22 @@
                                 <div id="graph-customization" class="mt-6">
                                     <div class="mb-8 p-4 bg-slate-50/70 rounded-md border">
                                         <h4 class="font-medium text-slate-700 mb-3 text-sm">グラフ描画設定</h4>
-                                        <div class="flex items-center flex-wrap gap-x-4 gap-y-2">
-                                            <div class="flex items-center space-x-3">
-                                                <input type="checkbox" id="lowpass-filter-toggle" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                                <label for="lowpass-filter-toggle" class="text-sm font-medium text-slate-700">ローパスフィルタを有効にする</label>
+                                        <div class="flex items-center flex-wrap gap-x-6 gap-y-3">
+                                            <div class="flex items-center space-x-2">
+                                                <label for="lowpass-filter-type" class="text-sm font-medium text-slate-700">ローパスフィルタ:</label>
+                                                <select id="lowpass-filter-type" class="block w-36 rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                                    <option value="none" selected>適用しない</option>
+                                                    <option value="moving-average">移動平均</option>
+                                                    <option value="gaussian">ガウシアン</option>
+                                                </select>
                                             </div>
                                             <div class="flex items-center space-x-2">
-                                                 <label for="lowpass-window-size" class="text-sm font-medium text-slate-700">平滑化の度合い:</label>
-                                                <input type="number" id="lowpass-window-size" value="10" min="2" max="50" step="1" class="block w-20 rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                                 <label id="lowpass-strength-label" for="lowpass-strength" class="text-sm font-medium text-slate-700">強度:</label>
+                                                <input type="number" id="lowpass-strength" value="10" step="0.1" class="block w-20 rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" disabled>
                                             </div>
                                             <button id="redraw-charts-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition-all duration-150">再描画</button>
                                         </div>
-                                        <p class="text-xs text-slate-500 mt-2">フィルタ設定を変更後、再描画ボタンを押してください。値が大きいほど滑らかになります。</p>
+                                        <p id="filter-description" class="text-xs text-slate-500 mt-2">フィルタを選択すると、強度を指定できます。</p>
                                     </div>
                                     <div class="mb-8 p-4 bg-slate-50/70 rounded-md border">
                                          <h4 class="font-medium text-slate-700 mb-3 text-sm">エクスポート設定</h4>
@@ -455,7 +461,7 @@
                                         <div class="flex-1">
                                             <h3 class="text-base font-medium text-gray-800 mb-3">データの収集</h3>
                                             <div class="space-y-3 text-gray-600 text-sm">
-                                                <p class="text-gray-600 text-sm">解析したい運動のトラッキングデータをキャプチャします。このとき、本ツールでは対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値（または最終値）からそのマージンを超えた瞬間をそれぞれ「動き出し」「動き終わり」として判定しています。このため、一方向の単純な動作に対しては高精度に検出できますが、何度も往復するような複雑な動作では、意図しない区間が検出される可能性があります。</p>
+                                                <p class="text-gray-600 text-sm">解析したい運動のトラッキングデータをキャプチャします。本ツールでは対象物の動作区間は、進行方向の変位データに基づいて自動で検出されます。具体的には、データ全体の振れ幅に対して非常に小さいマージン（デフォルト: 0.1%）を設定し、初期値からそのマージンを超えた瞬間を「動き出し」、データの末尾から逆算してマージン内に入った瞬間を「動き終わり」として判定します。これにより、理論上は一方向の単純な動作だけでなく、往復運動なども含めて動作全体を正確に捉えることができます。</p>
 
                                                 <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4" style="max-width: 900px;">
                                                     <div class="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-lg shadow-md flex items-center justify-center">
@@ -479,7 +485,7 @@
                                                     <div class="aspect-square bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg shadow-md flex items-center justify-center">
                                                         <div class="text-center">
                                                             <img src="img/complex.png">
-                                                            <div class="text-xs font-medium text-gray-700">誤検出の可能性有り</div>
+                                                            <div class="text-xs font-medium text-gray-700">誤検出の可能性あり</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -525,7 +531,7 @@
                                             <ul class="list-disc list-inside space-y-2 text-gray-600 text-sm">
                                                 <li>平均速度、スリップ率、およびそれらの分散が表示されます。</li>
                                                 <li>微小速度のフィルタリング機能で、静止状態に近い微小な動きを平均速度の計算から除外できます。</li>
-                                                <li>ローパスフィルタ機能で、グラフのノイズを低減して表示を滑らかにできます。平滑化の度合いも調整可能です。</li>
+                                                <li>ローパスフィルタ機能で、グラフのノイズを低減できます。「移動平均」と「ガウシアン」から選択でき、フィルタ強度も調整可能です。</li>
                                                 <li>グラフのラベルを編集したり、スタイル（カジュアル/フォーマル）を変更できます。</li>
                                                 <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
                                                 <li>虫眼鏡アイコンからグラフを拡大表示できます。</li>
@@ -619,7 +625,9 @@
                                     $\delta = R \times M$
                                 </div>
                                 <p>
-                                    このマージン $\delta$ を用いて、データの初期値 $P_{initial}$ から $\pm \delta$ の範囲を逸脱した最初のフレームを「動作開始点」、データの最終値 $P_{final}$ から $\pm \delta$ の範囲に最初に入ったフレームを「動作終了点」として検出し、その間の区間を解析対象とします。
+                                    このマージン $\delta$ を用いて、動作の開始点と終了点を検出します。<br>
+                                    <b>動作開始点:</b> データの初期値 $P_{initial}$ から $\pm \delta$ の範囲を逸脱した最初のフレーム。<br>
+                                    <b>動作終了点:</b> 往復運動などを正しく捉えるため、データの末尾から逆方向に探索します。最終値 $P_{final}$ から $\pm \delta$ の範囲に最後に入ったフレーム（＝範囲外だった最後のフレームの次）を終了点とすることで、動作全体の区間を正確に抽出します。
                                 </p>
                                 <div class="my-6 text-center">
                                     <img src="img/exp.png" alt="動作区間検出のグラフ例" class="mx-auto rounded-lg shadow-md border">
@@ -670,10 +678,23 @@
                                 
                                 <h3>ローパスフィルタ</h3>
                                 <p>
-                                    グラフのノイズを低減するために、単純移動平均（Simple Moving Average）によるローパスフィルタを実装しています。ユーザーが指定した平滑化の度合い（ウィンドウサイズ $W$）に基づき、ある点 $i$ の値 $y_i$ を、その前後 $\lfloor W/2 \rfloor$ 個のデータを含む合計 $W$ 個のデータの平均値 $\hat{y}_i$ で置き換えます。
+                                    グラフのノイズを低減するために、複数のローパスフィルタから選択できます。
+                                </p>
+                                <h4>移動平均フィルタ</h4>
+                                <!-- MODIFICATION: Changed "窓サイズ" to "サンプル数" -->
+                                <p>
+                                    単純移動平均（Simple Moving Average）法です。指定された「サンプル数」$W$に基づき、ある点 $i$ の値 $y_i$ を、その前後 $\lfloor W/2 \rfloor$ 個のデータを含む合計 $W$ 個のデータの平均値 $\hat{y}_i$ で置き換えます。
                                 </p>
                                 <div class="formula-block">
                                     $\hat{y}_i = \frac{1}{W} \sum_{j=i-\lfloor W/2 \rfloor}^{i+\lfloor W/2 \rfloor} y_j$
+                                </div>
+                                <h4>ガウシアンフィルタ</h4>
+                                <!-- MODIFICATION: Updated Gaussian filter description -->
+                                <p>
+                                    より滑らかな結果が得られるガウス畳み込みによるフィルタです。フィルタの核となるガウス関数の標準偏差 $\sigma$ をユーザーが直接指定します。$\sigma$ の値が大きいほど、より強力な平滑化がかかります。
+                                </p>
+                                <div class="formula-block">
+                                    $$G(x) = \frac{1}{\sqrt{2\pi}\sigma} e^{-\frac{x^2}{2\sigma^2}}$$
                                 </div>
 
                                 <h2 class="text-xl font-semibold text-slate-700 mt-8">基準速度算出ツール</h2>
@@ -727,7 +748,7 @@
                         <h2 class="text-xl font-semibold text-slate-700">基本情報</h2>
                         <div class="mt-3 grid grid-cols-1 gap-y-2 text-sm">
                             <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap Plus</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.6.3</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.8.2</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学國井研究室　西藤 実</p>
                             <p><span class="w-24 inline-block font-medium text-slate-500">その他の詳細:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" style="color: #3b82f6;">こちらのGitHubのリポジトリ</a>をご覧ください</p>
 
@@ -737,6 +758,8 @@
                     <div>
                         <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                         <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                            <!-- MODIFICATION: Removed recent development logs and added a new one for UI text change -->
+                            <li><span class="font-semibold">2025-08-05:</span> ローパスフィルタにガウシアンフィルタを追加。動作区間検出アルゴリズムを修正。その他の潜在的なバグを修正。</li>
                             <li><span class="font-semibold">2025-07-05:</span> アルゴリズム仕様ページを追加し、数式表示の改善やレイアウト修正などの更新を実施。</li>
                             <li><span class="font-semibold">2025-07-04:</span> データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加。UI/UXの改善。</li>
                             <li><span class="font-semibold">2025-07-03:</span> データ解析ツールにグラフ拡大機能を追加。</li>
@@ -927,17 +950,21 @@
             const filterVelocityCheckbox = document.getElementById('filter-velocity-checkbox');
             const filterRangeInputs = document.getElementById('filter-range-inputs');
             const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
-            const lowpassFilterToggle = document.getElementById('lowpass-filter-toggle');
             const redrawChartsBtn = document.getElementById('redraw-charts-btn');
-            const lowpassWindowSizeInput = document.getElementById('lowpass-window-size');
+            
+            const lowpassFilterTypeSelect = document.getElementById('lowpass-filter-type');
+            const lowpassStrengthInput = document.getElementById('lowpass-strength');
+            const lowpassStrengthLabel = document.getElementById('lowpass-strength-label');
+            const filterDescription = document.getElementById('filter-description');
+
 
             // --- Modal Elements ---
             const chartZoomModal = document.getElementById('chart-zoom-modal');
             const modalCloseBtn = document.getElementById('modal-close-btn');
             const modalChartCanvas = document.getElementById('modal-chart-canvas');
             
-            // --- Low Pass Filter Helper ---
-            function applyLowPassFilter(dataPoints, windowSize) {
+            // --- Low Pass Filter Helpers ---
+            function applyMovingAverageFilter(dataPoints, windowSize) {
                 if (windowSize <= 1 || dataPoints.length < windowSize) return dataPoints;
 
                 const smoothedPoints = [];
@@ -955,6 +982,36 @@
                 }
                 return smoothedPoints;
             }
+
+            function applyGaussianFilter(dataPoints, sigma) {
+                if (sigma <= 0 || dataPoints.length < 3) return dataPoints;
+
+                const radius = Math.ceil(sigma * 3);
+                const kernel = [];
+                let kernelSum = 0;
+                for (let i = -radius; i <= radius; i++) {
+                    const val = Math.exp(-0.5 * (i / sigma) * (i / sigma));
+                    kernel.push(val);
+                    kernelSum += val;
+                }
+                for (let i = 0; i < kernel.length; i++) {
+                    kernel[i] /= kernelSum;
+                }
+                
+                const smoothedPoints = [];
+                const halfKernel = Math.floor(kernel.length / 2);
+
+                for (let i = 0; i < dataPoints.length; i++) {
+                    let weightedSumY = 0;
+                    for (let j = 0; j < kernel.length; j++) {
+                        const dataIndex = i + j - halfKernel;
+                        const clampedIndex = Math.max(0, Math.min(dataPoints.length - 1, dataIndex));
+                        weightedSumY += dataPoints[clampedIndex].y * kernel[j];
+                    }
+                    smoothedPoints.push({ x: dataPoints[i].x, y: weightedSumY });
+                }
+                return smoothedPoints;
+            }
             
             function rerenderCharts() {
                  if (lastProcessedData && lastProcessedData.length > 0) {
@@ -968,6 +1025,28 @@
                 csvFileInput.addEventListener('change', handleFileSelect);
                 startAnalysisBtn.addEventListener('click', startAnalysis);
                 
+                // MODIFICATION: Changed filter UI update logic
+                lowpassFilterTypeSelect.addEventListener('change', (e) => {
+                    const filterType = e.target.value;
+                    if (filterType === 'none') {
+                        lowpassStrengthInput.disabled = true;
+                        lowpassStrengthLabel.innerHTML = '強度:';
+                        filterDescription.textContent = 'フィルタを選択すると、強度を指定できます。';
+                    } else if (filterType === 'moving-average') {
+                        lowpassStrengthInput.disabled = false;
+                        lowpassStrengthInput.value = 10;
+                        lowpassStrengthInput.step = 1;
+                        lowpassStrengthLabel.innerHTML = 'サンプル数:';
+                        filterDescription.textContent = '移動平均のサンプル数（整数）を指定します。値が大きいほど滑らかになります。';
+                    } else if (filterType === 'gaussian') {
+                        lowpassStrengthInput.disabled = false;
+                        lowpassStrengthInput.value = 2.0;
+                        lowpassStrengthInput.step = 0.1;
+                        lowpassStrengthLabel.innerHTML = 'σ値:';
+                        filterDescription.innerHTML = '<b>σ値の目安:</b> 0.5-1.0(弱), 1.0-2.0(標準), 2.0-3.0(強)';
+                    }
+                });
+
                 rigidbodyListDiv.addEventListener('change', (event) => {
                     if (event.target.classList.contains('rigidbody-checkbox')) {
                         const checkbox = event.target;
@@ -1012,7 +1091,6 @@
                     input.addEventListener('input', updateAllChartLabels);
                 });
 
-                // --- Event Delegation for action buttons (Zoom, Download) ---
                 resultsSection.addEventListener('click', (event) => {
                     const button = event.target.closest('button');
                     if (!button) return;
@@ -1025,27 +1103,13 @@
                 });
             }
 
-            // --- Modal Logic ---
-            if (modalCloseBtn) {
-                modalCloseBtn.addEventListener('click', closeZoomModal);
-            }
-            if (chartZoomModal) {
-                chartZoomModal.addEventListener('click', (e) => {
-                    if (e.target === chartZoomModal) { // Close if clicking on the background overlay
-                        closeZoomModal();
-                    }
-                });
-            }
+            if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeZoomModal);
+            if (chartZoomModal) chartZoomModal.addEventListener('click', (e) => { if (e.target === chartZoomModal) closeZoomModal(); });
 
             function handleZoom(chartId) {
                 const originalChart = chartInstances[chartId];
                 if (!originalChart) return;
-
-                if (modalChartInstance) {
-                    modalChartInstance.destroy();
-                }
-
-                // Deep copy options and increase font sizes for better visibility
+                if (modalChartInstance) modalChartInstance.destroy();
                 const modalChartOptions = JSON.parse(JSON.stringify(originalChart.options));
                 modalChartOptions.maintainAspectRatio = false;
                 modalChartOptions.plugins.title.font.size = 20;
@@ -1054,21 +1118,12 @@
                 modalChartOptions.scales.y.title.font.size = 16;
                 modalChartOptions.scales.x.ticks.font.size = 14;
                 modalChartOptions.scales.y.ticks.font.size = 14;
-
-                modalChartInstance = new Chart(modalChartCanvas, {
-                    type: originalChart.config.type,
-                    data: originalChart.config.data,
-                    options: modalChartOptions
-                });
-
+                modalChartInstance = new Chart(modalChartCanvas, { type: originalChart.config.type, data: originalChart.config.data, options: modalChartOptions });
                 chartZoomModal.classList.remove('hidden');
             }
 
             function closeZoomModal() {
-                if (modalChartInstance) {
-                    modalChartInstance.destroy();
-                    modalChartInstance = null;
-                }
+                if (modalChartInstance) { modalChartInstance.destroy(); modalChartInstance = null; }
                 chartZoomModal.classList.add('hidden');
             }
 
@@ -1253,7 +1308,6 @@
                          newAvgSlipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
                     }
                     
-                    // Note: Variances are not recalculated here, as they are based on the full dataset, not the filtered one for average velocity.
                     return {...bodyData, avgVelocity: newAvgVelocity, avgSlipRate: newAvgSlipRate};
                 });
                 
@@ -1360,7 +1414,6 @@
                 const initialValue = pos[0];
                 const startLowerBound = initialValue - margin;
                 const startUpperBound = initialValue + margin;
-
                 let startIndex = 0;
                 for (let i = 1; i < pos.length; i++) {
                     if (pos[i] < startLowerBound || pos[i] > startUpperBound) {
@@ -1368,10 +1421,7 @@
                         break;
                     }
                 }
-                if (startIndex === 0) {
-                    console.warn("動作開始が検出できませんでした。");
-                    return null; 
-                }
+                if (startIndex === 0) { console.warn("動作開始が検出できませんでした。"); return null; }
 
                 const finalValue = pos[pos.length - 1];
                 const endLowerBound = finalValue - margin;
@@ -1385,11 +1435,7 @@
                     }
                 }
                 
-                if (startIndex >= endIndex) {
-                    console.warn("有効な動作区間が見つかりませんでした (開始点が終了点以降)。");
-                    return null;
-                }
-
+                if (startIndex >= endIndex) { console.warn("有効な動作区間が見つかりませんでした (開始点が終了点以降)。"); return null; }
                 return { start: startIndex, end: endIndex };
             }
 
@@ -1423,8 +1469,9 @@
             function renderAllCharts(processedData, travelAxis, verticalAxis) {
                 Object.values(chartInstances).forEach(chart => { if(chart && chart.destroy) chart.destroy() });
                 
-                const isFilterEnabled = lowpassFilterToggle ? lowpassFilterToggle.checked : false;
-                const windowSize = lowpassWindowSizeInput ? parseInt(lowpassWindowSizeInput.value, 10) : 10;
+                const filterType = lowpassFilterTypeSelect ? lowpassFilterTypeSelect.value : 'none';
+                const filterStrength = lowpassStrengthInput ? parseFloat(lowpassStrengthInput.value) : 0;
+                const isFiltered = filterType !== 'none';
 
                 const horizontalAxes = ['X', 'Y', 'Z'].filter(ax => ax !== verticalAxis);
                 const trajectoryYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
@@ -1437,10 +1484,12 @@
                 };
                 
                 const labelMapping = { 'v': 'velocity', 's': 'slip', 'z': 'vertical', 't': 'trajectory' };
+                const prefixMapping = { 'velocity': 'v', 'slip': 's', 'vertical': 'z', 'trajectory': 't' };
                 
                 for (const [prefix, fullKey] of Object.entries(labelMapping)) {
                     const labels = initialLabels[fullKey];
-                    document.getElementById(`${prefix}-chart-title`).value = labels.title;
+                    const finalTitle = isFiltered ? `${labels.title} (ローパス適用)` : labels.title;
+                    document.getElementById(`${prefix}-chart-title`).value = finalTitle;
                     document.getElementById(`${prefix}-chart-xlabel`).value = labels.x;
                     document.getElementById(`${prefix}-chart-ylabel`).value = labels.y;
                 }
@@ -1461,10 +1510,14 @@
                     let verticalData = result.data.map(d => ({ x: d.distance, y: d.verticalDisp }));
                     const trajectoryData = result.data.map(d => ({ x: d.trajectory_x, y: d.trajectory_y }));
 
-                    if (isFilterEnabled) {
-                        velocityData = applyLowPassFilter(velocityData, windowSize);
-                        slipData = applyLowPassFilter(slipData, windowSize);
-                        verticalData = applyLowPassFilter(verticalData, windowSize);
+                    if (filterType === 'moving-average') {
+                        velocityData = applyMovingAverageFilter(velocityData, filterStrength);
+                        slipData = applyMovingAverageFilter(slipData, filterStrength);
+                        verticalData = applyMovingAverageFilter(verticalData, filterStrength);
+                    } else if (filterType === 'gaussian') {
+                        velocityData = applyGaussianFilter(velocityData, filterStrength);
+                        slipData = applyGaussianFilter(slipData, filterStrength);
+                        verticalData = applyGaussianFilter(verticalData, filterStrength);
                     }
 
                     return {
@@ -1475,18 +1528,39 @@
                     };
                 });
                 
-                ['velocity', 'slip', 'vertical'].forEach(key => {
+                // --- Create Velocity and Vertical Charts ---
+                ['velocity', 'vertical'].forEach(key => {
                     const chartId = `${key}-chart`;
                     const chartData = datasets.map(d => d[key]);
-                    const labels = initialLabels[key];
+                    const prefix = prefixMapping[key];
+                    const title = document.getElementById(`${prefix}-chart-title`).value;
+                    const xlabel = document.getElementById(`${prefix}-chart-xlabel`).value;
+                    const ylabel = document.getElementById(`${prefix}-chart-ylabel`).value;
                     chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
                         type: 'scatter', 
                         data: { datasets: chartData },
-                        options: getChartOptions(labels.y, labels.x, labels.title)
+                        options: getChartOptions(ylabel, xlabel, title)
                     });
                 });
 
-                const trajectoryLabels = initialLabels['trajectory'];
+                // --- Create Slip Chart with fixed Y-axis ---
+                const slipChartId = 'slip-chart';
+                const slipChartData = datasets.map(d => d.slip);
+                const slipPrefix = prefixMapping['slip'];
+                const slipTitle = document.getElementById(`${slipPrefix}-chart-title`).value;
+                const slipXLabel = document.getElementById(`${slipPrefix}-chart-xlabel`).value;
+                const slipYLabel = document.getElementById(`${slipPrefix}-chart-ylabel`).value;
+                const slipChartOptions = getChartOptions(slipYLabel, slipXLabel, slipTitle);
+                slipChartOptions.scales.y.min = 0;
+                slipChartOptions.scales.y.max = 100;
+                chartInstances[slipChartId] = new Chart(document.getElementById(slipChartId), {
+                    type: 'scatter',
+                    data: { datasets: slipChartData },
+                    options: slipChartOptions
+                });
+
+
+                // --- Create Trajectory Chart ---
                 const trajectoryDatasets = datasets.map(d => d.trajectory);
                 
                 let minVal = Infinity, maxVal = -Infinity;
@@ -1501,7 +1575,11 @@
                 const finalMin = minVal - padding;
                 const finalMax = maxVal + padding;
 
-                const trajectoryOptions = getChartOptions(trajectoryLabels.y, trajectoryLabels.x, trajectoryLabels.title);
+                const trajectoryPrefix = prefixMapping['trajectory'];
+                const trajectoryTitle = document.getElementById(`${trajectoryPrefix}-chart-title`).value;
+                const trajectoryXLabel = document.getElementById(`${trajectoryPrefix}-chart-xlabel`).value;
+                const trajectoryYLabel = document.getElementById(`${trajectoryPrefix}-chart-ylabel`).value;
+                const trajectoryOptions = getChartOptions(trajectoryYLabel, trajectoryXLabel, trajectoryTitle);
                 trajectoryOptions.scales.x.min = finalMin;
                 trajectoryOptions.scales.x.max = finalMax;
                 trajectoryOptions.scales.y.min = finalMin;
@@ -1519,13 +1597,20 @@
             }
 
             function updateAllChartLabels() {
+                const filterType = lowpassFilterTypeSelect.value;
+                const isFiltered = filterType !== 'none';
+                const suffix = isFiltered ? ' (ローパス適用)' : '';
+
                 document.querySelectorAll('.chart-label-input').forEach(input => {
                      const chartId = input.dataset.chartId;
                      const labelType = input.dataset.labelType;
                      const chart = chartInstances[chartId];
                      if(!chart || !chart.options) return;
 
-                     if(labelType === 'title') chart.options.plugins.title.text = input.value;
+                     if(labelType === 'title') {
+                        let baseTitle = input.value.replace(' (ローパス適用)', '');
+                        chart.options.plugins.title.text = baseTitle + suffix;
+                     }
                      if(labelType === 'x') chart.options.scales.x.title.text = input.value;
                      if(labelType === 'y') chart.options.scales.y.title.text = input.value;
                 });
@@ -1563,7 +1648,7 @@
                 formalBtn.classList.toggle('text-slate-700', mode === 'casual');
                 const isFormal = mode === 'formal';
                 const formalStyles = { color: '#000', font: { weight: 'bold' } };
-                const casualStyles = { color: '#334155', font: { weight: 'normal' } }; // slate-700
+                const casualStyles = { color: '#334155', font: { weight: 'normal' } }; 
                 const newStyles = isFormal ? formalStyles : casualStyles;
                 
                 Object.values(chartInstances).forEach(chart => {
@@ -1590,10 +1675,10 @@
                     } else {
                         chart.options.scales.x.grid.display = true;
                         chart.options.scales.y.grid.display = true;
-                        chart.options.scales.x.grid.color = '#e2e8f0'; // slate-200
-                        chart.options.scales.y.grid.color = '#e2e8f0'; // slate-200
-                        chart.options.scales.x.border = { color: '#cbd5e1' }; // slate-300
-                        chart.options.scales.y.border = { color: '#cbd5e1' }; // slate-300
+                        chart.options.scales.x.grid.color = '#e2e8f0'; 
+                        chart.options.scales.y.grid.color = '#e2e8f0'; 
+                        chart.options.scales.x.border = { color: '#cbd5e1' }; 
+                        chart.options.scales.y.border = { color: '#cbd5e1' }; 
 
                         const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
                         chart.data.datasets.forEach((dataset, i) => {
