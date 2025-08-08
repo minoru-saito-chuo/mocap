@@ -123,7 +123,7 @@
     </div>
 
     <div class="flex min-h-screen bg-slate-100">
-        <aside class="hidden lg:flex flex-col w-60 bg-slate-200/50 backdrop-blur-xl border-r border-slate-300/50">
+        <aside class="hidden lg:flex flex-col w-60 bg-slate-200/50 backdrop-blur-xl border-r border-slate-300/50 h-screen sticky top-0">
             <div class="flex items-center justify-center h-16 border-b border-slate-300/50 px-4">
                 <img src="icons/icon-192.png" style="width: 25px; height: auto;">
                 <h1 class="text-lg font-bold text-slate-800 ml-2">Mocap Plus</h1>
@@ -173,7 +173,7 @@
             </nav>
         </aside>
 
-        <div id="main-content-area" class="flex flex-col flex-1 overflow-y-auto">
+        <div id="main-content-area" class="flex flex-col flex-1">
              <header class="lg:hidden flex items-center justify-between bg-white/70 backdrop-blur-lg p-4 border-b sticky top-0 z-10">
                 <button id="mobile-menu-btn" class="p-2 -ml-2">
                     <svg class="h-6 w-6 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -205,6 +205,11 @@
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
                                 <!-- MODIFICATION: Removed recent development logs -->
+                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/08/07</p>
+                                    <p class="font-semibold text-slate-800 mt-1">機能とUIを改善</p>
+                                    <p class="text-sm text-slate-600 mt-2">データ解析ツールでファイルを後からでも追加できるよう修正。スクロールしたときにメニューが固定されるようUIを改善。</p>
+                                </div>
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/08/05</p>
                                     <p class="font-semibold text-slate-800 mt-1">機能改善とアルゴリズム修正</p>
@@ -231,8 +236,12 @@
                             <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div>
-                                    <label for="csv-files" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを選択</label>
-                                    <input type="file" id="csv-files" multiple accept=".csv" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"/>
+                                    <label for="csv-files" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを追加</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="csv-files" multiple accept=".csv" class="hidden">
+                                        <label for="csv-files" class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを追加</label>
+                                        <button id="clear-files-btn" class="flex-shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-xs shadow-sm">クリア</button>
+                                    </div>
                                     <div id="file-list" class="mt-4 space-y-2"></div>
                                 </div>
                                 <div>
@@ -759,6 +768,7 @@
                         <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                         <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
                             <!-- MODIFICATION: Removed recent development logs and added a new one for UI text change -->
+                            <li><span class="font-semibold">2025-08-07:</span> データ解析ツールでファイルを後からでも追加できるよう修正。スクロールしてもメニューが固定されるよう改善。</li>
                             <li><span class="font-semibold">2025-08-05:</span> ローパスフィルタにガウシアンフィルタを追加。動作区間検出アルゴリズムを修正。その他の潜在的なバグを修正。</li>
                             <li><span class="font-semibold">2025-07-05:</span> アルゴリズム仕様ページを追加し、数式表示の改善やレイアウト修正などの更新を実施。</li>
                             <li><span class="font-semibold">2025-07-04:</span> データ解析ツールに分散表示機能と、ユーザが任意に設定できるローパスフィルタ機能を追加。UI/UXの改善。</li>
@@ -893,7 +903,7 @@
                          if(mobileTitle) mobileTitle.textContent = titleText;
                     }
                 });
-                if(mainContentArea) mainContentArea.scrollTop = 0;
+                window.scrollTo(0, 0);
                 
                 if (pageId === 'algorithms') {
                    renderMath();
@@ -939,6 +949,7 @@
 
             const csvFileInput = document.getElementById('csv-files');
             const fileListDiv = document.getElementById('file-list');
+            const clearFilesBtn = document.getElementById('clear-files-btn');
             const travelAxisSelect = document.getElementById('travel-axis');
             const verticalAxisSelect = document.getElementById('vertical-axis');
             const rigidbodySelectionSection = document.getElementById('rigidbody-selection-section');
@@ -1024,6 +1035,9 @@
             if (csvFileInput) {
                 csvFileInput.addEventListener('change', handleFileSelect);
                 startAnalysisBtn.addEventListener('click', startAnalysis);
+                if (clearFilesBtn) {
+                    clearFilesBtn.addEventListener('click', clearAllFiles);
+                }
                 
                 // MODIFICATION: Changed filter UI update logic
                 lowpassFilterTypeSelect.addEventListener('change', (e) => {
@@ -1043,7 +1057,7 @@
                         lowpassStrengthInput.value = 2.0;
                         lowpassStrengthInput.step = 0.1;
                         lowpassStrengthLabel.innerHTML = 'σ値:';
-                        filterDescription.innerHTML = '<b>σ値の目安:</b> 0.5-1.0(弱), 1.0-2.0(標準), 2.0-3.0(強)';
+                        filterDescription.innerHTML = '<b>σ値の目安:</b> 1.0-2.5(弱), 2.5-3.5(標準), 3.5-5.0(強)';
                     }
                 });
 
@@ -1128,14 +1142,35 @@
             }
 
 
-            function handleFileSelect(event) {
+            function clearAllFiles() {
+                // Clear the data store
+                for (const key in fileDataStore) {
+                    delete fileDataStore[key];
+                }
+                
+                // Clear the UI
                 fileListDiv.innerHTML = '';
-                rigidbodySelectionSection.classList.add('hidden');
                 rigidbodyListDiv.innerHTML = '';
+                rigidbodySelectionSection.classList.add('hidden');
+                resultsSection.classList.add('hidden');
+                
+                // Reset file input
+                csvFileInput.value = '';
+            }
+
+            function handleFileSelect(event) {
                 const files = Array.from(event.target.files);
                 if (files.length === 0) return;
+
                 rigidbodySelectionSection.classList.remove('hidden');
+
                 files.forEach(file => {
+                    // Check if file already exists
+                    if (fileDataStore[file.name]) {
+                        console.log(`File "${file.name}" is already loaded. Skipping.`);
+                        return; // continue to next file
+                    }
+
                     const fileId = `file-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
                     const fileElement = document.createElement('div');
                     fileElement.className = 'bg-slate-50 p-2.5 rounded-md flex items-center justify-between border text-sm';
@@ -1165,6 +1200,8 @@
                         error: (error) => alert(`ファイル "${file.name}" の読み込みに失敗しました: ${error.message}`)
                     });
                 });
+                // After adding files, clear the input so the user can select the same file again if they clear it
+                event.target.value = '';
             }
 
             function extractRigidBodies(data) {
