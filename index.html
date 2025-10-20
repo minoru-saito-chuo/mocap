@@ -13,11 +13,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    
+
     <!-- KaTeX for LaTeX rendering -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckCWLtvHyeiWXPfbINU/3dYRsdIOP2ap7FpWuSeCIKEMvrF" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 
     <style>
         body {
@@ -56,7 +56,7 @@
             background-color: #e2e8f0; /* slate-200 */
             color: #1e293b; /* slate-800 */
         }
-        
+
         /* Mobile Menu Overlay */
         #mobile-menu-overlay {
             transition: opacity 0.3s ease-in-out;
@@ -112,11 +112,15 @@
             overflow-x: auto;
             text-align: center;
         }
+        .tab-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
 <body class="antialiased text-slate-700">
     <div id="loading" class="hidden fixed top-0 left-0 w-full h-full bg-white/80 backdrop-blur-sm flex justify-center items-center z-50">
-        <div class="text-center"><div class="loader mx-auto"></div><p class="text-slate-700 mt-4">解析中...</p></div>
+        <div class="text-center"><div class="loader mx-auto"></div><p id="loading-text" class="text-slate-700 mt-4">解析中...</p></div>
     </div>
     <div id="download-overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
          <div class="text-center"><div class="download-loader mx-auto"></div><p class="text-white mt-4">エクスポート用の画像を生成中...</p></div>
@@ -139,15 +143,21 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M18 17V9"></path>
                       <path stroke-linecap="round" stroke-linejoin="round" d="M13 17V5"></path>
                       <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-3"></path>
-                    </svg>                    
+                    </svg>
                     <span>データ解析ツール</span>
+                </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#wide-area-analysis">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    <span>広域解析ツール</span>
                 </a>
                 <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#standard-velocity">
                     <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15.6 3.3a10 10 0 1 0 5.7 5.7"></path>
                       <circle cx="12" cy="12" r="2"></circle>
                       <path stroke-linecap="round" stroke-linejoin="round" d="M13.4 10.6 19 5"></path>
-                    </svg>                    
+                    </svg>
                     <span>基準速度算出ツール</span>
                 </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
@@ -156,13 +166,13 @@
                           <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 17h.01" />
-                        </svg>                        
+                        </svg>
                         <span>使い方ガイド</span>
                     </a>
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#algorithms">
                         <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>                        
+                        </svg>
                         <span>アルゴリズム仕様</span>
                     </a>
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#about">
@@ -189,14 +199,18 @@
                         <div class="bg-white p-8 rounded-xl shadow-sm border">
                             <h1 class="text-3xl font-bold text-slate-800 mb-2">Mocap Plus へようこそ</h1>
                             <p class="text-slate-600 mb-8">OptiTrackの解析ソフト「Motive」からエクスポートされたcsvファイルを添付するだけで、モーションキャプチャのデータを簡単に解析することができる統合ツールです。</p>
-                            <div class="grid md:grid-cols-2 gap-6">
+                            <div class="grid md:grid-cols-3 gap-6">
                                 <a href="#data-analysis" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-blue-300 hover:-translate-y-1">
-                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">データの解析</h2>
-                                    <p class="text-slate-600">複数の剛体データから、速度、スリップ率、変位などを計算し、グラフで可視化します。</p>
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">データ解析</h2>
+                                    <p class="text-slate-600">速度、スリップ率などを計算し、グラフで可視化します。</p>
+                                </a>
+                                <a href="#wide-area-analysis" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-purple-300 hover:-translate-y-1">
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">広域解析</h2>
+                                    <p class="text-slate-600">広範囲の移動軌跡とヒートマップを生成し、網羅率を計算します。</p>
                                 </a>
                                 <a href="#standard-velocity" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-green-300 hover:-translate-y-1">
                                     <h2 class="text-xl font-semibold text-slate-800 mb-2">基準速度の算出</h2>
-                                    <p class="text-slate-600">車輪の剛体データと半径から、回転周期を算出し、基準となる速度を計算します。</p>
+                                    <p class="text-slate-600">車輪の回転周期から基準となる速度を計算します。</p>
                                 </a>
                             </div>
                         </div>
@@ -204,7 +218,12 @@
                         <div class="mt-10">
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
-                                <!-- MODIFICATION: Removed recent development logs -->
+                                <!-- MODIFICATION: Added new development log -->
+                                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/10/20</p>
+                                    <p class="font-semibold text-slate-800 mt-1">「広域解析ツール」を追加</p>
+                                    <p class="text-sm text-slate-600 mt-2">広範囲の移動軌跡や滞在頻度を可視化するヒートマップ機能、指定範囲に対する網羅率を計算する機能を追加しました。</p>
+                                </div>
                                  <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/08/07</p>
                                     <p class="font-semibold text-slate-800 mt-1">機能とUIを改善</p>
@@ -231,7 +250,7 @@
                             <h1 class="text-3xl font-bold text-slate-800">データ解析ツール</h1>
                             <p class="text-slate-500 mt-2">CSVファイルをアップロードして、剛体の運動を解析します。</p>
                         </header>
-                        
+
                         <section class="bg-white p-6 rounded-lg shadow-sm border">
                             <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -273,7 +292,7 @@
                                 </div>
                             </div>
                         </section>
-                        
+
                         <section id="rigidbody-selection-section" class="bg-white p-6 rounded-lg shadow-sm border hidden">
                             <h2 class="text-xl font-semibold text-center mb-6">2. 解析対象の剛体を選択</h2>
                             <div id="rigidbody-list" class="space-y-4"></div>
@@ -283,7 +302,7 @@
                                 </button>
                             </div>
                         </section>
-                
+
                         <div id="results-section" class="hidden space-y-8">
                             <section class="bg-white p-6 rounded-lg shadow-sm border">
                                 <h2 class="text-xl font-semibold text-center mb-6">3. 解析結果</h2>
@@ -300,7 +319,7 @@
                                 <p class="text-xs text-slate-500 mb-4">※平均速度及び平均スリップ率は、静止範囲として設定している倍率により大きく変動します。</p>
                                 <button id="download-velocity-csv" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm text-sm">微小速度データをCSVでダウンロード</button>
                             </section>
-                
+
                             <section class="bg-white p-6 rounded-lg shadow-sm border">
                                 <div class="flex flex-wrap justify-between items-center mb-6 text-center border-b pb-4">
                                     <h2 class="text-xl font-semibold w-full sm:w-auto text-center sm:text-left">4. グラフ</h2>
@@ -392,13 +411,133 @@
                     </div>
                 </div>
 
+                <div class="page" id="wide-area-analysis">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">広域解析ツール</h1>
+                            <p class="text-slate-500 mt-2">CSVファイルをアップロードして、広範囲の移動軌跡や滞在傾向を可視化します。</p>
+                        </header>
+
+                        <section id="settings-card-wide" class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. 設定</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label for="csv-files-wide" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを追加</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="csv-files-wide" multiple accept=".csv" class="hidden">
+                                        <label for="csv-files-wide" class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを追加</label>
+                                        <button id="clear-files-btn-wide" class="flex-shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-xs shadow-sm">クリア</button>
+                                    </div>
+                                    <div id="file-list-area-wide" class="mt-4 space-y-2"></div>
+                                </div>
+                                 <div class="space-y-4">
+                                    <div>
+                                        <label for="sampling-rate-wide" class="block text-sm font-medium text-slate-700 mb-2">② データ取得間隔 (秒)</label>
+                                        <input type="number" id="sampling-rate-wide" value="1.0" step="0.1" min="0.01" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                     <div>
+                                        <label for="heatmap-grid-size-wide" class="block text-sm font-medium text-slate-700 mb-2">③ ヒートマップのマス目のサイズ (m)</label>
+                                        <input type="number" id="heatmap-grid-size-wide" value="0.5" step="0.1" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                     <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">④ 方向の定義</label>
+                                        <div class="flex space-x-4">
+                                            <div class="flex-1">
+                                                <label for="vertical-axis-wide" class="block text-xs font-medium text-slate-500">鉛直方向の軸</label>
+                                                <select id="vertical-axis-wide" class="mt-1 w-full bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                                    <option value="X">X</option><option value="Y" selected>Y</option><option value="Z">Z</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                     </div>
+                                </div>
+                            </div>
+                            <div id="rigidbody-selection-area-wide" class="mt-6 hidden">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">⑤ 解析対象の剛体を選択</label>
+                                <div id="rigidbody-list-container-wide" class="space-y-4 p-4 border rounded-md bg-slate-50/70 max-h-60 overflow-y-auto"></div>
+                            </div>
+                            <div class="text-center mt-8">
+                                <button id="analyze-btn-wide" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-8 rounded-md shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                                    解析開始
+                                </button>
+                            </div>
+                        </section>
+
+                        <section id="results-card-wide" class="bg-white p-6 rounded-lg shadow-sm border hidden">
+                            <h2 class="text-xl font-semibold text-center mb-4">2. 解析結果</h2>
+                            <div class="flex justify-center mb-6 border-b">
+                                <button id="show-trajectory-btn-wide" class="tab-btn active font-medium py-2 px-6 rounded-t-md transition-colors">軌跡</button>
+                                <button id="show-heatmap-btn-wide" class="tab-btn font-medium py-2 px-6 rounded-t-md transition-colors">ヒートマップ</button>
+                            </div>
+
+                            <div id="trajectory-view-wide">
+                                <div class="w-full max-w-2xl mx-auto aspect-square bg-white p-2 relative border rounded-lg shadow-sm">
+                                    <div class="chart-container"><canvas id="trajectory-chart-wide"></canvas></div>
+                                </div>
+                                 <div class="text-center mt-4 flex justify-center items-center space-x-2">
+                                    <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="trajectory-chart-wide" data-format="png">PNGで保存</button>
+                                    <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="trajectory-chart-wide" data-format="pdf">PDFで保存</button>
+                                </div>
+                            </div>
+
+                            <div id="heatmap-view-wide" class="hidden">
+                                 <div id="heatmap-container-wide" class="w-full max-w-2xl mx-auto aspect-square relative bg-slate-50 border rounded-lg shadow-sm">
+                                    <canvas id="heatmap-canvas-wide"></canvas>
+                                    <div id="heatmap-tooltip" class="hidden absolute bg-black/70 text-white text-xs rounded-md px-2 py-1 pointer-events-none shadow-lg"></div>
+                                </div>
+                                <div id="heatmap-legend-wide" class="flex justify-end items-center mt-2 max-w-2xl mx-auto space-x-2 text-sm">
+                                    <span>Min</span>
+                                    <div class="w-32 h-4 rounded-md" style="background: linear-gradient(to right, rgb(0, 0, 255), rgb(0, 255, 255), rgb(0, 255, 0), rgb(255, 255, 0), rgb(255, 0, 0));"></div>
+                                    <span>Max (<span id="heatmap-max-value-wide">0</span>)</span>
+                                </div>
+                                 <div class="text-center mt-4 flex justify-center items-center space-x-2">
+                                    <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="heatmap-canvas-wide" data-format="png">PNGで保存</button>
+                                    <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="heatmap-canvas-wide" data-format="pdf">PDFで保存</button>
+                                </div>
+                            </div>
+                             <p class="text-xs text-slate-500 mt-4 text-center">※ 座標は正規化せず、元データの値をメートル単位に変換して使用しています。</p>
+
+                            <div id="coverage-section-wide" class="mt-8 pt-6 border-t">
+                                <h3 class="text-lg font-semibold text-center mb-4 text-slate-800">網羅率の計算</h3>
+                                <div class="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 border rounded-lg">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700">基準範囲の形状</label>
+                                            <div class="mt-2 flex gap-4"><label class="flex items-center"><input type="radio" name="area-shape-wide" value="circle" class="form-radio" checked> <span class="ml-2">円</span></label><label class="flex items-center"><input type="radio" name="area-shape-wide" value="square" class="form-radio"> <span class="ml-2">正方形</span></label></div>
+                                        </div>
+                                        <div>
+                                            <label for="area-size-wide" class="block text-sm font-medium text-slate-700"><span id="area-size-label-wide">半径</span> (m)</label>
+                                            <input type="number" id="area-size-wide" value="2.0" step="0.1" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                        </div>
+                                         <div>
+                                            <label class="block text-sm font-medium text-slate-700">中心座標</label>
+                                            <div class="mt-2 flex gap-4"><label class="flex items-center"><input type="radio" name="center-type-wide" value="data" class="form-radio" checked> <span class="ml-2">データの中心</span></label><label class="flex items-center"><input type="radio" name="center-type-wide" value="custom" class="form-radio"> <span class="ml-2">座標指定</span></label></div>
+                                        </div>
+                                        <div id="custom-center-inputs-wide" class="hidden space-y-2">
+                                             <div class="flex items-center gap-2"><label for="center-x-wide" class="text-sm" id="center-x-label-wide">X:</label><input type="number" id="center-x-wide" value="0" step="0.1" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300"><label for="center-y-wide" class="text-sm" id="center-y-label-wide">Y:</label><input type="number" id="center-y-wide" value="0" step="0.1" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-center justify-center bg-white p-4 rounded-md border">
+                                         <button id="calculate-coverage-btn-wide" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-md shadow-sm">計算実行</button>
+                                         <div class="mt-4 text-center">
+                                             <p class="text-sm text-slate-600">網羅率</p>
+                                             <p class="text-3xl font-bold text-slate-800 my-1"><span id="coverage-result-wide">--</span> %</p>
+                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+
                 <div class="page" id="standard-velocity">
                     <div class="max-w-3xl mx-auto space-y-8">
                         <header class="text-center">
                             <h1 class="text-3xl font-bold text-slate-800">基準速度算出ツール</h1>
                             <p class="text-slate-500 mt-2">モーションキャプチャのCSVデータから車輪の基準速度を計算します。</p>
                         </header>
-                
+
                         <section id="step-1-file-upload-std" class="bg-white p-6 rounded-lg shadow-sm border">
                             <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
                             <div class="mt-4 flex flex-col items-center gap-3">
@@ -409,9 +548,9 @@
                                 <p id="file-name-display-std" class="text-sm text-slate-500 mt-2">ファイルが選択されていません</p>
                             </div>
                         </section>
-            
+
                          <div id="loading-indicator-std" class="hidden flex-col items-center justify-center py-10"><div class="loader"></div><p class="text-slate-600 mt-4">ファイルを解析中...</p></div>
-            
+
                         <section id="step-2-parameters-std" class="hidden bg-white p-6 rounded-lg shadow-sm border">
                             <h2 class="text-xl font-semibold text-center mb-6">2. パラメータ設定</h2>
                              <div class="mt-4 space-y-5 max-w-sm mx-auto">
@@ -436,7 +575,7 @@
                                 </button>
                             </div>
                         </section>
-            
+
                         <section id="step-3-results-std" class="hidden bg-white p-6 rounded-lg shadow-sm border">
                             <h2 class="text-xl font-semibold text-center mb-6">3. 計算結果</h2>
                             <div id="result-display-std" class="hidden mt-6 p-6 bg-slate-50/70 rounded-lg text-center border">
@@ -457,6 +596,51 @@
                     <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
 
                     <div class="space-y-10">
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-6 w-6 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                    </svg>
+                                    <span>広域解析ツール</span>
+                                </h2>
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-3">設定</h3>
+                                            <div class="space-y-3 text-gray-600 text-sm">
+                                                <p><strong>① CSVファイルを追加:</strong> 解析したいMotiveのCSVファイルを1つ以上選択します。</p>
+                                                <p><strong>② データ取得間隔:</strong> データをサンプリングする時間間隔を秒単位で指定します。短いほど軌跡は詳細になりますが、処理が重くなる場合があります。</p>
+                                                <p><strong>③ ヒートマップのマス目サイズ:</strong> 滞在頻度を可視化するヒートマップの1マスの大きさをメートル単位で指定します。</p>
+                                                <p><strong>④ 方向の定義:</strong> 座標系における鉛直方向の軸を定義します。</p>
+                                                <p><strong>⑤ 解析対象の剛体を選択:</strong> ファイル内の剛体から解析したいものを選択し、必要に応じて凡例名を編集します。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">解析開始</h3>
+                                            <p class="text-gray-600 text-sm">ボタンを押すと解析が実行され、結果が表示されます。</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-3">結果の確認</h3>
+                                            <ul class="list-disc list-inside space-y-2 text-gray-600 text-sm">
+                                                <li><strong>軌跡タブ:</strong> 選択した剛体の平面移動軌跡をプロットします。</li>
+                                                <li><strong>ヒートマップタブ:</strong> 各マスに剛体が滞在した時間の頻度を色で表示します。カーソルを合わせると、そのマスのカウント数が表示されます。</li>
+                                                <li><strong>網羅率の計算:</strong> 指定した円または正方形の範囲に対し、軌跡がどれだけの面積をカバーしたかをパーセンテージで計算します。</li>
+                                                <li>各グラフはPNGまたはPDF形式でダウンロードできます。</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
                             <div class="p-6 sm:p-8">
                                 <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
@@ -616,9 +800,9 @@
                             <h1 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">アルゴリズム仕様</h1>
                             <div class="prose-styles">
                                 <p>本ツールで採用されているデータ解析のアルゴリズムおよび計算式について、その詳細を以下に示します。</p>
-                                
+
                                 <h2 class="text-xl font-semibold text-slate-700 mt-8">データ解析ツール</h2>
-                                
+
                                 <h3>動作区間の自動検出</h3>
                                 <p>
                                     本ツールでは、CSVデータに含まれる時間全体のデータから、対象物が実際に動作している区間を自動で抽出します。この処理は、ユーザーが指定した「進行方向」の座標データに基づいて行われます。
@@ -642,7 +826,7 @@
                                     <img src="img/exp.png" alt="動作区間検出のグラフ例" class="mx-auto rounded-lg shadow-md border">
                                     <p class="text-sm text-slate-500 mt-2">図1: 動作区間検出の概念図。変位データが静止範囲（マージン $\pm\delta$）を逸脱・復帰する点を検出する。</p>
                                 </div>
-                                
+
                                 <h3>水平移動距離</h3>
                                 <p>
                                     各時刻 $t$ における水平移動距離 $d(t)$ は、ユーザーが定義した「鉛直方向」以外の2軸（水平軸 $h_1, h_2$）の変位から算出されます。動作開始点の座標を $(h_{1,0}, h_{2,0})$ とすると、時刻 $t$ での座標 $(h_{1,t}, h_{2,t})$ との間の距離は、三平方の定理を用いて次式で計算されます。
@@ -650,7 +834,7 @@
                                 <div class="formula-block">
                                     $d(t) = \sqrt{(h_{1,t} - h_{1,0})^2 + (h_{2,t} - h_{2,0})^2}$
                                 </div>
-                                
+
                                 <h3>瞬時速度（微小速度）</h3>
                                 <p>
                                     時刻 $t_i$ における瞬時速度 $v_i$ は、隣接するフレーム間の水平移動距離と時間の変化量から、後退差分を用いて近似的に算出されます。
@@ -658,16 +842,16 @@
                                 <div class="formula-block">
                                     $v_i = \frac{d(t_i) - d(t_{i-1})}{t_i - t_{i-1}} = \frac{\Delta d}{\Delta t}$
                                 </div>
-                                
+
                                 <h3>スリップ率</h3>
                                 <p>
                                     スリップ率 $S$ は、ユーザーが入力した基準速度 $u$ と、算出した剛体の速度 $v$ を用いて計算されます。$u > v$ の場合は駆動輪のスリップ（加速時）、$u < v$ の場合は制動輪のスリップ（減速時）として、以下の式で定義されます。
                                 </p>
                                 <div class="formula-block">
-                                    $S [\%] = 
-                                    \begin{cases} 
-                                    (1 - \frac{v}{u}) \times 100 & (u > v, \text{ 加速スリップ}) \\
-                                    (1 - \frac{u}{v}) \times 100 & (u < v, \text{ 制動スリップ}) 
+                                    $S [\%] =
+                                    \begin{cases}
+                                    (1 - \frac{v}{u}) \times 100 & (u &gt; v, \text{ 加速スリップ}) \\
+                                    (1 - \frac{u}{v}) \times 100 & (u &lt; v, \text{ 制動スリップ})
                                     \end{cases}$
                                 </div>
                                 <p>
@@ -684,13 +868,12 @@
                                 <div class="formula-block">
                                     $\text{不偏分散: } u^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2$
                                 </div>
-                                
+
                                 <h3>ローパスフィルタ</h3>
                                 <p>
                                     グラフのノイズを低減するために、複数のローパスフィルタから選択できます。
                                 </p>
                                 <h4>移動平均フィルタ</h4>
-                                <!-- MODIFICATION: Changed "窓サイズ" to "サンプル数" -->
                                 <p>
                                     単純移動平均（Simple Moving Average）法です。指定された「サンプル数」$W$に基づき、ある点 $i$ の値 $y_i$ を、その前後 $\lfloor W/2 \rfloor$ 個のデータを含む合計 $W$ 個のデータの平均値 $\hat{y}_i$ で置き換えます。
                                 </p>
@@ -698,13 +881,40 @@
                                     $\hat{y}_i = \frac{1}{W} \sum_{j=i-\lfloor W/2 \rfloor}^{i+\lfloor W/2 \rfloor} y_j$
                                 </div>
                                 <h4>ガウシアンフィルタ</h4>
-                                <!-- MODIFICATION: Updated Gaussian filter description -->
                                 <p>
                                     より滑らかな結果が得られるガウス畳み込みによるフィルタです。フィルタの核となるガウス関数の標準偏差 $\sigma$ をユーザーが直接指定します。$\sigma$ の値が大きいほど、より強力な平滑化がかかります。
                                 </p>
                                 <div class="formula-block">
                                     $$G(x) = \frac{1}{\sqrt{2\pi}\sigma} e^{-\frac{x^2}{2\sigma^2}}$$
                                 </div>
+
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">広域解析ツール</h2>
+                                <h3>データサンプリング</h3>
+                                <p>
+                                    複数のCSVファイルから長時間のデータを効率的に扱うため、指定された「データ取得間隔」に基づいてデータをサンプリングします。座標は正規化せず、元データの値をそのまま使用します。
+                                </p>
+
+                                <h3>ヒートマップ生成</h3>
+                                <p>
+                                    対象物の滞在頻度や傾向を可視化するため、ヒートマップを生成します。まず、描画領域全体をユーザー指定の「マス目のサイズ」でグリッドに分割します。
+                                    次に、サンプリングされた各データ点について、それがどのグリッドセルに位置するかを判定します。同一のサンプリング時刻内に複数のデータ点（剛体）が同じセルに存在した場合でも、そのセルは1回のみカウントされます。これにより、各セルが少なくとも1回以上占有されたサンプリング時刻の総数を集計し、ヒートマップの各セルの値とします。
+                                </p>
+                                <div class="formula-block">
+                                    $\text{Cell}(i, j) = \sum_{t \in T} \mathbf{1} \left( \exists p \in P_t \text{ s.t. } p \in \text{Grid}(i, j) \right)$
+                                </div>
+                                <p>
+                                    ここで、$T$はサンプリング時刻の集合、$P_t$は時刻$t$における全データ点の集合、$\mathbf{1}(\cdot)$は指示関数です。
+                                </p>
+
+                                <h3>網羅率の計算</h3>
+                                <p>
+                                    指定された基準範囲（円または正方形）に対して、対象物がどれだけの割合の領域を走破したかを示す「網羅率」を計算します。
+                                    まず、基準範囲内に中心が含まれるヒートマップのグリッドセルの総数 $N_{total}$ を求めます。次に、これらのセルのうち、対象物が少なくとも1回以上滞在した（ヒートマップの値が1以上である）セルの数 $N_{reached}$ をカウントします。網羅率 $C$ は以下の式で算出されます。
+                                </p>
+                                <div class="formula-block">
+                                    $C [\%] = \frac{N_{reached}}{N_{total}} \times 100$
+                                </div>
+
 
                                 <h2 class="text-xl font-semibold text-slate-700 mt-8">基準速度算出ツール</h2>
 
@@ -713,10 +923,10 @@
                                     Motiveから出力される回転角度データは、通常 $\pm 180^\circ$ の範囲に制限されており、回転がこの範囲を超えると値が不連続に変化（ラップ）します。正確な周期計算のため、このラップを解消（アンラップ）し、連続的な角度変化データに変換します。具体的には、隣接する角度データ $A_{i-1}$ と $A_i$ の差が $\pm 180^\circ$ を超えた場合に、$360^\circ$ のオフセットを加算または減算して補正します。
                                 </p>
                                 <div class="formula-block">
-                                    $A'_{i} = 
-                                    \begin{cases} 
-                                    A'_{i-1} + (A_i - A_{i-1}) - 360 & (A_i - A_{i-1} > 180^\circ) \\
-                                    A'_{i-1} + (A_i - A_{i-1}) + 360 & (A_i - A_{i-1} < -180^\circ) \\
+                                    $A'_{i} =
+                                    \begin{cases}
+                                    A'_{i-1} + (A_i - A_{i-1}) - 360 & (A_i - A_{i-1} &gt; 180^\circ) \\
+                                    A'_{i-1} + (A_i - A_{i-1}) + 360 & (A_i - A_{i-1} &lt; -180^\circ) \\
                                     A'_{i-1} + (A_i - A_{i-1}) & (\text{その他})
                                     \end{cases}$
                                 </div>
@@ -735,7 +945,7 @@
                                 <div class="formula-block">
                                     $T = t_{end} - t_{start}$
                                 </div>
-                                
+
                                 <h3>基準速度の算出</h3>
                                 <p>
                                     算出された周期 $T$ と、ユーザーが入力した車輪の半径 $r$ から、車輪の周速度、すなわち基準速度 $v$ を計算します。角速度 $\omega$ は $\omega = 2\pi / T$ で与えられるため、基準速度 $v$ は次式で求められます。
@@ -757,9 +967,9 @@
                         <h2 class="text-xl font-semibold text-slate-700">基本情報</h2>
                         <div class="mt-3 grid grid-cols-1 gap-y-2 text-sm">
                             <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap Plus</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 2.8.2</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学國井研究室　西藤 実</p>
-                            <p><span class="w-24 inline-block font-medium text-slate-500">その他の詳細:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" style="color: #3b82f6;">こちらのGitHubのリポジトリ</a>をご覧ください</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span> 3.0.0</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span> 中央大学理工学部 國井研究室 西藤 実</p>
+                            <p><span class="w-24 inline-block font-medium text-slate-500">リポジトリ:</span> <a href="https://github.com/minoru-saito-chuo/mocap" target="_blank" class="text-blue-600 hover:underline">GitHub</a></p>
 
                         </div>
                     </div>
@@ -767,7 +977,7 @@
                     <div>
                         <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                         <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
-                            <!-- MODIFICATION: Removed recent development logs and added a new one for UI text change -->
+                            <li><span class="font-semibold">2025-10-20:</span> 広域解析ツールを追加し、軌跡・ヒートマップ・網羅率の可視化機能を追加。</li>
                             <li><span class="font-semibold">2025-08-07:</span> データ解析ツールでファイルを後からでも追加できるよう修正。スクロールしてもメニューが固定されるよう改善。</li>
                             <li><span class="font-semibold">2025-08-05:</span> ローパスフィルタにガウシアンフィルタを追加。動作区間検出アルゴリズムを修正。その他の潜在的なバグを修正。</li>
                             <li><span class="font-semibold">2025-07-05:</span> アルゴリズム仕様ページを追加し、数式表示の改善やレイアウト修正などの更新を実施。</li>
@@ -795,7 +1005,7 @@
             </main>
         </div>
     </div>
-    
+
     <div id="mobile-menu-overlay" class="lg:hidden fixed inset-0 z-40 hidden opacity-0">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div id="mobile-menu-content" class="relative bg-slate-100 w-64 h-full shadow-lg p-4 transform -translate-x-full">
@@ -811,6 +1021,7 @@
              <nav class="space-y-2" id="mobile-nav-links">
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#home">ホーム</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#wide-area-analysis">広域解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#algorithms">アルゴリズム仕様</a>
@@ -849,7 +1060,7 @@
             const mobileNavLinks = document.getElementById('mobile-nav-links');
             const mobileTitle = document.getElementById('mobile-title');
             const mainContentArea = document.getElementById('main-content-area');
-            
+
             function openMobileMenu() {
                 if (!mobileMenuOverlay) return;
                 document.body.classList.add('mobile-menu-open');
@@ -904,12 +1115,12 @@
                     }
                 });
                 window.scrollTo(0, 0);
-                
+
                 if (pageId === 'algorithms') {
                    renderMath();
                 }
             }
-            
+
             if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
             if (mobileMenuCloseBtn) mobileMenuCloseBtn.addEventListener('click', closeMobileMenu);
             if (mobileMenuOverlay) {
@@ -925,7 +1136,7 @@
                     const pageId = link.getAttribute('href').substring(1);
                     history.pushState(null, '', '#' + pageId);
                     showPage(pageId);
-                    closeMobileMenu(); 
+                    closeMobileMenu();
                 });
             });
 
@@ -940,7 +1151,7 @@
             } else {
                  showPage('home');
             }
-            
+
             // --- DATA ANALYSIS TOOL SCRIPT ---
             const fileDataStore = {};
             const chartInstances = {};
@@ -962,7 +1173,8 @@
             const filterRangeInputs = document.getElementById('filter-range-inputs');
             const recalculateAvgBtn = document.getElementById('recalculate-avg-btn');
             const redrawChartsBtn = document.getElementById('redraw-charts-btn');
-            
+            const loadingText = document.getElementById('loading-text');
+
             const lowpassFilterTypeSelect = document.getElementById('lowpass-filter-type');
             const lowpassStrengthInput = document.getElementById('lowpass-strength');
             const lowpassStrengthLabel = document.getElementById('lowpass-strength-label');
@@ -973,7 +1185,7 @@
             const chartZoomModal = document.getElementById('chart-zoom-modal');
             const modalCloseBtn = document.getElementById('modal-close-btn');
             const modalChartCanvas = document.getElementById('modal-chart-canvas');
-            
+
             // --- Low Pass Filter Helpers ---
             function applyMovingAverageFilter(dataPoints, windowSize) {
                 if (windowSize <= 1 || dataPoints.length < windowSize) return dataPoints;
@@ -1008,7 +1220,7 @@
                 for (let i = 0; i < kernel.length; i++) {
                     kernel[i] /= kernelSum;
                 }
-                
+
                 const smoothedPoints = [];
                 const halfKernel = Math.floor(kernel.length / 2);
 
@@ -1023,7 +1235,7 @@
                 }
                 return smoothedPoints;
             }
-            
+
             function rerenderCharts() {
                  if (lastProcessedData && lastProcessedData.length > 0) {
                     renderAllCharts(lastProcessedData, travelAxisSelect.value, verticalAxisSelect.value);
@@ -1033,13 +1245,12 @@
             }
 
             if (csvFileInput) {
-                csvFileInput.addEventListener('change', handleFileSelect);
+                csvFileInput.addEventListener('change', (e) => handleFileSelect(e, 'data-analysis'));
                 startAnalysisBtn.addEventListener('click', startAnalysis);
                 if (clearFilesBtn) {
-                    clearFilesBtn.addEventListener('click', clearAllFiles);
+                    clearFilesBtn.addEventListener('click', () => clearAllFiles('data-analysis'));
                 }
-                
-                // MODIFICATION: Changed filter UI update logic
+
                 lowpassFilterTypeSelect.addEventListener('change', (e) => {
                     const filterType = e.target.value;
                     if (filterType === 'none') {
@@ -1095,7 +1306,7 @@
                     filterRangeInputs.classList.toggle('hidden', !filterVelocityCheckbox.checked);
                 });
                 recalculateAvgBtn.addEventListener('click', recalculateAverages);
-                
+
                 if (redrawChartsBtn) redrawChartsBtn.addEventListener('click', rerenderCharts);
 
 
@@ -1142,65 +1353,60 @@
             }
 
 
-            function clearAllFiles() {
-                // Clear the data store
-                for (const key in fileDataStore) {
-                    delete fileDataStore[key];
+            function clearAllFiles(tool) {
+                if (tool === 'data-analysis') {
+                    for (const key in fileDataStore) { delete fileDataStore[key]; }
+                    fileListDiv.innerHTML = '';
+                    rigidbodyListDiv.innerHTML = '';
+                    rigidbodySelectionSection.classList.add('hidden');
+                    resultsSection.classList.add('hidden');
+                    csvFileInput.value = '';
                 }
-                
-                // Clear the UI
-                fileListDiv.innerHTML = '';
-                rigidbodyListDiv.innerHTML = '';
-                rigidbodySelectionSection.classList.add('hidden');
-                resultsSection.classList.add('hidden');
-                
-                // Reset file input
-                csvFileInput.value = '';
             }
 
-            function handleFileSelect(event) {
+            function handleFileSelect(event, tool) {
                 const files = Array.from(event.target.files);
                 if (files.length === 0) return;
 
-                rigidbodySelectionSection.classList.remove('hidden');
+                if (tool === 'data-analysis') {
+                    rigidbodySelectionSection.classList.remove('hidden');
 
-                files.forEach(file => {
-                    // Check if file already exists
-                    if (fileDataStore[file.name]) {
-                        console.log(`File "${file.name}" is already loaded. Skipping.`);
-                        return; // continue to next file
-                    }
+                    files.forEach(file => {
+                        if (fileDataStore[file.name]) {
+                            console.log(`File "${file.name}" is already loaded. Skipping.`);
+                            return;
+                        }
 
-                    const fileId = `file-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
-                    const fileElement = document.createElement('div');
-                    fileElement.className = 'bg-slate-50 p-2.5 rounded-md flex items-center justify-between border text-sm';
-                    fileElement.innerHTML = `
-                        <span class="text-slate-700 truncate pr-4">${file.name}</span>
-                        <div class="flex items-center flex-shrink-0">
-                            <label for="speed-${fileId}" class="text-xs text-slate-500 mr-2 whitespace-nowrap">基準速度(m/s):</label>
-                            <div class="flex">
-                                <input type="number" id="speed-${fileId}" data-filename="${file.name}" class="reference-speed-input bg-white border border-slate-300 rounded-l-md w-20 p-1 text-right text-sm" step="0.1" value="1.0">
-                                <button type="button" class="paste-btn p-1.5 bg-slate-100 hover:bg-slate-200 border border-l-0 border-slate-300 rounded-r-md" data-target-id="speed-${fileId}" title="ペースト">
-                                    <svg class="h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
-                                </button>
+                        const fileId = `file-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
+                        const fileElement = document.createElement('div');
+                        fileElement.className = 'bg-slate-50 p-2.5 rounded-md flex items-center justify-between border text-sm';
+                        fileElement.innerHTML = `
+                            <span class="text-slate-700 truncate pr-4">${file.name}</span>
+                            <div class="flex items-center flex-shrink-0">
+                                <label for="speed-${fileId}" class="text-xs text-slate-500 mr-2 whitespace-nowrap">基準速度(m/s):</label>
+                                <div class="flex">
+                                    <input type="number" id="speed-${fileId}" data-filename="${file.name}" class="reference-speed-input bg-white border border-slate-300 rounded-l-md w-20 p-1 text-right text-sm" step="0.1" value="1.0">
+                                    <button type="button" class="paste-btn p-1.5 bg-slate-100 hover:bg-slate-200 border border-l-0 border-slate-300 rounded-r-md" data-target-id="speed-${fileId}" title="ペースト">
+                                        <svg class="h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    fileListDiv.appendChild(fileElement);
-                    Papa.parse(file, {
-                        complete: (results) => {
-                            try {
-                                const rigidBodies = extractRigidBodies(results.data);
-                                fileDataStore[file.name] = { rawData: results.data, rigidBodies };
-                                displayRigidBodySelector(file.name, rigidBodies);
-                            } catch (error) {
-                                alert(`ファイル "${file.name}" の解析中にエラーが発生しました: ${error.message}`);
-                            }
-                        },
-                        error: (error) => alert(`ファイル "${file.name}" の読み込みに失敗しました: ${error.message}`)
+                        `;
+                        fileListDiv.appendChild(fileElement);
+                        Papa.parse(file, {
+                            complete: (results) => {
+                                try {
+                                    const rigidBodies = extractRigidBodies(results.data);
+                                    fileDataStore[file.name] = { rawData: results.data, rigidBodies };
+                                    displayRigidBodySelector(file.name, rigidBodies);
+                                } catch (error) {
+                                    alert(`ファイル "${file.name}" の解析中にエラーが発生しました: ${error.message}`);
+                                }
+                            },
+                            error: (error) => alert(`ファイル "${file.name}" の読み込みに失敗しました: ${error.message}`)
+                        });
                     });
-                });
-                // After adding files, clear the input so the user can select the same file again if they clear it
+                }
                 event.target.value = '';
             }
 
@@ -1213,7 +1419,7 @@
                      if(data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') dataStartIndex = i + 1;
                 }
                 if(typeRowIndex === -1 || nameRowIndex === -1 || propertyRowIndex === -1 || dataStartIndex === -1) throw new Error("CSVのヘッダー形式が不正です。");
-                
+
                 const [typeRow, nameRow, propertyRow] = [data[typeRowIndex], data[nameRowIndex], data[propertyRowIndex]];
                 const rigidBodies = {};
 
@@ -1225,7 +1431,7 @@
                         i += 2;
                     }
                 }
-                
+
                 const actualData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
                 Object.values(rigidBodies).forEach(body => {
                     body.data = actualData.map(row => ({
@@ -1274,7 +1480,7 @@
                     alert('進行方向と鉛直方向は異なる軸を選択してください。');
                     return;
                 }
-                
+
                 const motionDetectionSettings = {
                     multiplier: parseFloat(document.getElementById('motion-threshold-multiplier').value)
                 };
@@ -1291,6 +1497,7 @@
                     alert('解析する剛体を少なくとも1つ選択してください。');
                     return;
                 }
+                loadingText.textContent = '解析中...';
                 loadingDiv.classList.remove('hidden');
                 resultsSection.classList.add('hidden');
                 setTimeout(() => {
@@ -1308,7 +1515,7 @@
                     }
                 }, 50);
             }
-            
+
             function recalculateAverages() {
                  const useFilter = filterVelocityCheckbox.checked;
                  const lowerBound = parseFloat(document.getElementById('filter-lower-bound').value);
@@ -1344,10 +1551,10 @@
                     if (u > 0 && v >= 0) {
                          newAvgSlipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
                     }
-                    
+
                     return {...bodyData, avgVelocity: newAvgVelocity, avgSlipRate: newAvgSlipRate};
                 });
-                
+
                 displayResults(updatedData);
             }
 
@@ -1361,7 +1568,7 @@
                     const referenceSpeed = parseFloat(referenceSpeedInput.value);
 
                     if (!body || isNaN(referenceSpeed)) throw new Error(`データまたは基準速度が見つかりません: ${filename} - ${bodyName}`);
-                    
+
                     const motionRange = findMotionRange(body.data, travelAxis, motionDetectionSettings);
                     if (!motionRange) {
                         console.warn(`${label} の有効な動作が見つかりませんでした。スキップします。`);
@@ -1381,12 +1588,12 @@
                         const d_h2 = d.pos[horizontalAxes[1]] - initialPos[horizontalAxes[1]];
                         d.distance = Math.sqrt(d_h1 ** 2 + d_h2 ** 2);
                         d.verticalDisp = d.pos[verticalAxis] - initialPos[verticalAxis];
-                        
+
                         const chartXAxisName = travelAxis;
                         const chartYAxisName = horizontalAxes.find(ax => ax !== travelAxis);
                         d.trajectory_x = d.pos[chartXAxisName] - initialPos[chartXAxisName];
                         d.trajectory_y = d.pos[chartYAxisName] - initialPos[chartYAxisName];
-                        
+
                         if (i === 0) { d.instVelocity = 0; } else {
                             const dt = d.time - workingData[i - 1].time;
                             const dd = d.distance - workingData[i - 1].distance;
@@ -1396,16 +1603,16 @@
                         if (u > 0 && v >= 0) d.slipRate = (u > v) ? (1 - (v / u)) * 100 : (1 - (u / v)) * 100;
                         else d.slipRate = 0;
                     });
-                    
+
                     const totalTime = workingData[workingData.length - 1].time;
                     const totalDistance = workingData[workingData.length - 1].distance;
                     const avgVelocity = totalTime > 0 ? totalDistance / totalTime : 0;
-                    
+
                     let avgSlipRate = 0;
                     if (referenceSpeed > 0 && avgVelocity >= 0) {
                          avgSlipRate = (referenceSpeed > avgVelocity) ? (1 - (avgVelocity / referenceSpeed)) * 100 : (1 - (referenceSpeed / avgVelocity)) * 100;
                     }
-                    
+
                     const n = workingData.length;
                     let velocitySampleVariance = 0, velocityUnbiasedVariance = 0;
                     if (n > 1) {
@@ -1444,7 +1651,7 @@
                 const overallMax = Math.max(...pos);
                 const overallMin = Math.min(...pos);
                 const overallRange = overallMax - overallMin;
-                if (overallRange === 0) return null; 
+                if (overallRange === 0) return null;
 
                 const margin = overallRange * settings.multiplier;
 
@@ -1463,7 +1670,7 @@
                 const finalValue = pos[pos.length - 1];
                 const endLowerBound = finalValue - margin;
                 const endUpperBound = finalValue + margin;
-                
+
                 let endIndex = pos.length;
                 for (let i = pos.length - 1; i >= startIndex; i--) {
                     if (pos[i] < endLowerBound || pos[i] > endUpperBound) {
@@ -1471,7 +1678,7 @@
                         break;
                     }
                 }
-                
+
                 if (startIndex >= endIndex) { console.warn("有効な動作区間が見つかりませんでした (開始点が終了点以降)。"); return null; }
                 return { start: startIndex, end: endIndex };
             }
@@ -1505,7 +1712,7 @@
 
             function renderAllCharts(processedData, travelAxis, verticalAxis) {
                 Object.values(chartInstances).forEach(chart => { if(chart && chart.destroy) chart.destroy() });
-                
+
                 const filterType = lowpassFilterTypeSelect ? lowpassFilterTypeSelect.value : 'none';
                 const filterStrength = lowpassStrengthInput ? parseFloat(lowpassStrengthInput.value) : 0;
                 const isFiltered = filterType !== 'none';
@@ -1519,10 +1726,10 @@
                     'vertical': { id: 'vertical-chart', title: '鉛直変位 vs 距離', x: '距離 (m)', y: `鉛直変位 (${verticalAxis}軸) (m)` },
                     'trajectory': { id: 'trajectory-chart', title: '平面移動軌跡', x: `${travelAxis}軸 変位 (m)`, y: `${trajectoryYAxisName}軸 変位 (m)` }
                 };
-                
+
                 const labelMapping = { 'v': 'velocity', 's': 'slip', 'z': 'vertical', 't': 'trajectory' };
                 const prefixMapping = { 'velocity': 'v', 'slip': 's', 'vertical': 'z', 'trajectory': 't' };
-                
+
                 for (const [prefix, fullKey] of Object.entries(labelMapping)) {
                     const labels = initialLabels[fullKey];
                     const finalTitle = isFiltered ? `${labels.title} (ローパス適用)` : labels.title;
@@ -1564,8 +1771,7 @@
                         trajectory: { ...base, data: trajectoryData }
                     };
                 });
-                
-                // --- Create Velocity and Vertical Charts ---
+
                 ['velocity', 'vertical'].forEach(key => {
                     const chartId = `${key}-chart`;
                     const chartData = datasets.map(d => d[key]);
@@ -1573,14 +1779,13 @@
                     const title = document.getElementById(`${prefix}-chart-title`).value;
                     const xlabel = document.getElementById(`${prefix}-chart-xlabel`).value;
                     const ylabel = document.getElementById(`${prefix}-chart-ylabel`).value;
-                    chartInstances[chartId] = new Chart(document.getElementById(chartId), { 
-                        type: 'scatter', 
+                    chartInstances[chartId] = new Chart(document.getElementById(chartId), {
+                        type: 'scatter',
                         data: { datasets: chartData },
                         options: getChartOptions(ylabel, xlabel, title)
                     });
                 });
 
-                // --- Create Slip Chart with fixed Y-axis ---
                 const slipChartId = 'slip-chart';
                 const slipChartData = datasets.map(d => d.slip);
                 const slipPrefix = prefixMapping['slip'];
@@ -1596,10 +1801,8 @@
                     options: slipChartOptions
                 });
 
-
-                // --- Create Trajectory Chart ---
                 const trajectoryDatasets = datasets.map(d => d.trajectory);
-                
+
                 let minVal = Infinity, maxVal = -Infinity;
                 trajectoryDatasets.forEach(dataset => {
                     dataset.data.forEach(point => {
@@ -1623,12 +1826,12 @@
                 trajectoryOptions.scales.y.max = finalMax;
                 trajectoryOptions.aspectRatio = 1;
 
-                chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), { 
-                    type: 'scatter', 
+                chartInstances['trajectory-chart'] = new Chart(document.getElementById('trajectory-chart'), {
+                    type: 'scatter',
                     data: { datasets: trajectoryDatasets },
                     options: trajectoryOptions
                 });
-                
+
                 const currentStyle = document.querySelector('.style-btn.bg-blue-600');
                 handleStyleChange({target: currentStyle || document.getElementById('style-casual')});
             }
@@ -1685,12 +1888,12 @@
                 formalBtn.classList.toggle('text-slate-700', mode === 'casual');
                 const isFormal = mode === 'formal';
                 const formalStyles = { color: '#000', font: { weight: 'bold' } };
-                const casualStyles = { color: '#334155', font: { weight: 'normal' } }; 
+                const casualStyles = { color: '#334155', font: { weight: 'normal' } };
                 const newStyles = isFormal ? formalStyles : casualStyles;
-                
+
                 Object.values(chartInstances).forEach(chart => {
                     if (!chart || !chart.options || !chart.options.plugins || !chart.options.scales) return;
-                    
+
                     chart.options.plugins.title.color = newStyles.color;
                     chart.options.plugins.title.font.weight = newStyles.font.weight;
                     chart.options.plugins.legend.labels.color = newStyles.color;
@@ -1712,10 +1915,10 @@
                     } else {
                         chart.options.scales.x.grid.display = true;
                         chart.options.scales.y.grid.display = true;
-                        chart.options.scales.x.grid.color = '#e2e8f0'; 
-                        chart.options.scales.y.grid.color = '#e2e8f0'; 
-                        chart.options.scales.x.border = { color: '#cbd5e1' }; 
-                        chart.options.scales.y.border = { color: '#cbd5e1' }; 
+                        chart.options.scales.x.grid.color = '#e2e8f0';
+                        chart.options.scales.y.grid.color = '#e2e8f0';
+                        chart.options.scales.x.border = { color: '#cbd5e1' };
+                        chart.options.scales.y.border = { color: '#cbd5e1' };
 
                         const colors = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#f97316'];
                         chart.data.datasets.forEach((dataset, i) => {
@@ -1754,19 +1957,19 @@
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = exportWidth;
                 tempCanvas.height = exportHeight;
-                
+
                 tempCanvas.style.position = 'absolute';
                 tempCanvas.style.left = '-9999px';
                 tempCanvas.style.top = '0px';
                 document.body.appendChild(tempCanvas);
-                
+
                 const tempChart = new Chart(tempCanvas, {
                      type: chart.config.type,
                      data: chart.config.data,
                      options: { ...chart.config.options, animation: false, responsive: false, maintainAspectRatio: false }
                 });
-                
-                await new Promise(resolve => setTimeout(resolve, 500)); 
+
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 try {
                     const canvas = await html2canvas(tempCanvas, { backgroundColor: '#FFFFFF', scale: 2 });
@@ -1784,7 +1987,6 @@
                             alert('PDF generation library (jsPDF) is not loaded.'); return;
                         }
                         const { jsPDF } = window.jspdf;
-                        const imgData = canvas.toDataURL('image/png');
                         const pdf = new jsPDF({
                             orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
                             unit: 'px',
@@ -1802,7 +2004,7 @@
                     downloadOverlay.classList.add('hidden');
                 }
             }
-            
+
             // --- STANDARD VELOCITY TOOL SCRIPT ---
             const fileInputStd = document.getElementById('csv-file-input-std');
             const fileNameDisplayStd = document.getElementById('file-name-display-std');
@@ -1818,7 +2020,7 @@
             const copyBtnStd = document.getElementById('copy-btn-std');
             const errorDisplayStd = document.getElementById('error-display-std');
 
-            let parsedCsvDataStd = null; 
+            let parsedCsvDataStd = null;
 
             if (fileInputStd) {
                 fileInputStd.addEventListener('change', handleFileSelectStd);
@@ -1862,7 +2064,7 @@
                     if (csvData[i][1] === 'Name') nameRowIndex = i;
                     if (csvData[i][1] === 'Type') typeRowIndex = i;
                 }
-                
+
                 if (dataStartIndex === -1 || propertyRowIndex === -1 || nameRowIndex === -1 || typeRowIndex === -1) {
                     throw new Error("CSVのヘッダー形式がMotiveエクスポート形式と異なります。");
                 }
@@ -1911,7 +2113,7 @@
             function populateRigidBodyRadiosStd(bodyNames) {
                 rigidbodyContainerStd.innerHTML = '';
                 const keywords = ['wheel', 'tire'];
-                let defaultIndex = 0; 
+                let defaultIndex = 0;
                 const firstMatchIndex = bodyNames.findIndex(name =>
                     keywords.some(keyword => name.toLowerCase().includes(keyword))
                 );
@@ -1935,7 +2137,7 @@
                 resultsSectionStd.classList.add('hidden');
                 resultDisplayStd.classList.add('hidden');
                 errorDisplayStd.classList.add('hidden');
-                
+
                 const selectedRadio = document.querySelector('.rigidbody-radio-std:checked');
                 if (!selectedRadio) {
                     showErrorStd("解析する剛体を選択してください。"); return;
@@ -1947,11 +2149,11 @@
                 const radiusM = radiusCm / 100.0;
                 const selectedAxis = axisSelectStd.value;
                 const selectedBodyName = selectedRadio.value;
-                
+
                 try {
                     const bodyInfo = parsedCsvDataStd.rigidBodies[selectedBodyName];
                     const rotationColumnIndex = bodyInfo.rotation[selectedAxis];
-                    
+
                     if (rotationColumnIndex === undefined) {
                         throw new Error(`選択された剛体に'${selectedAxis}'軸の回転データが存在しません。`);
                     }
@@ -1961,7 +2163,7 @@
                     if (timeData.length !== angleData.length || timeData.length < 2) {
                         throw new Error("有効な時間または角度データが不足しています。");
                     }
-                    
+
                     const unwrappedAngles = unwrapAnglesStd(angleData);
                     const period = findRotationPeriodStd(timeData, unwrappedAngles);
 
@@ -1988,7 +2190,7 @@
                 let offset = 0;
                 for (let i = 1; i < angles.length; i++) {
                     const diff = angles[i] - angles[i-1];
-                    if (diff > 180) { offset -= 360; } 
+                    if (diff > 180) { offset -= 360; }
                     else if (diff < -180) { offset += 360; }
                     unwrapped.push(angles[i] + offset);
                 }
@@ -2006,8 +2208,8 @@
 
                 const sampleEndIndex = Math.min(motionStartIndex + 20, unwrappedAngles.length - 1);
                 const angleChange = unwrappedAngles[sampleEndIndex] - unwrappedAngles[motionStartIndex];
-                if (Math.abs(angleChange) < 10) return null; 
-                
+                if (Math.abs(angleChange) < 10) return null;
+
                 const direction = Math.sign(angleChange);
                 const targetAngle = unwrappedAngles[motionStartIndex] + (360 * direction);
                 let endIndex = -1;
@@ -2023,11 +2225,11 @@
                 const time_before = times[endIndex - 1], time_after = times[endIndex];
 
                 if (angle_after === angle_before) return time_after - T_start;
-                
+
                 const fraction = (targetAngle - angle_before) / (angle_after - angle_before);
                 return (time_before + fraction * (time_after - time_before)) - T_start;
             }
-            
+
             function handleCopyStd() {
                 const textToCopy = copyBtnStd.dataset.copyValue;
                 if (!textToCopy) return;
@@ -2045,26 +2247,628 @@
                 }
                 document.body.removeChild(textArea);
             }
-            
+
             function showErrorStd(message) {
                 errorDisplayStd.textContent = message;
                 errorDisplayStd.classList.remove('hidden');
                 resultsSectionStd.classList.remove('hidden');
                 setTimeout(() => resultsSectionStd.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
             }
-        });
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('Service Worker registered: ', registration);
-        })
-        .catch(error => {
-          console.log('Service Worker registration failed: ', error);
+            // --- WIDE AREA ANALYSIS TOOL SCRIPT (kiseki) ---
+            const csvFileInputWide = document.getElementById('csv-files-wide');
+            const fileListAreaWide = document.getElementById('file-list-area-wide');
+            const clearFilesBtnWide = document.getElementById('clear-files-btn-wide');
+            const samplingRateInputWide = document.getElementById('sampling-rate-wide');
+            const gridSizeInputWide = document.getElementById('heatmap-grid-size-wide');
+            const verticalAxisSelectWide = document.getElementById('vertical-axis-wide');
+            const rigidbodySelectionAreaWide = document.getElementById('rigidbody-selection-area-wide');
+            const rigidbodyListContainerWide = document.getElementById('rigidbody-list-container-wide');
+            const analyzeBtnWide = document.getElementById('analyze-btn-wide');
+            const resultsCardWide = document.getElementById('results-card-wide');
+
+            const showTrajectoryBtnWide = document.getElementById('show-trajectory-btn-wide');
+            const showHeatmapBtnWide = document.getElementById('show-heatmap-btn-wide');
+            const trajectoryViewWide = document.getElementById('trajectory-view-wide');
+            const heatmapViewWide = document.getElementById('heatmap-view-wide');
+            const heatmapMaxValueWide = document.getElementById('heatmap-max-value-wide');
+
+            const calculateCoverageBtnWide = document.getElementById('calculate-coverage-btn-wide');
+            const coverageResultElWide = document.getElementById('coverage-result-wide');
+            const areaShapeRadiosWide = document.querySelectorAll('input[name="area-shape-wide"]');
+            const centerTypeRadiosWide = document.querySelectorAll('input[name="center-type-wide"]');
+            const customCenterInputsWide = document.getElementById('custom-center-inputs-wide');
+            const areaSizeLabelWide = document.getElementById('area-size-label-wide');
+            const areaSizeInputWide = document.getElementById('area-size-wide');
+            const centerXInputWide = document.getElementById('center-x-wide');
+            const centerYInputWide = document.getElementById('center-y-wide');
+            const centerXLabelWide = document.getElementById('center-x-label-wide');
+            const centerYLabelWide = document.getElementById('center-y-label-wide');
+
+            let trajectoryChartWide = null;
+            let fileDataStoreWide = {};
+            let lastSampledDataWide = null;
+            let lastHeatmapGridWide = null;
+            const heatmapTooltip = document.getElementById('heatmap-tooltip');
+            const heatmapCanvas = document.getElementById('heatmap-canvas-wide');
+
+            heatmapCanvas.addEventListener('mousemove', (event) => {
+                if (!lastHeatmapGridWide || !lastHeatmapGridWide.gridInfo) return;
+
+                const rect = heatmapCanvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const { grid, gridInfo } = lastHeatmapGridWide;
+                const { rows, cols } = gridInfo;
+                const cellWidth = heatmapCanvas.width / cols;
+                const cellHeight = heatmapCanvas.height / rows;
+
+                const col = Math.floor(x / cellWidth);
+                const row = rows - 1 - Math.floor(y / cellHeight);
+
+                if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                    const count = grid[row][col];
+                    heatmapTooltip.textContent = `カウント: ${count}`;
+                    heatmapTooltip.style.left = `${event.clientX - rect.left + 10}px`;
+                    heatmapTooltip.style.top = `${event.clientY - rect.top + 10}px`;
+                    heatmapTooltip.classList.remove('hidden');
+                } else {
+                    heatmapTooltip.classList.add('hidden');
+                }
+            });
+
+            heatmapCanvas.addEventListener('mouseout', () => {
+                heatmapTooltip.classList.add('hidden');
+            });
+
+            csvFileInputWide.addEventListener('change', handleFileSelectWide);
+            clearFilesBtnWide.addEventListener('click', clearAllFilesWide);
+            analyzeBtnWide.addEventListener('click', analyzeDataWide);
+            showTrajectoryBtnWide.addEventListener('click', () => switchViewWide('trajectory'));
+            showHeatmapBtnWide.addEventListener('click', () => switchViewWide('heatmap'));
+            document.querySelectorAll('.download-btn-wide').forEach(btn => btn.addEventListener('click', handleDownloadWide));
+
+            calculateCoverageBtnWide.addEventListener('click', calculateAndDisplayCoverageWide);
+            areaShapeRadiosWide.forEach(radio => radio.addEventListener('change', (e) => {
+                areaSizeLabelWide.textContent = e.target.value === 'circle' ? '半径' : '一辺の長さ';
+            }));
+            centerTypeRadiosWide.forEach(radio => radio.addEventListener('change', (e) => {
+                customCenterInputsWide.classList.toggle('hidden', e.target.value === 'data');
+            }));
+
+            function handleFileSelectWide(event) {
+                const files = Array.from(event.target.files);
+                if (files.length === 0) return;
+
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "ファイルを読み込み中...";
+
+                const filePromises = files.map(file => {
+                    if (fileDataStoreWide[file.name]) {
+                        console.log(`File ${file.name} is already loaded.`);
+                        return Promise.resolve();
+                    }
+                    return new Promise((resolve, reject) => {
+                        Papa.parse(file, {
+                            complete: (results) => {
+                                try {
+                                    const { rigidBodyInfo, rawData: processedData } = parseHeaderWide(results.data);
+                                    fileDataStoreWide[file.name] = {
+                                        rawData: processedData,
+                                        rigidBodyInfo: rigidBodyInfo
+                                    };
+                                    resolve();
+                                } catch (error) {
+                                    reject(new Error(`"${file.name}"の解析に失敗: ${error.message}`));
+                                }
+                            },
+                            error: (err) => reject(new Error(`"${file.name}"の読み込みに失敗: ${err.message}`))
+                        });
+                    });
+                });
+
+                Promise.all(filePromises)
+                    .then(() => {
+                        updateFileAndRigidBodyUIWide();
+                        analyzeBtnWide.disabled = false;
+                    })
+                    .catch(error => {
+                        alert(error.message);
+                    })
+                    .finally(() => {
+                        loadingDiv.classList.add('hidden');
+                        csvFileInputWide.value = '';
+                    });
+            }
+
+            function parseHeaderWide(data) {
+                let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
+                for(let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (!row || row.length < 2) continue;
+                    if (row[1] === 'Type') typeRowIndex = i;
+                    if (row[1] === 'Name') nameRowIndex = i;
+                    if (row.includes('Position') && row.includes('Rotation')) propertyRowIndex = i;
+                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                        dataHeaderRowIndex = i;
+                        break;
+                    }
+                }
+                if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
+                    throw new Error("OptiTrack CSVのヘッダー形式を認識できませんでした。");
+                }
+
+                const typeRow = data[typeRowIndex];
+                const nameRow = data[nameRowIndex];
+                const propertyRow = data[propertyRowIndex];
+                const dataHeaderRow = data[dataHeaderRowIndex];
+                const dataStartIndex = dataHeaderRowIndex + 1;
+
+                let rigidBodyInfo = {};
+                for (let i = 2; i < typeRow.length; i++) {
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                        const name = nameRow[i];
+                        if (rigidBodyInfo[name]) continue;
+                        rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
+                        for (let j = 0; j < 3; j++) {
+                            const colIndex = i + j;
+                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
+                            const axis = dataHeaderRow[colIndex].toUpperCase();
+                            if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
+                            else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
+                            else if (axis === 'Z') rigidBodyInfo[name].zIndex = colIndex;
+                        }
+                    }
+                }
+
+                Object.keys(rigidBodyInfo).forEach(name => {
+                    const info = rigidBodyInfo[name];
+                    if (info.xIndex === -1 || info.yIndex === -1 || info.zIndex === -1) {
+                         console.warn(`剛体 "${name}" の座標(X,Y,Z)の一部が見つかりませんでした。この剛体は無視されます。`);
+                         delete rigidBodyInfo[name];
+                    }
+                });
+
+                const rawData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
+                return { rigidBodyInfo, rawData };
+            }
+
+            function updateFileAndRigidBodyUIWide() {
+                fileListAreaWide.innerHTML = Object.keys(fileDataStoreWide).map(filename =>
+                    `<div class="bg-slate-50 p-2.5 rounded-md border text-sm flex justify-between items-center">
+                        <span class="text-slate-700 truncate pr-4">${filename}</span>
+                    </div>`
+                ).join('');
+
+                rigidbodyListContainerWide.innerHTML = Object.keys(fileDataStoreWide).map(filename => {
+                    const info = fileDataStoreWide[filename];
+                    if (Object.keys(info.rigidBodyInfo).length === 0) return '';
+                    return `
+                        <div>
+                            <h4 class="font-semibold text-sm text-slate-800 mb-2 border-b pb-1">${filename}</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
+                                ${Object.keys(info.rigidBodyInfo).map(name => `
+                                    <div class="rigidbody-item-container-wide">
+                                        <label class="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 cursor-pointer w-full">
+                                            <input type="checkbox" class="rigidbody-checkbox-wide form-checkbox h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" data-filename="${filename}" value="${name}" checked>
+                                            <span class="text-slate-800 text-sm">${name}</span>
+                                        </label>
+                                        <div class="legend-input-container-wide pl-7 mt-1 hidden">
+                                            <label class="text-xs text-slate-500">凡例名:</label>
+                                            <input type="text" class="legend-label-input-wide mt-1 block w-full rounded-md shadow-sm p-1.5 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500" data-filename="${filename}" data-bodyname="${name}" value="${filename} - ${name}">
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                rigidbodyListContainerWide.addEventListener('change', (event) => {
+                    if (event.target.classList.contains('rigidbody-checkbox-wide')) {
+                        const checkbox = event.target;
+                        const itemContainer = checkbox.closest('.rigidbody-item-container-wide');
+                        const legendInputContainer = itemContainer.querySelector('.legend-input-container-wide');
+                        if (legendInputContainer) {
+                            legendInputContainer.classList.toggle('hidden', !checkbox.checked);
+                        }
+                    }
+                });
+
+                document.querySelectorAll('.rigidbody-checkbox-wide:checked').forEach(checkbox => {
+                    const itemContainer = checkbox.closest('.rigidbody-item-container-wide');
+                    const legendInputContainer = itemContainer.querySelector('.legend-input-container-wide');
+                    if (legendInputContainer) {
+                        legendInputContainer.classList.remove('hidden');
+                    }
+                });
+
+                rigidbodySelectionAreaWide.classList.toggle('hidden', Object.keys(fileDataStoreWide).length === 0);
+                clearFilesBtnWide.classList.toggle('hidden', Object.keys(fileDataStoreWide).length === 0);
+            }
+
+            function clearAllFilesWide() {
+                fileDataStoreWide = {};
+                csvFileInputWide.value = '';
+                updateFileAndRigidBodyUIWide();
+                resultsCardWide.classList.add('hidden');
+                analyzeBtnWide.disabled = true;
+            }
+
+            function analyzeDataWide() {
+                const verticalAxis = verticalAxisSelectWide.value;
+                const selectedBodies = Array.from(document.querySelectorAll('.rigidbody-checkbox-wide:checked')).map(cb => {
+                    const filename = cb.dataset.filename;
+                    const bodyName = cb.value;
+                    const legendInput = document.querySelector(`.legend-label-input-wide[data-filename="${filename}"][data-bodyname="${bodyName}"]`);
+                    return {
+                        filename: filename,
+                        bodyName: bodyName,
+                        label: legendInput ? legendInput.value : `${filename} - ${bodyName}`
+                    };
+                });
+
+                if (selectedBodies.length === 0) { alert('解析する剛体を少なくとも1つ選択してください。'); return; }
+                const samplingRate = parseFloat(samplingRateInputWide.value);
+                if (isNaN(samplingRate) || samplingRate <= 0) { alert('データ取得間隔には正の数値を入力してください。'); return; }
+                const gridSize = parseFloat(gridSizeInputWide.value);
+                if (isNaN(gridSize) || gridSize <= 0) { alert('マス目のサイズには正の数値を入力してください。'); return; }
+
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "解析中...";
+
+                setTimeout(() => {
+                    try {
+                        const axes = ['X', 'Y', 'Z'];
+                        const horizontalAxes = axes.filter(ax => ax !== verticalAxis);
+                        const hAxis1 = horizontalAxes[0];
+                        const hAxis2 = horizontalAxes[1];
+
+                        lastSampledDataWide = sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate);
+                        drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
+                        lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize);
+                        heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
+
+                        const allPoints = [].concat(...Object.values(lastSampledDataWide));
+                        const dataCenter = calculateDataCenterWide(allPoints);
+                        centerXInputWide.value = dataCenter.x.toFixed(2);
+                        centerYInputWide.value = dataCenter.y.toFixed(2);
+                        centerXLabelWide.textContent = `${hAxis1}:`;
+                        centerYLabelWide.textContent = `${hAxis2}:`;
+
+                        resultsCardWide.classList.remove('hidden');
+                        switchViewWide('trajectory');
+                        setTimeout(() => resultsCardWide.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                    } catch (error) {
+                        alert(`解析エラー: ${error.message}`);
+                    } finally {
+                        loadingDiv.classList.add('hidden');
+                    }
+                }, 50);
+            }
+
+            function sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate) {
+                const result = {};
+                selectedBodies.forEach(({ filename, bodyName, label }) => {
+                    const uniqueKey = label;
+                    result[uniqueKey] = [];
+                    const { rawData, rigidBodyInfo } = fileDataStoreWide[filename];
+                    const info = rigidBodyInfo[bodyName];
+                    if (!info) return;
+
+                    let nextSampleTime = 0;
+                    for (const row of rawData) {
+                        const time = parseFloat(row[1]);
+                        if (isNaN(time)) continue;
+
+                        if (time >= nextSampleTime) {
+                            const p1 = parseFloat(row[info[hAxis1.toLowerCase() + 'Index']]) / 1000;
+                            const p2 = parseFloat(row[info[hAxis2.toLowerCase() + 'Index']]) / 1000;
+
+                            if (!isNaN(p1) && !isNaN(p2)) {
+                                result[uniqueKey].push({
+                                    t: time,
+                                    x: p1,
+                                    y: p2
+                                });
+                            }
+                            nextSampleTime += samplingRate;
+                        }
+                    }
+                });
+                return result;
+            }
+
+            function drawTrajectoryWide(data, hAxis1, hAxis2) {
+                const ctx = document.getElementById('trajectory-chart-wide').getContext('2d');
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+                if (trajectoryChartWide) trajectoryChartWide.destroy();
+
+                const datasets = Object.keys(data).map((uniqueKey, index) => ({
+                    label: uniqueKey,
+                    data: data[uniqueKey].map(p => ({ x: p.x, y: p.y })),
+                    borderColor: colors[index % colors.length],
+                    backgroundColor: colors[index % colors.length],
+                    showLine: true, tension: 0.1, pointRadius: 2, borderWidth: 2,
+                }));
+
+                const allPoints = [].concat(...datasets.map(d => d.data));
+                let scales = {};
+                if (allPoints.length > 0) {
+                    const allX = allPoints.map(p => p.x), allY = allPoints.map(p => p.y);
+                    const minX = Math.min(...allX), maxX = Math.max(...allX);
+                    const minY = Math.min(...allY), maxY = Math.max(...allY);
+                    const rangeX = maxX - minX, rangeY = maxY - minY;
+                    const maxRange = Math.max(rangeX, rangeY, 0.1) * 1.1;
+                    const midX = (minX + maxX) / 2, midY = (minY + maxY) / 2;
+                    scales = {
+                        x: { min: midX - maxRange / 2, max: midX + maxRange / 2, grid: { color: '#e2e8f0' }, title: { display: true, text: `${hAxis1}座標 (m)` }},
+                        y: { min: midY - maxRange / 2, max: midY + maxRange / 2, grid: { color: '#e2e8f0' }, title: { display: true, text: `${hAxis2}座標 (m)` }}
+                    };
+                }
+                trajectoryChartWide = new Chart(ctx, {
+                    type: 'scatter', data: { datasets }, options: { responsive: true, maintainAspectRatio: true, plugins: { title: { display: true, text: '剛体の移動軌跡' }, legend: { position: 'top' }}, scales: scales, aspectRatio: 1 }
+                });
+            }
+
+            function calculateHeatmapGridWide(data, gridSize) {
+                const allPoints = [].concat(...Object.values(data));
+                if (allPoints.length === 0) return { grid: [], maxCount: 0, gridInfo: null };
+
+                const minX = Math.min(...allPoints.map(p => p.x)), maxX = Math.max(...allPoints.map(p => p.x));
+                const minY = Math.min(...allPoints.map(p => p.y)), maxY = Math.max(...allPoints.map(p => p.y));
+                const rangeX = maxX - minX, rangeY = maxY - minY;
+                const maxRange = Math.max(rangeX, rangeY, 0.1);
+                const midX = (minX + maxX) / 2, midY = (minY + maxY) / 2;
+                const gridMinX = midX - maxRange / 2, gridMinY = midY - maxRange / 2;
+                const divisions = Math.ceil(maxRange / gridSize);
+                const cols = Math.max(1, divisions), rows = Math.max(1, divisions);
+
+                const grid = Array(rows).fill(0).map(() => Array(cols).fill(0));
+                const timeSteps = {};
+                const samplingRate = parseFloat(samplingRateInputWide.value);
+                allPoints.forEach(p => {
+                    const t = Math.floor(p.t / samplingRate);
+                    if (!timeSteps[t]) timeSteps[t] = [];
+                    timeSteps[t].push(p);
+                });
+                Object.values(timeSteps).forEach(pointsInStep => {
+                    const visitedCells = new Set();
+                    pointsInStep.forEach(point => {
+                        const col = Math.floor((point.x - gridMinX) / gridSize);
+                        const row = Math.floor((point.y - gridMinY) / gridSize);
+                        if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                           visitedCells.add(`${row}-${col}`);
+                        }
+                    });
+                    visitedCells.forEach(cell => {
+                        const [r, c] = cell.split('-').map(Number);
+                        if (grid[r] !== undefined && grid[r][c] !== undefined) grid[r][c]++;
+                    });
+                });
+                const maxCount = Math.max(0, ...[].concat(...grid));
+                const gridInfo = { gridMinX, gridMinY, rows, cols, gridSize };
+                return { grid, maxCount, gridInfo };
+            }
+
+            function drawHeatmapCanvasWide(grid, maxCount) {
+                const canvas = document.getElementById('heatmap-canvas-wide');
+                const container = document.getElementById('heatmap-container-wide');
+                if (!container) return;
+                const ctx = canvas.getContext('2d');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const rows = grid.length;
+                if (rows === 0 || grid[0].length === 0) return;
+                const cols = grid[0].length;
+                const cellWidth = canvas.width / cols, cellHeight = canvas.height / rows;
+                if (maxCount > 0) {
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const count = grid[r][c];
+                            if (count > 0) {
+                                const value = count / maxCount;
+                                ctx.fillStyle = getColorForValueWide(value);
+                                ctx.fillRect(c * cellWidth, (rows - 1 - r) * cellHeight, cellWidth + 1, cellHeight + 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function getColorForValueWide(value) {
+                // Blue -> Cyan -> Green -> Yellow -> Red
+                const colors = [
+                    { r: 0,   g: 0,   b: 255 }, // Blue
+                    { r: 0,   g: 255, b: 255 }, // Cyan
+                    { r: 0,   g: 255, b: 0 },   // Green
+                    { r: 255, g: 255, b: 0 },   // Yellow
+                    { r: 255, g: 0,   b: 0 }    // Red
+                ];
+
+                const segment = 1 / (colors.length - 1);
+                const index = Math.min(Math.floor(value / segment), colors.length - 2);
+                const t = (value - (index * segment)) / segment;
+
+                const r = colors[index].r + t * (colors[index + 1].r - colors[index].r);
+                const g = colors[index].g + t * (colors[index + 1].g - colors[index].g);
+                const b = colors[index].b + t * (colors[index + 1].b - colors[index].b);
+
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+
+            function switchViewWide(viewName) {
+                if (viewName === 'trajectory') {
+                    trajectoryViewWide.classList.remove('hidden');
+                    heatmapViewWide.classList.add('hidden');
+                    showTrajectoryBtnWide.classList.add('active');
+                    showHeatmapBtnWide.classList.remove('active');
+                } else {
+                    trajectoryViewWide.classList.add('hidden');
+                    heatmapViewWide.classList.remove('hidden');
+                    showTrajectoryBtnWide.classList.remove('active');
+                    showHeatmapBtnWide.classList.add('active');
+
+                    if (lastHeatmapGridWide) {
+                        setTimeout(() => {
+                            drawHeatmapCanvasWide(lastHeatmapGridWide.grid, lastHeatmapGridWide.maxCount);
+                        }, 50);
+                    }
+                }
+            }
+
+            function calculateDataCenterWide(allPoints) {
+                if (allPoints.length === 0) return { x: 0, y: 0 };
+                const sumX = allPoints.reduce((sum, p) => sum + p.x, 0);
+                const sumY = allPoints.reduce((sum, p) => sum + p.y, 0);
+                return { x: sumX / allPoints.length, y: sumY / allPoints.length };
+            }
+
+            function calculateAndDisplayCoverageWide() {
+                if (!lastHeatmapGridWide || !lastHeatmapGridWide.gridInfo) {
+                    alert('先にデータを解析してください。');
+                    return;
+                }
+
+                const shape = document.querySelector('input[name="area-shape-wide"]:checked').value;
+                const size = parseFloat(areaSizeInputWide.value);
+                if (isNaN(size) || size <= 0) {
+                    alert('基準範囲のサイズには正の数値を入力してください。');
+                    return;
+                }
+
+                let centerX, centerY;
+                if (document.querySelector('input[name="center-type-wide"]:checked').value === 'custom') {
+                    centerX = parseFloat(centerXInputWide.value);
+                    centerY = parseFloat(centerYInputWide.value);
+                    if (isNaN(centerX) || isNaN(centerY)) {
+                        alert('中心座標には有効な数値を入力してください。');
+                        return;
+                    }
+                } else {
+                    const allPoints = [].concat(...Object.values(lastSampledDataWide));
+                    const dataCenter = calculateDataCenterWide(allPoints);
+                    centerX = dataCenter.x;
+                    centerY = dataCenter.y;
+                }
+
+                const { grid, gridInfo } = lastHeatmapGridWide;
+                const { gridMinX, gridMinY, rows, cols, gridSize } = gridInfo;
+
+                let totalCellsInArea = 0;
+                let reachedCellsInArea = 0;
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cellCenterX = gridMinX + (c + 0.5) * gridSize;
+                        const cellCenterY = gridMinY + (r + 0.5) * gridSize;
+
+                        const dx = cellCenterX - centerX;
+                        const dy = cellCenterY - centerY;
+
+                        let isInArea = false;
+                        if (shape === 'circle') {
+                            if ((dx * dx + dy * dy) <= (size * size)) {
+                                isInArea = true;
+                            }
+                        } else { // square
+                            if (Math.abs(dx) <= size / 2 && Math.abs(dy) <= size / 2) {
+                                isInArea = true;
+                            }
+                        }
+
+                        if (isInArea) {
+                            totalCellsInArea++;
+                            if (grid[r][c] > 0) {
+                                reachedCellsInArea++;
+                            }
+                        }
+                    }
+                }
+
+                const coverage = totalCellsInArea > 0 ? (reachedCellsInArea / totalCellsInArea) * 100 : 0;
+                coverageResultElWide.textContent = coverage.toFixed(2);
+
+                // Visualize the area on the heatmap
+                switchViewWide('heatmap');
+                setTimeout(() => {
+                    drawHeatmapCanvasWide(grid, lastHeatmapGridWide.maxCount);
+                    const canvas = document.getElementById('heatmap-canvas-wide');
+                    const ctx = canvas.getContext('2d');
+
+                    const canvasWidth = canvas.width;
+                    const canvasHeight = canvas.height;
+                    const totalGridWidth = cols * gridSize;
+                    const totalGridHeight = rows * gridSize;
+
+                    const canvasCenterX = ((centerX - gridMinX) / totalGridWidth) * canvasWidth;
+                    const canvasCenterY = canvasHeight - (((centerY - gridMinY) / totalGridHeight) * canvasHeight);
+
+                    ctx.strokeStyle = '#0d9488';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+
+                    if (shape === 'circle') {
+                        const canvasRadius = (size / totalGridWidth) * canvasWidth;
+                        ctx.beginPath();
+                        ctx.arc(canvasCenterX, canvasCenterY, canvasRadius, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    } else {
+                        const canvasSide = (size / totalGridWidth) * canvasWidth;
+                        ctx.strokeRect(canvasCenterX - canvasSide / 2, canvasCenterY - canvasSide / 2, canvasSide, canvasSide);
+                    }
+                    ctx.setLineDash([]);
+                }, 100);
+            }
+
+            async function handleDownloadWide(event) {
+                const { target, format } = event.target.dataset;
+                const element = document.getElementById(target);
+                if (!element) return;
+
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "画像を生成中...";
+
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                try {
+                    const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2 });
+                    const image = canvas.toDataURL('image/png', 1.0);
+
+                    if (format === 'png') {
+                        const link = document.createElement('a');
+                        link.href = image;
+                        link.download = `${target}.png`;
+                        link.click();
+                    } else if (format === 'pdf') {
+                        const { jsPDF } = window.jspdf;
+                        const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+                        const pdf = new jsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height] });
+                        pdf.addImage(image, 'PNG', 0, 0, canvas.width, canvas.height);
+                        pdf.save(`${target}.pdf`);
+                    }
+                } catch (error) {
+                    console.error("Download failed:", error);
+                    alert("画像の生成に失敗しました。");
+                } finally {
+                    loadingDiv.classList.add('hidden');
+                }
+            }
+
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                      console.log('Service Worker registered: ', registration);
+                    })
+                    .catch(error => {
+                      console.log('Service Worker registration failed: ', error);
+                    });
+                });
+            }
         });
-    });
-  }
-</script>
+    </script>
 </body>
 </html>
