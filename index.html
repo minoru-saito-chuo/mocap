@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -491,6 +493,7 @@
                             <div class="flex justify-center mb-6 border-b">
                                 <button id="show-trajectory-btn-wide" class="tab-btn active font-medium py-2 px-6 rounded-t-md transition-colors">軌跡</button>
                                 <button id="show-heatmap-btn-wide" class="tab-btn font-medium py-2 px-6 rounded-t-md transition-colors">ヒートマップ</button>
+                                <button id="show-3d-trajectory-btn-wide" class="tab-btn font-medium py-2 px-6 rounded-t-md transition-colors">3D軌跡</button>
                             </div>
 
                             <div id="trajectory-view-wide">
@@ -500,6 +503,12 @@
                                  <div class="text-center mt-4 flex justify-center items-center space-x-2">
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="trajectory-chart-wide" data-format="png">PNGで保存</button>
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="trajectory-chart-wide" data-format="pdf">PDFで保存</button>
+                                </div>
+                            </div>
+
+                            <div id="3d-trajectory-view-wide" class="hidden">
+                                <div id="3d-trajectory-container-wide" class="w-full max-w-2xl mx-auto aspect-square relative bg-slate-50 border rounded-lg shadow-sm">
+                                    <canvas id="3d-trajectory-canvas-wide"></canvas>
                                 </div>
                             </div>
 
@@ -2294,8 +2303,10 @@
 
             const showTrajectoryBtnWide = document.getElementById('show-trajectory-btn-wide');
             const showHeatmapBtnWide = document.getElementById('show-heatmap-btn-wide');
+            const show3dTrajectoryBtnWide = document.getElementById('show-3d-trajectory-btn-wide');
             const trajectoryViewWide = document.getElementById('trajectory-view-wide');
             const heatmapViewWide = document.getElementById('heatmap-view-wide');
+            const trajectory3dViewWide = document.getElementById('3d-trajectory-view-wide');
             const heatmapMaxValueWide = document.getElementById('heatmap-max-value-wide');
 
             const calculateCoverageBtnWide = document.getElementById('calculate-coverage-btn-wide');
@@ -2317,6 +2328,7 @@
             let fileDataStoreWide = {};
             let lastSampledDataWide = null;
             let lastHeatmapGridWide = null;
+            let scene, camera, renderer, controls;
             const heatmapTooltip = document.getElementById('heatmap-tooltip');
             const heatmapCanvas = document.getElementById('heatmap-canvas-wide');
 
@@ -2355,6 +2367,7 @@
             analyzeBtnWide.addEventListener('click', analyzeDataWide);
             showTrajectoryBtnWide.addEventListener('click', () => switchViewWide('trajectory'));
             showHeatmapBtnWide.addEventListener('click', () => switchViewWide('heatmap'));
+            show3dTrajectoryBtnWide.addEventListener('click', () => switchViewWide('3d-trajectory'));
             document.querySelectorAll('.download-btn-wide').forEach(btn => btn.addEventListener('click', handleDownloadWide));
 
             calculateCoverageBtnWide.addEventListener('click', calculateAndDisplayCoverageWide);
@@ -2439,10 +2452,9 @@
                     if (!row || row.length < 2) continue;
                     if (row[1] === 'Type') typeRowIndex = i;
                     if (row[1] === 'Name') nameRowIndex = i;
-                    if (row.includes('Position') && row.includes('Rotation')) propertyRowIndex = i;
+                    if (row.includes('Position')) propertyRowIndex = i;
                     if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
-                        break;
                     }
                 }
                 if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
@@ -2452,7 +2464,8 @@
                 const typeRow = data[typeRowIndex];
                 const nameRow = data[nameRowIndex];
                 const propertyRow = data[propertyRowIndex];
-                const dataHeaderRow = data[dataHeaderRowIndex];
+                // The actual axis labels (X, Y, Z) are on the row just before the "Frame, Time" header.
+                const dataHeaderRow = data[dataHeaderRowIndex - 1];
                 const dataStartIndex = dataHeaderRowIndex + 1;
 
                 let rigidBodyInfo = {};
@@ -2582,6 +2595,7 @@
 
                         lastSampledDataWide = sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate, dataUnit);
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
+                        draw3dTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2, verticalAxis);
                         lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
@@ -2612,6 +2626,7 @@
 
             function sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate, dataUnit) {
                 const result = {};
+                const verticalAxis = verticalAxisSelectWide.value;
                 selectedBodies.forEach(({ filename, bodyName, label }) => {
                     const uniqueKey = label;
                     result[uniqueKey] = [];
@@ -2627,17 +2642,20 @@
                         if (time >= nextSampleTime) {
                             let p1 = parseFloat(row[info[hAxis1.toLowerCase() + 'Index']]);
                             let p2 = parseFloat(row[info[hAxis2.toLowerCase() + 'Index']]);
+                            let p3 = parseFloat(row[info[verticalAxis.toLowerCase() + 'Index']]);
 
                             if (dataUnit === 'mm') {
                                 p1 /= 1000;
                                 p2 /= 1000;
+                                p3 /= 1000;
                             }
 
-                            if (!isNaN(p1) && !isNaN(p2)) {
+                            if (!isNaN(p1) && !isNaN(p2) && !isNaN(p3)) {
                                 result[uniqueKey].push({
                                     t: time,
                                     x: p1,
-                                    y: p2
+                                    y: p2,
+                                    z: p3
                                 });
                             }
                             nextSampleTime += samplingRate;
@@ -2645,6 +2663,24 @@
                     }
                 });
                 return result;
+            }
+
+            function draw3dTrajectoryWide(data, hAxis1, hAxis2, vAxis) {
+                if (!scene) init3DScene();
+
+                // Clear existing lines
+                const lines = scene.children.filter(obj => obj.type === 'Line');
+                lines.forEach(line => scene.remove(line));
+
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+
+                Object.keys(data).forEach((uniqueKey, index) => {
+                    const points = data[uniqueKey].map(p => new THREE.Vector3(p.x, p.z, p.y));
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ color: colors[index % colors.length] });
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                });
             }
 
             function drawTrajectoryWide(data, hAxis1, hAxis2) {
@@ -2767,23 +2803,53 @@
             }
 
             function switchViewWide(viewName) {
+                trajectoryViewWide.classList.add('hidden');
+                heatmapViewWide.classList.add('hidden');
+                trajectory3dViewWide.classList.add('hidden');
+                showTrajectoryBtnWide.classList.remove('active');
+                showHeatmapBtnWide.classList.remove('active');
+                show3dTrajectoryBtnWide.classList.remove('active');
+
                 if (viewName === 'trajectory') {
                     trajectoryViewWide.classList.remove('hidden');
-                    heatmapViewWide.classList.add('hidden');
                     showTrajectoryBtnWide.classList.add('active');
-                    showHeatmapBtnWide.classList.remove('active');
-                } else {
-                    trajectoryViewWide.classList.add('hidden');
+                } else if (viewName === 'heatmap') {
                     heatmapViewWide.classList.remove('hidden');
-                    showTrajectoryBtnWide.classList.remove('active');
                     showHeatmapBtnWide.classList.add('active');
-
                     if (lastHeatmapGridWide) {
                         setTimeout(() => {
                             drawHeatmapCanvasWide(lastHeatmapGridWide.grid, lastHeatmapGridWide.maxCount);
                         }, 50);
                     }
+                } else if (viewName === '3d-trajectory') {
+                    trajectory3dViewWide.classList.remove('hidden');
+                    show3dTrajectoryBtnWide.classList.add('active');
+                    init3DScene();
+                    animate();
                 }
+            }
+
+            function init3DScene() {
+                const container = document.getElementById('3d-trajectory-container-wide');
+                const canvas = document.getElementById('3d-trajectory-canvas-wide');
+
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+                const axesHelper = new THREE.AxesHelper(5);
+                scene.add(axesHelper);
+
+                camera.position.z = 5;
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
             }
 
             function calculateDataCenterWide(allPoints) {
