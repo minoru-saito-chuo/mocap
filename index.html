@@ -2446,41 +2446,76 @@
             }
 
             function parseHeaderWide(data) {
-                let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
-                for(let i = 0; i < Math.min(20, data.length); i++) {
+                let header = {
+                    typeRow: -1,
+                    nameRow: -1,
+                    propertyRow: -1,
+                    axisRow: -1,
+                    dataStartRow: -1
+                };
+
+                // 1. Find all relevant header rows by searching for keywords
+                for (let i = 0; i < Math.min(20, data.length); i++) {
                     const row = data[i];
-                    if (!row || row.length < 2) continue;
-                    if (row[1] === 'Type') typeRowIndex = i;
-                    if (row[1] === 'Name') nameRowIndex = i;
-                    if (row.includes('Position')) propertyRowIndex = i;
+                    if (!row) continue;
+                    if (row.includes('Type')) header.typeRow = i;
+                    if (row.includes('Name')) header.nameRow = i;
+                    if (row.includes('Position') || row.includes('Rotation')) {
+                        // This could be the property row or the name row in some formats
+                        if(header.propertyRow === -1) header.propertyRow = i;
+                    }
+                     if (row.some(cell => ['X', 'Y', 'Z'].includes(cell.toUpperCase()))) {
+                        if(header.axisRow === -1) header.axisRow = i;
+                    }
                     if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
-                        dataHeaderRowIndex = i;
+                        header.dataStartRow = i + 1;
                     }
                 }
-                if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
-                    throw new Error("OptiTrack CSVのヘッダー形式を認識できませんでした。");
+
+                // If axis row wasn't found, it might be the same as the property row
+                if(header.axisRow === -1 && header.propertyRow !== -1) {
+                    const propRow = data[header.propertyRow];
+                    if(propRow.some(cell => ['X', 'Y', 'Z'].includes(cell.toUpperCase()))){
+                        header.axisRow = header.propertyRow;
+                    }
                 }
 
-                const typeRow = data[typeRowIndex];
-                const nameRow = data[nameRowIndex];
-                const propertyRow = data[propertyRowIndex];
-                // The actual axis labels (X, Y, Z) are on the row just before the "Frame, Time" header.
-                const dataHeaderRow = data[dataHeaderRowIndex - 1];
-                const dataStartIndex = dataHeaderRowIndex + 1;
+
+                if (Object.values(header).some(v => v === -1)) {
+                    console.error("Failed to find all header rows:", header);
+                    throw new Error("OptiTrack CSVのヘッダー形式を完全に認識できませんでした。");
+                }
+
+                const typeRow = data[header.typeRow];
+                const nameRow = data[header.nameRow];
+                const propertyRow = data[header.propertyRow];
+                const axisRow = data[header.axisRow];
 
                 let rigidBodyInfo = {};
                 for (let i = 2; i < typeRow.length; i++) {
-                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                        const name = nameRow[i];
-                        if (rigidBodyInfo[name]) continue;
-                        rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
-                        for (let j = 0; j < 3; j++) {
-                            const colIndex = i + j;
-                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
-                            const axis = dataHeaderRow[colIndex].toUpperCase();
-                            if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
-                            else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
-                            else if (axis === 'Z') rigidBodyInfo[name].zIndex = colIndex;
+                    if (typeRow[i] === 'Rigid Body') {
+                        // The name can be in the Name row or the Property row depending on Motive version
+                        const name = nameRow[i] || propertyRow[i];
+                        if (!name || rigidBodyInfo[name]) continue;
+
+                        // This column is the start of a rigid body. Find its Position columns.
+                        for (let j = i; j < typeRow.length; j++) {
+                            if (propertyRow[j] === 'Position') {
+                                if (!rigidBodyInfo[name]) {
+                                     rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
+                                }
+                                const axis = axisRow[j].toUpperCase();
+                                if (axis === 'X') rigidBodyInfo[name].xIndex = j;
+                                else if (axis === 'Y') rigidBodyInfo[name].yIndex = j;
+                                else if (axis === 'Z') rigidBodyInfo[name].zIndex = j;
+
+                                // Once we've found all three axes for this body, we can stop searching for it.
+                                if (rigidBodyInfo[name].xIndex !==-1 && rigidBodyInfo[name].yIndex !==-1 && rigidBodyInfo[name].zIndex !== -1){
+                                    break;
+                                }
+                            }
+                            // Stop if we hit the next rigid body or another data type
+                             if (j > i && typeRow[j] !== '') break;
                         }
                     }
                 }
@@ -2488,12 +2523,16 @@
                 Object.keys(rigidBodyInfo).forEach(name => {
                     const info = rigidBodyInfo[name];
                     if (info.xIndex === -1 || info.yIndex === -1 || info.zIndex === -1) {
-                         console.warn(`剛体 "${name}" の座標(X,Y,Z)の一部が見つかりませんでした。この剛体は無視されます。`);
-                         delete rigidBodyInfo[name];
+                        console.warn(`剛体 "${name}" の座標(X,Y,Z)の一部が見つかりませんでした。この剛体は無視されます。`);
+                        delete rigidBodyInfo[name];
                     }
                 });
 
-                const rawData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
+                if (Object.keys(rigidBodyInfo).length === 0) {
+                    throw new Error("ファイル内に有効な剛体データが見つかりませんでした。");
+                }
+
+                const rawData = data.slice(header.dataStartRow).filter(row => row.length > 1 && row[1] !== '');
                 return { rigidBodyInfo, rawData };
             }
 
