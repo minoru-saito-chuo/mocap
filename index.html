@@ -2594,7 +2594,7 @@
                         lastSampledDataWide = sampleAllDataWide(selectedBodies, samplingRate, dataUnit);
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
                         draw3DTrajectory(lastSampledDataWide);
-                        lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize);
+                        lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize, hAxis1, hAxis2);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
                         const allPoints = [].concat(...Object.values(lastSampledDataWide));
@@ -2762,12 +2762,14 @@
                 animate();
             }
 
-            function calculateHeatmapGridWide(data, gridSize) {
+            function calculateHeatmapGridWide(data, gridSize, hAxis1, hAxis2) {
+                const hAxis1Lower = hAxis1.toLowerCase();
+                const hAxis2Lower = hAxis2.toLowerCase();
                 const allPoints = [].concat(...Object.values(data));
                 if (allPoints.length === 0) return { grid: [], maxCount: 0, gridInfo: null };
 
-                const minX = Math.min(...allPoints.map(p => p.x)), maxX = Math.max(...allPoints.map(p => p.x));
-                const minY = Math.min(...allPoints.map(p => p.y)), maxY = Math.max(...allPoints.map(p => p.y));
+                const minX = Math.min(...allPoints.map(p => p[hAxis1Lower])), maxX = Math.max(...allPoints.map(p => p[hAxis1Lower]));
+                const minY = Math.min(...allPoints.map(p => p[hAxis2Lower])), maxY = Math.max(...allPoints.map(p => p[hAxis2Lower]));
                 const rangeX = maxX - minX, rangeY = maxY - minY;
                 const maxRange = Math.max(rangeX, rangeY, 0.1);
                 const midX = (minX + maxX) / 2, midY = (minY + maxY) / 2;
@@ -2786,8 +2788,8 @@
                 Object.values(timeSteps).forEach(pointsInStep => {
                     const visitedCells = new Set();
                     pointsInStep.forEach(point => {
-                        const col = Math.floor((point.x - gridMinX) / gridSize);
-                        const row = Math.floor((point.y - gridMinY) / gridSize);
+                        const col = Math.floor((point[hAxis1Lower] - gridMinX) / gridSize);
+                        const row = Math.floor((point[hAxis2Lower] - gridMinY) / gridSize);
                         if (col >= 0 && col < cols && row >= 0 && row < rows) {
                            visitedCells.add(`${row}-${col}`);
                         }
@@ -2802,7 +2804,7 @@
                 return { grid, maxCount, gridInfo };
             }
 
-            function drawHeatmapCanvasWide(grid, maxCount) {
+            function drawHeatmapCanvasWide(grid, maxCount, hAxis1, hAxis2) {
                 const canvas = document.getElementById('heatmap-canvas-wide');
                 const container = document.getElementById('heatmap-container-wide');
                 if (!container) return;
@@ -2864,8 +2866,13 @@
                     heatmapViewWide.classList.remove('hidden');
                     showHeatmapBtnWide.classList.add('active');
                     if (lastHeatmapGridWide) {
+                        const verticalAxis = verticalAxisSelectWide.value;
+                        const axes = ['X', 'Y', 'Z'];
+                        const horizontalAxes = axes.filter(ax => ax !== verticalAxis);
+                        const hAxis1 = horizontalAxes[0];
+                        const hAxis2 = horizontalAxes[1];
                         setTimeout(() => {
-                            drawHeatmapCanvasWide(lastHeatmapGridWide.grid, lastHeatmapGridWide.maxCount);
+                            drawHeatmapCanvasWide(lastHeatmapGridWide.grid, lastHeatmapGridWide.maxCount, hAxis1, hAxis2);
                         }, 50);
                     }
                 } else if (viewName === '3d-trajectory') {
