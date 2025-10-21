@@ -2327,6 +2327,7 @@
             let fileDataStoreWide = {};
             let lastSampledDataWide = null;
             let lastHeatmapGridWide = null;
+            let is3DTrajectoryRendered = false;
             const heatmapTooltip = document.getElementById('heatmap-tooltip');
             const heatmapCanvas = document.getElementById('heatmap-canvas-wide');
 
@@ -2583,6 +2584,7 @@
 
                 loadingDiv.classList.remove('hidden');
                 loadingText.textContent = "解析中...";
+                is3DTrajectoryRendered = false; // Reset render flag
 
                 setTimeout(() => {
                     try {
@@ -2593,7 +2595,8 @@
 
                         lastSampledDataWide = sampleAllDataWide(selectedBodies, samplingRate, dataUnit);
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
-                        draw3DTrajectory(lastSampledDataWide);
+                        // Defer 3D trajectory drawing until the tab is clicked
+                        // draw3DTrajectory(lastSampledDataWide);
                         lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize, hAxis1, hAxis2);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
@@ -2804,6 +2807,16 @@
                     renderer.render(scene, camera);
                 }
                 animate();
+
+                const resizeObserver = new ResizeObserver(entries => {
+                    if (entries.length === 0) return;
+                    const { width, height } = entries[0].contentRect;
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(width, height);
+                });
+
+                resizeObserver.observe(container);
             }
 
             function calculateHeatmapGridWide(data, gridSize, hAxis1, hAxis2) {
@@ -2922,6 +2935,12 @@
                 } else if (viewName === '3d-trajectory') {
                     trajectory3DViewWide.classList.remove('hidden');
                     show3DTrajectoryBtnWide.classList.add('active');
+                    if (lastSampledDataWide && !is3DTrajectoryRendered) {
+                        setTimeout(() => { // Use setTimeout to ensure the container is fully visible
+                            draw3DTrajectory(lastSampledDataWide);
+                            is3DTrajectoryRendered = true;
+                        }, 50);
+                    }
                 }
             }
 
