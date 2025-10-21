@@ -1443,31 +1443,87 @@
             }
 
             function extractRigidBodies(data) {
-                let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataStartIndex = -1;
-                for(let i=0; i < 15 && i < data.length; i++){
-                     if(data[i][1] === 'Type') typeRowIndex = i;
-                     if(data[i][1] === 'Name') nameRowIndex = i;
-                     if(data[i][2] === 'Rotation' || data[i][2] === 'Position') propertyRowIndex = i;
-                     if(data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') dataStartIndex = i + 1;
-                }
-                if(typeRowIndex === -1 || nameRowIndex === -1 || propertyRowIndex === -1 || dataStartIndex === -1) throw new Error("CSVのヘッダー形式が不正です。");
+                let header = {
+                    typeRow: -1, nameRow: -1, propertyRow: -1, axisRow: -1, dataStartRow: -1
+                };
 
-                const [typeRow, nameRow, propertyRow] = [data[typeRowIndex], data[nameRowIndex], data[propertyRowIndex]];
-                const rigidBodies = {};
-
-                for (let i = 2; i < typeRow.length; i++) {
-                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                        const name = nameRow[i];
-                        if (!rigidBodies[name]) rigidBodies[name] = { name: name, posIndices: {} };
-                        rigidBodies[name].posIndices = { X: i, Y: i + 1, Z: i + 2 };
-                        i += 2;
+                for (let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (!row) continue;
+                    if (row.includes('Type')) header.typeRow = i;
+                    if (row.includes('Name')) header.nameRow = i;
+                    if (row.includes('Position') || row.includes('Rotation')) {
+                        if(header.propertyRow === -1) header.propertyRow = i;
                     }
+                     if (row.some(cell => ['X', 'Y', 'Z'].includes(cell.toUpperCase()))) {
+                        if(header.axisRow === -1) header.axisRow = i;
+                    }
+                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                        header.dataStartRow = i + 1;
+                    }
+                }
+
+                if(header.axisRow === -1 && header.propertyRow !== -1) {
+                    const propRow = data[header.propertyRow];
+                    if(propRow.some(cell => ['X', 'Y', 'Z'].includes(cell.toUpperCase()))){
+                        header.axisRow = header.propertyRow;
+                    }
+                }
+
+                if (Object.values(header).some(v => v === -1)) {
+                    console.error("Failed to find all header rows:", header);
+                    throw new Error("CSVのヘッダー形式が不正です。");
+                }
+
+                const typeRow = data[header.typeRow];
+                const nameRow = data[header.nameRow];
+                const propertyRow = data[header.propertyRow];
+                const axisRow = data[header.axisRow];
+
+                let rigidBodies = {};
+                for (let i = 2; i < typeRow.length; i++) {
+                    if (typeRow[i] !== 'Rigid Body') continue;
+
+                    const name = nameRow[i] || propertyRow[i];
+                    if (!name || rigidBodies[name]) continue;
+
+                    const endColIndex = typeRow.findIndex((val, index) => index > i && val !== '');
+                    const searchEnd = endColIndex === -1 ? typeRow.length : endColIndex;
+
+                    let positionColStart = -1;
+                    for (let j = i; j < searchEnd; j++) {
+                        if (propertyRow[j] === 'Position') {
+                            positionColStart = j;
+                            break;
+                        }
+                    }
+
+                    if (positionColStart !== -1) {
+                        const body = { name: name, posIndices: {} };
+                        for (let k = positionColStart; k < searchEnd; k++) {
+                            const axis = axisRow[k]?.toUpperCase();
+                            if (axis === 'X' && body.posIndices.X === undefined) body.posIndices.X = k;
+                            else if (axis === 'Y' && body.posIndices.Y === undefined) body.posIndices.Y = k;
+                            else if (axis === 'Z' && body.posIndices.Z === undefined) body.posIndices.Z = k;
+                        }
+
+                        if (body.posIndices.X !== undefined && body.posIndices.Y !== undefined && body.posIndices.Z !== undefined) {
+                            rigidBodies[name] = body;
+                        }
+                    }
+                    i = searchEnd -1;
+                }
+
+                if (Object.keys(rigidBodies).length === 0) {
+                    throw new Error("ファイル内に有効な剛体データが見つかりませんでした。");
                 }
 
                 const dataUnit = document.querySelector('input[name="data-unit"]:checked').value;
                 const conversionFactor = dataUnit === 'mm' ? 1000 : 1;
-                const actualData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
+                const actualData = data.slice(header.dataStartRow).filter(row => row.length > 1 && row[1] !== '');
                 Object.values(rigidBodies).forEach(body => {
+                    if(body.posIndices.X === undefined || body.posIndices.Y === undefined || body.posIndices.Z === undefined) return;
+
                     body.data = actualData.map(row => ({
                         time: parseFloat(row[1]),
                         pos: {
@@ -1475,9 +1531,9 @@
                             Y: parseFloat(row[body.posIndices.Y]) / conversionFactor,
                             Z: parseFloat(row[body.posIndices.Z]) / conversionFactor
                         }
-                    })).filter(d => !isNaN(d.time) && !isNaN(d.pos.X));
+                    })).filter(d => !isNaN(d.time) && d.pos.X != null && !isNaN(d.pos.X) && d.pos.Y != null && !isNaN(d.pos.Y) && d.pos.Z != null && !isNaN(d.pos.Z));
                 });
-                return Object.values(rigidBodies);
+                return Object.values(rigidBodies).filter(b => b.data && b.data.length > 0);
             }
 
             function displayRigidBodySelector(filename, rigidBodies) {
