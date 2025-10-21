@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -491,6 +493,7 @@
                             <div class="flex justify-center mb-6 border-b">
                                 <button id="show-trajectory-btn-wide" class="tab-btn active font-medium py-2 px-6 rounded-t-md transition-colors">軌跡</button>
                                 <button id="show-heatmap-btn-wide" class="tab-btn font-medium py-2 px-6 rounded-t-md transition-colors">ヒートマップ</button>
+                                <button id="show-3d-trajectory-btn-wide" class="tab-btn font-medium py-2 px-6 rounded-t-md transition-colors">3D軌跡</button>
                             </div>
 
                             <div id="trajectory-view-wide">
@@ -507,7 +510,7 @@
                                  <div id="heatmap-container-wide" class="w-full max-w-2xl mx-auto aspect-square relative bg-slate-50 border rounded-lg shadow-sm">
                                     <canvas id="heatmap-canvas-wide"></canvas>
                                     <div id="heatmap-tooltip" class="hidden absolute bg-black/70 text-white text-xs rounded-md px-2 py-1 pointer-events-none shadow-lg"></div>
-                                </div>
+                                 </div>
                                 <div id="heatmap-legend-wide" class="flex justify-end items-center mt-2 max-w-2xl mx-auto space-x-2 text-sm">
                                     <span>Min</span>
                                     <div class="w-32 h-4 rounded-md" style="background: linear-gradient(to right, rgb(0, 0, 255), rgb(0, 255, 255), rgb(0, 255, 0), rgb(255, 255, 0), rgb(255, 0, 0));"></div>
@@ -516,6 +519,11 @@
                                  <div class="text-center mt-4 flex justify-center items-center space-x-2">
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="heatmap-canvas-wide" data-format="png">PNGで保存</button>
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="heatmap-canvas-wide" data-format="pdf">PDFで保存</button>
+                                </div>
+                            </div>
+
+                            <div id="trajectory-3d-view-wide" class="hidden">
+                                <div id="3d-trajectory-container-wide" class="w-full max-w-2xl mx-auto aspect-square relative bg-slate-50 border rounded-lg shadow-sm">
                                 </div>
                             </div>
                                      <p id="coordinate-unit-note" class="text-xs text-slate-500 mt-4 text-center">※ 座標は正規化せず、元データの値をメートル単位に変換して使用しています。</p>
@@ -2294,8 +2302,10 @@
 
             const showTrajectoryBtnWide = document.getElementById('show-trajectory-btn-wide');
             const showHeatmapBtnWide = document.getElementById('show-heatmap-btn-wide');
+            const show3DTrajectoryBtnWide = document.getElementById('show-3d-trajectory-btn-wide');
             const trajectoryViewWide = document.getElementById('trajectory-view-wide');
             const heatmapViewWide = document.getElementById('heatmap-view-wide');
+            const trajectory3DViewWide = document.getElementById('trajectory-3d-view-wide');
             const heatmapMaxValueWide = document.getElementById('heatmap-max-value-wide');
 
             const calculateCoverageBtnWide = document.getElementById('calculate-coverage-btn-wide');
@@ -2355,6 +2365,7 @@
             analyzeBtnWide.addEventListener('click', analyzeDataWide);
             showTrajectoryBtnWide.addEventListener('click', () => switchViewWide('trajectory'));
             showHeatmapBtnWide.addEventListener('click', () => switchViewWide('heatmap'));
+            show3DTrajectoryBtnWide.addEventListener('click', () => switchViewWide('3d-trajectory'));
             document.querySelectorAll('.download-btn-wide').forEach(btn => btn.addEventListener('click', handleDownloadWide));
 
             calculateCoverageBtnWide.addEventListener('click', calculateAndDisplayCoverageWide);
@@ -2580,8 +2591,9 @@
                         const hAxis1 = horizontalAxes[0];
                         const hAxis2 = horizontalAxes[1];
 
-                        lastSampledDataWide = sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate, dataUnit);
+                        lastSampledDataWide = sampleAllDataWide(selectedBodies, samplingRate, dataUnit);
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
+                        draw3DTrajectory(lastSampledDataWide);
                         lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
@@ -2610,7 +2622,7 @@
                 }, 50);
             }
 
-            function sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate, dataUnit) {
+            function sampleAllDataWide(selectedBodies, samplingRate, dataUnit) {
                 const result = {};
                 selectedBodies.forEach(({ filename, bodyName, label }) => {
                     const uniqueKey = label;
@@ -2625,20 +2637,18 @@
                         if (isNaN(time)) continue;
 
                         if (time >= nextSampleTime) {
-                            let p1 = parseFloat(row[info[hAxis1.toLowerCase() + 'Index']]);
-                            let p2 = parseFloat(row[info[hAxis2.toLowerCase() + 'Index']]);
+                            let x = parseFloat(row[info.xIndex]);
+                            let y = parseFloat(row[info.yIndex]);
+                            let z = parseFloat(row[info.zIndex]);
 
                             if (dataUnit === 'mm') {
-                                p1 /= 1000;
-                                p2 /= 1000;
+                                x /= 1000;
+                                y /= 1000;
+                                z /= 1000;
                             }
 
-                            if (!isNaN(p1) && !isNaN(p2)) {
-                                result[uniqueKey].push({
-                                    t: time,
-                                    x: p1,
-                                    y: p2
-                                });
+                            if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                                result[uniqueKey].push({ t: time, x: x, y: y, z: z });
                             }
                             nextSampleTime += samplingRate;
                         }
@@ -2654,7 +2664,7 @@
 
                 const datasets = Object.keys(data).map((uniqueKey, index) => ({
                     label: uniqueKey,
-                    data: data[uniqueKey].map(p => ({ x: p.x, y: p.y })),
+                    data: data[uniqueKey].map(p => ({ x: p[hAxis1.toLowerCase()], y: p[hAxis2.toLowerCase()] })),
                     borderColor: colors[index % colors.length],
                     backgroundColor: colors[index % colors.length],
                     showLine: true, tension: 0.1, pointRadius: 2, borderWidth: 2,
@@ -2677,6 +2687,48 @@
                 trajectoryChartWide = new Chart(ctx, {
                     type: 'scatter', data: { datasets }, options: { responsive: true, maintainAspectRatio: true, plugins: { title: { display: true, text: '剛体の移動軌跡' }, legend: { position: 'top' }}, scales: scales, aspectRatio: 1 }
                 });
+            }
+
+            function draw3DTrajectory(data) {
+                const container = document.getElementById('3d-trajectory-container-wide');
+                if (!container) return;
+                container.innerHTML = '';
+
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xf1f5f9);
+
+                const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera.position.z = 10;
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(renderer.domElement);
+
+                const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+
+                Object.keys(data).forEach((key, index) => {
+                    const points = data[key].map(p => new THREE.Vector3(p.x, p.y, p.z));
+                    if (points.length < 2) return;
+
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ color: colors[index % colors.length], linewidth: 2 });
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                });
+
+                const gridHelper = new THREE.GridHelper(100, 100);
+                scene.add(gridHelper);
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    controls.update();
+                    renderer.render(scene, camera);
+                }
+                animate();
             }
 
             function calculateHeatmapGridWide(data, gridSize) {
@@ -2767,22 +2819,27 @@
             }
 
             function switchViewWide(viewName) {
+                trajectoryViewWide.classList.add('hidden');
+                heatmapViewWide.classList.add('hidden');
+                trajectory3DViewWide.classList.add('hidden');
+                showTrajectoryBtnWide.classList.remove('active');
+                showHeatmapBtnWide.classList.remove('active');
+                show3DTrajectoryBtnWide.classList.remove('active');
+
                 if (viewName === 'trajectory') {
                     trajectoryViewWide.classList.remove('hidden');
-                    heatmapViewWide.classList.add('hidden');
                     showTrajectoryBtnWide.classList.add('active');
-                    showHeatmapBtnWide.classList.remove('active');
-                } else {
-                    trajectoryViewWide.classList.add('hidden');
+                } else if (viewName === 'heatmap') {
                     heatmapViewWide.classList.remove('hidden');
-                    showTrajectoryBtnWide.classList.remove('active');
                     showHeatmapBtnWide.classList.add('active');
-
                     if (lastHeatmapGridWide) {
                         setTimeout(() => {
                             drawHeatmapCanvasWide(lastHeatmapGridWide.grid, lastHeatmapGridWide.maxCount);
                         }, 50);
                     }
+                } else if (viewName === '3d-trajectory') {
+                    trajectory3DViewWide.classList.remove('hidden');
+                    show3DTrajectoryBtnWide.classList.add('active');
                 }
             }
 
