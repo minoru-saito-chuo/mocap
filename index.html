@@ -431,16 +431,23 @@
                                     <div id="file-list-area-wide" class="mt-4 space-y-2"></div>
                                 </div>
                                  <div class="space-y-4">
+                                     <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">② 元データの単位</label>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <label class="flex items-center"><input type="radio" name="data-unit-wide" value="mm" class="form-radio" checked> <span class="ml-2 text-sm">mm</span></label>
+                                            <label class="flex items-center"><input type="radio" name="data-unit-wide" value="m" class="form-radio"> <span class="ml-2 text-sm">m</span></label>
+                                        </div>
+                                     </div>
                                     <div>
-                                        <label for="sampling-rate-wide" class="block text-sm font-medium text-slate-700 mb-2">② データ取得間隔 (秒)</label>
+                                        <label for="sampling-rate-wide" class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔 (秒)</label>
                                         <input type="number" id="sampling-rate-wide" value="1.0" step="0.1" min="0.01" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                      <div>
-                                        <label for="heatmap-grid-size-wide" class="block text-sm font-medium text-slate-700 mb-2">③ ヒートマップのマス目のサイズ (m)</label>
-                                        <input type="number" id="heatmap-grid-size-wide" value="0.5" step="0.1" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <label for="heatmap-grid-size-wide" class="block text-sm font-medium text-slate-700 mb-2">④ ヒートマップのマス目のサイズ (<span class="unit-label">mm</span>)</label>
+                                        <input type="number" id="heatmap-grid-size-wide" value="500" step="100" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                      <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-2">④ 方向の定義</label>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">⑤ 方向の定義</label>
                                         <div class="flex space-x-4">
                                             <div class="flex-1">
                                                 <label for="vertical-axis-wide" class="block text-xs font-medium text-slate-500">鉛直方向の軸</label>
@@ -495,7 +502,7 @@
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="heatmap-canvas-wide" data-format="pdf">PDFで保存</button>
                                 </div>
                             </div>
-                             <p class="text-xs text-slate-500 mt-4 text-center">※ 座標は正規化せず、元データの値をメートル単位に変換して使用しています。</p>
+                                     <p id="coordinate-unit-note" class="text-xs text-slate-500 mt-4 text-center">※ 座標は正規化せず、元データの値をメートル単位に変換して使用しています。</p>
 
                             <div id="coverage-section-wide" class="mt-8 pt-6 border-t">
                                 <h3 class="text-lg font-semibold text-center mb-4 text-slate-800">網羅率の計算</h3>
@@ -506,8 +513,8 @@
                                             <div class="mt-2 flex gap-4"><label class="flex items-center"><input type="radio" name="area-shape-wide" value="circle" class="form-radio" checked> <span class="ml-2">円</span></label><label class="flex items-center"><input type="radio" name="area-shape-wide" value="square" class="form-radio"> <span class="ml-2">正方形</span></label></div>
                                         </div>
                                         <div>
-                                            <label for="area-size-wide" class="block text-sm font-medium text-slate-700"><span id="area-size-label-wide">半径</span> (m)</label>
-                                            <input type="number" id="area-size-wide" value="2.0" step="0.1" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                            <label for="area-size-wide" class="block text-sm font-medium text-slate-700"><span id="area-size-label-wide">半径</span> (<span class="unit-label">mm</span>)</label>
+                                            <input type="number" id="area-size-wide" value="2000" step="100" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
                                         </div>
                                          <div>
                                             <label class="block text-sm font-medium text-slate-700">中心座標</label>
@@ -2284,6 +2291,9 @@
             const centerYInputWide = document.getElementById('center-y-wide');
             const centerXLabelWide = document.getElementById('center-x-label-wide');
             const centerYLabelWide = document.getElementById('center-y-label-wide');
+            const dataUnitRadiosWide = document.querySelectorAll('input[name="data-unit-wide"]');
+            const unitLabels = document.querySelectorAll('.unit-label');
+            const coordinateUnitNote = document.getElementById('coordinate-unit-note');
 
             let trajectoryChartWide = null;
             let fileDataStoreWide = {};
@@ -2335,6 +2345,28 @@
             }));
             centerTypeRadiosWide.forEach(radio => radio.addEventListener('change', (e) => {
                 customCenterInputsWide.classList.toggle('hidden', e.target.value === 'data');
+            }));
+
+            dataUnitRadiosWide.forEach(radio => radio.addEventListener('change', (e) => {
+                const selectedUnit = e.target.value;
+                unitLabels.forEach(label => label.textContent = selectedUnit);
+
+                const gridSizeInput = document.getElementById('heatmap-grid-size-wide');
+                const areaSizeInput = document.getElementById('area-size-wide');
+
+                if (selectedUnit === 'm') {
+                    gridSizeInput.value = (parseFloat(gridSizeInput.value) / 1000).toFixed(2);
+                    gridSizeInput.step = 0.1;
+                    areaSizeInput.value = (parseFloat(areaSizeInput.value) / 1000).toFixed(2);
+                    areaSizeInput.step = 0.1;
+                    coordinateUnitNote.textContent = "※ 座標は正規化せず、元データの値をそのまま使用しています。";
+                } else { // mm
+                    gridSizeInput.value = Math.round(parseFloat(gridSizeInput.value) * 1000);
+                    gridSizeInput.step = 100;
+                    areaSizeInput.value = Math.round(parseFloat(areaSizeInput.value) * 1000);
+                    areaSizeInput.step = 100;
+                    coordinateUnitNote.textContent = "※ 座標は正規化せず、元データの値をメートル単位に変換して使用しています。";
+                }
             }));
 
             function handleFileSelectWide(event) {
@@ -2498,6 +2530,7 @@
 
             function analyzeDataWide() {
                 const verticalAxis = verticalAxisSelectWide.value;
+                const dataUnit = document.querySelector('input[name="data-unit-wide"]:checked').value;
                 const selectedBodies = Array.from(document.querySelectorAll('.rigidbody-checkbox-wide:checked')).map(cb => {
                     const filename = cb.dataset.filename;
                     const bodyName = cb.value;
@@ -2512,8 +2545,12 @@
                 if (selectedBodies.length === 0) { alert('解析する剛体を少なくとも1つ選択してください。'); return; }
                 const samplingRate = parseFloat(samplingRateInputWide.value);
                 if (isNaN(samplingRate) || samplingRate <= 0) { alert('データ取得間隔には正の数値を入力してください。'); return; }
-                const gridSize = parseFloat(gridSizeInputWide.value);
+                let gridSize = parseFloat(gridSizeInputWide.value);
                 if (isNaN(gridSize) || gridSize <= 0) { alert('マス目のサイズには正の数値を入力してください。'); return; }
+
+                if (dataUnit === 'mm') {
+                    gridSize /= 1000;
+                }
 
                 loadingDiv.classList.remove('hidden');
                 loadingText.textContent = "解析中...";
@@ -2525,15 +2562,22 @@
                         const hAxis1 = horizontalAxes[0];
                         const hAxis2 = horizontalAxes[1];
 
-                        lastSampledDataWide = sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate);
+                        lastSampledDataWide = sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate, dataUnit);
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
                         lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
                         const allPoints = [].concat(...Object.values(lastSampledDataWide));
                         const dataCenter = calculateDataCenterWide(allPoints);
-                        centerXInputWide.value = dataCenter.x.toFixed(2);
-                        centerYInputWide.value = dataCenter.y.toFixed(2);
+
+                        if (dataUnit === 'mm') {
+                            centerXInputWide.value = (dataCenter.x * 1000).toFixed(2);
+                            centerYInputWide.value = (dataCenter.y * 1000).toFixed(2);
+                        } else {
+                            centerXInputWide.value = dataCenter.x.toFixed(2);
+                            centerYInputWide.value = dataCenter.y.toFixed(2);
+                        }
+
                         centerXLabelWide.textContent = `${hAxis1}:`;
                         centerYLabelWide.textContent = `${hAxis2}:`;
 
@@ -2548,7 +2592,7 @@
                 }, 50);
             }
 
-            function sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate) {
+            function sampleAllDataWide(selectedBodies, hAxis1, hAxis2, samplingRate, dataUnit) {
                 const result = {};
                 selectedBodies.forEach(({ filename, bodyName, label }) => {
                     const uniqueKey = label;
@@ -2563,8 +2607,13 @@
                         if (isNaN(time)) continue;
 
                         if (time >= nextSampleTime) {
-                            const p1 = parseFloat(row[info[hAxis1.toLowerCase() + 'Index']]) / 1000;
-                            const p2 = parseFloat(row[info[hAxis2.toLowerCase() + 'Index']]) / 1000;
+                            let p1 = parseFloat(row[info[hAxis1.toLowerCase() + 'Index']]);
+                            let p2 = parseFloat(row[info[hAxis2.toLowerCase() + 'Index']]);
+
+                            if (dataUnit === 'mm') {
+                                p1 /= 1000;
+                                p2 /= 1000;
+                            }
 
                             if (!isNaN(p1) && !isNaN(p2)) {
                                 result[uniqueKey].push({
@@ -2733,7 +2782,8 @@
                 }
 
                 const shape = document.querySelector('input[name="area-shape-wide"]:checked').value;
-                const size = parseFloat(areaSizeInputWide.value);
+                const dataUnit = document.querySelector('input[name="data-unit-wide"]:checked').value;
+                let size = parseFloat(areaSizeInputWide.value);
                 if (isNaN(size) || size <= 0) {
                     alert('基準範囲のサイズには正の数値を入力してください。');
                     return;
@@ -2752,6 +2802,14 @@
                     const dataCenter = calculateDataCenterWide(allPoints);
                     centerX = dataCenter.x;
                     centerY = dataCenter.y;
+                }
+
+                if (dataUnit === 'mm') {
+                    size /= 1000;
+                    if (document.querySelector('input[name="center-type-wide"]:checked').value === 'custom') {
+                        centerX /= 1000;
+                        centerY /= 1000;
+                    }
                 }
 
                 const { grid, gridInfo } = lastHeatmapGridWide;
