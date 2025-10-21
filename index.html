@@ -523,7 +523,7 @@
                             </div>
 
                             <div id="trajectory-3d-view-wide" class="hidden">
-                                <div id="3d-trajectory-container-wide" class="w-full max-w-2xl mx-auto aspect-square relative bg-slate-50 border rounded-lg shadow-sm">
+                                <div id="trajectory-3d-container-wide" class="w-full max-w-2xl mx-auto aspect-square relative bg-slate-50 border rounded-lg shadow-sm">
                                 </div>
                             </div>
                                      <p id="coordinate-unit-note" class="text-xs text-slate-500 mt-4 text-center">※ 座標は正規化せず、元データの値をメートル単位に変換して使用しています。</p>
@@ -2690,15 +2690,14 @@
             }
 
             function draw3DTrajectory(data) {
-                const container = document.getElementById('3d-trajectory-container-wide');
+                const container = document.getElementById('trajectory-3d-container-wide');
                 if (!container) return;
                 container.innerHTML = '';
 
                 const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xf1f5f9); // slate-100
+                scene.background = new THREE.Color(0xf1f5f9);
 
                 const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 10000);
-
                 const renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(container.clientWidth, container.clientHeight);
                 container.appendChild(renderer.domElement);
@@ -2711,13 +2710,16 @@
 
                 const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, p.z))));
 
-                if (allPoints.length > 0) {
+                if (allPoints.length > 1) {
                     Object.values(data).forEach((pointsData, index) => {
                         const points = pointsData.map(p => new THREE.Vector3(p.x, p.y, p.z));
                         if (points.length < 2) return;
 
                         const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                        const material = new THREE.LineBasicMaterial({ color: colors[index % colors.length], linewidth: 2 });
+                        const material = new THREE.LineBasicMaterial({
+                            color: colors[index % colors.length],
+                            linewidth: 2 // Note: may not have an effect on all platforms
+                        });
                         const line = new THREE.Line(geometry, material);
                         scene.add(line);
                     });
@@ -2730,27 +2732,26 @@
 
                     const maxDim = Math.max(size.x, size.y, size.z);
                     const fov = camera.fov * (Math.PI / 180);
-                    const cameraDistance = maxDim / (2 * Math.tan(fov / 2));
+                    const cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
 
-                    camera.position.copy(center);
-                    camera.position.x += maxDim * 0.5;
-                    camera.position.y += maxDim * 0.5;
-                    camera.position.z += maxDim * 0.75;
+                    const offset = cameraDistance * 1.2;
+                    camera.position.set(center.x, center.y, center.z + Math.max(offset, 5));
+
                     camera.near = cameraDistance / 100;
-                    camera.far = cameraDistance * 3;
+                    camera.far = cameraDistance * 100;
                     camera.updateProjectionMatrix();
 
                     controls.target.copy(center);
                     controls.update();
 
-                    const gridHelper = new THREE.GridHelper(Math.ceil(maxDim * 1.5), 20);
-                    gridHelper.position.y = boundingBox.min.y; // Place grid at the bottom of the trajectory
+                    const gridHelper = new THREE.GridHelper(Math.ceil(maxDim * 1.5) || 10, 20, 0xcccccc, 0xcccccc);
+                    gridHelper.position.y = boundingBox.min.y;
                     scene.add(gridHelper);
 
                 } else {
                     camera.position.set(0, 5, 10);
                     controls.target.set(0, 0, 0);
-                    const gridHelper = new THREE.GridHelper(20, 20);
+                    const gridHelper = new THREE.GridHelper(20, 20, 0xcccccc, 0xcccccc);
                     scene.add(gridHelper);
                 }
 
