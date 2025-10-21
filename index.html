@@ -2695,10 +2695,9 @@
                 container.innerHTML = '';
 
                 const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xf1f5f9);
+                scene.background = new THREE.Color(0xf1f5f9); // slate-100
 
-                const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-                camera.position.z = 10;
+                const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 10000);
 
                 const renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(container.clientWidth, container.clientHeight);
@@ -2710,18 +2709,50 @@
 
                 const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
 
-                Object.keys(data).forEach((key, index) => {
-                    const points = data[key].map(p => new THREE.Vector3(p.x, p.y, p.z));
-                    if (points.length < 2) return;
+                const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, p.z))));
 
-                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                    const material = new THREE.LineBasicMaterial({ color: colors[index % colors.length], linewidth: 2 });
-                    const line = new THREE.Line(geometry, material);
-                    scene.add(line);
-                });
+                if (allPoints.length > 0) {
+                    Object.values(data).forEach((pointsData, index) => {
+                        const points = pointsData.map(p => new THREE.Vector3(p.x, p.y, p.z));
+                        if (points.length < 2) return;
 
-                const gridHelper = new THREE.GridHelper(100, 100);
-                scene.add(gridHelper);
+                        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                        const material = new THREE.LineBasicMaterial({ color: colors[index % colors.length], linewidth: 2 });
+                        const line = new THREE.Line(geometry, material);
+                        scene.add(line);
+                    });
+
+                    const boundingBox = new THREE.Box3().setFromPoints(allPoints);
+                    const center = new THREE.Vector3();
+                    boundingBox.getCenter(center);
+                    const size = new THREE.Vector3();
+                    boundingBox.getSize(size);
+
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const fov = camera.fov * (Math.PI / 180);
+                    const cameraDistance = maxDim / (2 * Math.tan(fov / 2));
+
+                    camera.position.copy(center);
+                    camera.position.x += maxDim * 0.5;
+                    camera.position.y += maxDim * 0.5;
+                    camera.position.z += maxDim * 0.75;
+                    camera.near = cameraDistance / 100;
+                    camera.far = cameraDistance * 3;
+                    camera.updateProjectionMatrix();
+
+                    controls.target.copy(center);
+                    controls.update();
+
+                    const gridHelper = new THREE.GridHelper(Math.ceil(maxDim * 1.5), 20);
+                    gridHelper.position.y = boundingBox.min.y; // Place grid at the bottom of the trajectory
+                    scene.add(gridHelper);
+
+                } else {
+                    camera.position.set(0, 5, 10);
+                    controls.target.set(0, 0, 0);
+                    const gridHelper = new THREE.GridHelper(20, 20);
+                    scene.add(gridHelper);
+                }
 
                 function animate() {
                     requestAnimationFrame(animate);
