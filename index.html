@@ -2718,11 +2718,11 @@
 
                 const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
 
-                const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, p.z))));
+                const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, -p.z))));
 
                 if (allPoints.length > 1) {
                     Object.values(data).forEach((pointsData, index) => {
-                        const points = pointsData.map(p => new THREE.Vector3(p.x, p.y, p.z));
+                        const points = pointsData.map(p => new THREE.Vector3(p.x, p.y, -p.z));
                         if (points.length < 2) return;
 
                         const curve = new THREE.CatmullRomCurve3(points);
