@@ -2697,26 +2697,6 @@
                 if (!container) return;
                 container.innerHTML = '';
 
-                const logDiv = document.createElement('div');
-                logDiv.style.position = 'absolute';
-                logDiv.style.top = '10px';
-                logDiv.style.left = '10px';
-                logDiv.style.padding = '5px';
-                logDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
-                logDiv.style.color = 'white';
-                logDiv.style.fontSize = '10px';
-                logDiv.style.fontFamily = 'monospace';
-                logDiv.style.zIndex = '100';
-                container.appendChild(logDiv);
-
-                const log = (msg) => {
-                    logDiv.innerHTML += msg + '<br>';
-                    console.log(msg);
-                };
-
-                log('--- 3D Trajectory Log ---');
-                log(`Data received: ${Object.keys(data).length} rigid bodies.`);
-
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color(0xf1f5f9);
 
@@ -2739,7 +2719,6 @@
                 const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
 
                 const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, p.z))));
-                log(`Total points: ${allPoints.length}`);
 
                 if (allPoints.length > 1) {
                     Object.values(data).forEach((pointsData, index) => {
@@ -2763,11 +2742,7 @@
                     const size = new THREE.Vector3();
                     boundingBox.getSize(size);
 
-                    log(`BBox Center: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
-                    log(`BBox Size: ${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)}`);
-
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    log(`Max dimension: ${maxDim.toFixed(2)}`);
                     const fov = camera.fov * (Math.PI / 180);
                     const cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
 
@@ -2778,9 +2753,6 @@
                     camera.far = cameraDistance * 100;
                     camera.updateProjectionMatrix();
 
-                    log(`Camera Position: ${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
-                    log(`Camera Target: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
-
                     controls.target.copy(center);
                     controls.update();
 
@@ -2788,17 +2760,11 @@
                     gridHelper.position.y = boundingBox.min.y;
                     scene.add(gridHelper);
 
-                    const axesHelper = new THREE.AxesHelper(maxDim * 0.8);
-                    axesHelper.position.set(center.x, center.y, center.z);
-                    scene.add(axesHelper);
-
                 } else {
                     camera.position.set(0, 5, 10);
                     controls.target.set(0, 0, 0);
                     const gridHelper = new THREE.GridHelper(20, 20, 0xcccccc, 0xcccccc);
                     scene.add(gridHelper);
-                    const axesHelper = new THREE.AxesHelper(5);
-                    scene.add(axesHelper);
                 }
 
                 function animate() {
