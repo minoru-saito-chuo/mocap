@@ -459,10 +459,40 @@
                                     <div>
                                         <label for="sampling-rate-wide" class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔 (秒)</label>
                                         <input type="number" id="sampling-rate-wide" value="1.0" step="0.1" min="0.01" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <div class="mt-2 flex items-center">
+                                            <input type="checkbox" id="no-downsampling-checkbox-wide" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                            <label for="no-downsampling-checkbox-wide" class="ml-2 block text-sm text-slate-600">ダウンサンプリングをしない</label>
+                                        </div>
                                     </div>
                                      <div>
                                         <label for="heatmap-grid-size-wide" class="block text-sm font-medium text-slate-700 mb-2">④ ヒートマップのマス目のサイズ (<span class="unit-label">mm</span>)</label>
                                         <input type="number" id="heatmap-grid-size-wide" value="500" step="100" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <details class="bg-slate-50/70 border rounded-md p-4">
+                                            <summary class="font-medium text-slate-700 text-sm">異常値の自動除外設定</summary>
+                                            <div class="mt-4 pt-4 border-t space-y-4">
+                                                <div class="flex items-center">
+                                                    <input type="checkbox" id="enable-outlier-removal-wide" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                                    <label for="enable-outlier-removal-wide" class="ml-2 block text-sm text-slate-600">剛体定義が一時的に飛んだ可能性のある点を自動で除外する</label>
+                                                </div>
+                                                <div id="outlier-settings-wide" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 pl-6">
+                                                    <div>
+                                                        <label for="outlier-window-wide" class="block text-xs font-medium text-slate-500">平均移動量計算の<br>時間窓 (秒)</label>
+                                                        <input type="number" id="outlier-window-wide" value="0.5" step="0.1" min="0.1" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                                    </div>
+                                                    <div>
+                                                        <label for="outlier-threshold-wide" class="block text-xs font-medium text-slate-500">異常とみなす<br>移動量の倍率</label>
+                                                        <input type="number" id="outlier-threshold-wide" value="10" step="1" min="2" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                                    </div>
+                                                    <div>
+                                                        <label for="outlier-return-time-wide" class="block text-xs font-medium text-slate-500">元の座標に戻る<br>時間閾値 (秒)</label>
+                                                        <input type="number" id="outlier-return-time-wide" value="0.3" step="0.1" min="0.1" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                                    </div>
+                                                </div>
+                                                <p class="text-xs text-slate-500 pl-6">※ 短い時間窓の平均移動量と比較して、瞬間的に移動量が指定倍率を超え、かつ短時間で元の座標付近に戻ってきた場合に異常値と判定します。</p>
+                                            </div>
+                                        </details>
                                     </div>
                                      <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-2">⑤ 方向の定義</label>
@@ -954,6 +984,22 @@
                                 <p>
                                     ここで、$T$はサンプリング時刻の集合、$P_t$は時刻$t$における全データ点の集合、$\mathbf{1}(\cdot)$は指示関数です。
                                 </p>
+
+                                <h3>異常値の自動除外</h3>
+                                <p>
+                                    モーションキャプチャのデータには、マーカーの隠れ（オクルージョン）などによって、剛体の位置・姿勢が一瞬だけ大きく飛ぶ（スパイク状のノイズ）ことがあります。本ツールでは、このような異常値を自動で検出し、除外するオプションを提供します。アルゴリズムの主な流れは以下の通りです。
+                                </p>
+                                <ol class="list-decimal list-inside space-y-2 text-sm pl-4">
+                                    <li><strong>局所的な平均移動速度の計算:</strong> ある点 $P_i$ に注目し、その直前の一定時間（ユーザー設定可能、例: 0.5秒）内のデータを用いて、局所的な平均移動速度 $v_{avg}$ を計算します。</li>
+                                    <li><strong>移動量の予測と現実の比較:</strong> $v_{avg}$ と直前のフレームからの経過時間 $\Delta t$ を用いて、次のフレームまでの予測移動距離 $d_{pred} = v_{avg} \times \Delta t$ を算出します。実際の移動距離 $d_{actual}$ が、$d_{pred}$ に特定の倍率（ユーザー設定可能、例: 10倍）を掛けたものを超えた場合、その点は「異常値の候補」と見なされます。</li>
+                                    <li><strong>短時間での復帰を確認:</strong> 点 $P_i$ が異常値候補となった場合、その後、短時間（ユーザー設定可能、例: 0.3秒）以内に、元の座標近く（異常が発生する直前の点 $P_{i-1}$ から $d_{pred}$ の範囲内）に復帰するかどうかを検証します。</li>
+                                    <li><strong>異常値の確定と除外:</strong> もし短時間で元の座標付近に復帰した場合、その間のフレーム（$P_i$ から復帰直前の点まで）は異常値と確定され、データセットから除外されます。</li>
+                                </ol>
+                                <div class="my-6 text-center">
+                                    <img src="img/outlier_removal_exp.png" alt="異常値除去の概念図" class="mx-auto rounded-lg shadow-md border" style="max-width: 500px;">
+                                    <p class="text-sm text-slate-500 mt-2">図2: 異常値除去の概念図。局所的な平均移動量から予測される範囲を逸脱し、短時間で復帰する点をノイズとして除去する。</p>
+                                </div>
+
 
                                 <h3>網羅率の計算</h3>
                                 <p>
@@ -2311,6 +2357,7 @@
             const fileListAreaWide = document.getElementById('file-list-area-wide');
             const clearFilesBtnWide = document.getElementById('clear-files-btn-wide');
             const samplingRateInputWide = document.getElementById('sampling-rate-wide');
+            const noDownsamplingCheckboxWide = document.getElementById('no-downsampling-checkbox-wide');
             const gridSizeInputWide = document.getElementById('heatmap-grid-size-wide');
             const verticalAxisSelectWide = document.getElementById('vertical-axis-wide');
             const rigidbodySelectionAreaWide = document.getElementById('rigidbody-selection-area-wide');
@@ -2349,6 +2396,16 @@
             const heatmapTooltip = document.getElementById('heatmap-tooltip');
             const heatmapCanvas = document.getElementById('heatmap-canvas-wide');
             const heightInfoCheckboxWide = document.getElementById('height-info-checkbox-wide');
+            const enableOutlierRemovalCheckbox = document.getElementById('enable-outlier-removal-wide');
+            const outlierSettingsDiv = document.getElementById('outlier-settings-wide');
+
+            enableOutlierRemovalCheckbox.addEventListener('change', (e) => {
+                outlierSettingsDiv.classList.toggle('hidden', !e.target.checked);
+            });
+
+            noDownsamplingCheckboxWide.addEventListener('change', (e) => {
+                samplingRateInputWide.disabled = e.target.checked;
+            });
 
             heightInfoCheckboxWide.addEventListener('change', () => {
                 if (lastSampledDataWide) {
@@ -2477,12 +2534,12 @@
                 for(let i = 0; i < Math.min(20, data.length); i++) {
                     const row = data[i];
                     if (!row || row.length < 2) continue;
-                    if (row[1] === 'Type') typeRowIndex = i;
-                    if (row[1] === 'Name') nameRowIndex = i;
-                    if (row.includes('Position') && row.includes('Rotation')) propertyRowIndex = i;
+                    // Robustly find header rows by checking for keywords and empty leading cells
+                    if ((row[0] === '' || row[1] === '') && row.includes('Type')) typeRowIndex = i;
+                    if ((row[0] === '' || row[1] === '') && row.includes('Name')) nameRowIndex = i;
+                    if ((row[0] === '' || row[1] === '') && (row.includes('Position') || row.includes('Rotation'))) propertyRowIndex = i;
                     if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
-                        break;
                     }
                 }
                 if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
@@ -2601,8 +2658,9 @@
                 });
 
                 if (selectedBodies.length === 0) { alert('解析する剛体を少なくとも1つ選択してください。'); return; }
-                const samplingRate = parseFloat(samplingRateInputWide.value);
-                if (isNaN(samplingRate) || samplingRate <= 0) { alert('データ取得間隔には正の数値を入力してください。'); return; }
+                const useDownsampling = !noDownsamplingCheckboxWide.checked;
+                const samplingRate = useDownsampling ? parseFloat(samplingRateInputWide.value) : 0;
+                if (useDownsampling && (isNaN(samplingRate) || samplingRate <= 0)) { alert('データ取得間隔には正の数値を入力してください。'); return; }
                 let gridSize = parseFloat(gridSizeInputWide.value);
                 if (isNaN(gridSize) || gridSize <= 0) { alert('マス目のサイズには正の数値を入力してください。'); return; }
 
@@ -2621,7 +2679,21 @@
                         const hAxis1 = horizontalAxes[0];
                         const hAxis2 = horizontalAxes[1];
 
-                        lastSampledDataWide = sampleAllDataWide(selectedBodies, samplingRate, dataUnit);
+                        let sampledData = sampleAllDataWide(selectedBodies, samplingRate, dataUnit, useDownsampling);
+
+                        if (enableOutlierRemovalCheckbox.checked) {
+                            const outlierSettings = {
+                                windowSize: parseFloat(document.getElementById('outlier-window-wide').value),
+                                thresholdMultiplier: parseFloat(document.getElementById('outlier-threshold-wide').value),
+                                returnTimeThreshold: parseFloat(document.getElementById('outlier-return-time-wide').value)
+                            };
+                             if (isNaN(outlierSettings.windowSize) || isNaN(outlierSettings.thresholdMultiplier) || isNaN(outlierSettings.returnTimeThreshold)) {
+                                throw new Error("異常値の除外設定が無効です。数値を確認してください。");
+                            }
+                            sampledData = removeOutliersWide(sampledData, outlierSettings);
+                        }
+
+                        lastSampledDataWide = sampledData;
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
                         // Defer 3D trajectory drawing until the tab is clicked
                         // draw3DTrajectory(lastSampledDataWide);
@@ -2653,7 +2725,7 @@
                 }, 50);
             }
 
-            function sampleAllDataWide(selectedBodies, samplingRate, dataUnit) {
+            function sampleAllDataWide(selectedBodies, samplingRate, dataUnit, useDownsampling) {
                 const result = {};
                 selectedBodies.forEach(({ filename, bodyName, label }) => {
                     const uniqueKey = label;
@@ -2667,7 +2739,7 @@
                         const time = parseFloat(row[1]);
                         if (isNaN(time)) continue;
 
-                        if (time >= nextSampleTime) {
+                        if (!useDownsampling || time >= nextSampleTime) {
                             let x = parseFloat(row[info.xIndex]);
                             let y = parseFloat(row[info.yIndex]);
                             let z = parseFloat(row[info.zIndex]);
@@ -2681,11 +2753,82 @@
                             if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
                                 result[uniqueKey].push({ t: time, x: x, y: y, z: z });
                             }
-                            nextSampleTime += samplingRate;
+                            if (useDownsampling) {
+                                nextSampleTime += samplingRate;
+                            }
                         }
                     }
                 });
                 return result;
+            }
+
+            function removeOutliersWide(data, settings) {
+                const cleanedData = {};
+                Object.keys(data).forEach(key => {
+                    const points = data[key];
+                    if (points.length < 3) {
+                        cleanedData[key] = points;
+                        return;
+                    }
+
+                    const distances = [];
+                    for (let i = 1; i < points.length; i++) {
+                        const p1 = points[i-1];
+                        const p2 = points[i];
+                        const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2) + Math.pow(p2.z - p1.z, 2));
+                        distances.push({dist, dt: p2.t - p1.t});
+                    }
+
+                    const validIndices = new Set(Array.from(Array(points.length).keys()));
+
+                    for (let i = 1; i < points.length - 1; i++) {
+                        if (!validIndices.has(i)) continue;
+
+                        const windowStartTime = points[i].t - settings.windowSize;
+                        let totalDist = 0;
+                        let totalTime = 0;
+                        let windowPointsCount = 0;
+
+                        for (let j = i - 1; j >= 0; j--) {
+                            if (points[j].t < windowStartTime) break;
+                            if (validIndices.has(j) && validIndices.has(j+1)) {
+                                totalDist += distances[j-1] ? distances[j-1].dist : 0;
+                                totalTime += distances[j-1] ? distances[j-1].dt : 0;
+                                windowPointsCount++;
+                            }
+                        }
+
+                        if (windowPointsCount < 3) continue;
+
+                        const avgSpeed = totalTime > 0 ? totalDist / totalTime : 0;
+                        const timeDelta = points[i].t - points[i-1].t;
+                        const expectedMovement = avgSpeed * timeDelta;
+
+                        const currentMovement = distances[i-1].dist;
+
+                        if (currentMovement > expectedMovement * settings.thresholdMultiplier) {
+                            for (let k = i + 1; k < points.length; k++) {
+                                if (points[k].t - points[i].t > settings.returnTimeThreshold) break;
+
+                                const returnDist = Math.sqrt(
+                                    Math.pow(points[k].x - points[i-1].x, 2) +
+                                    Math.pow(points[k].y - points[i-1].y, 2) +
+                                    Math.pow(points[k].z - points[i-1].z, 2)
+                                );
+
+                                if (returnDist < expectedMovement * settings.thresholdMultiplier) {
+                                    for (let l = i; l < k; l++) {
+                                        validIndices.delete(l);
+                                    }
+                                    i = k - 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    cleanedData[key] = points.filter((_, index) => validIndices.has(index));
+                });
+                return cleanedData;
             }
 
             function hexToRgb(hex) {
@@ -2759,7 +2902,11 @@
 
             function drawTrajectoryWide(data, hAxis1, hAxis2) {
                 const ctx = document.getElementById('trajectory-chart-wide').getContext('2d');
-                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+                const colors = [
+                    '#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899',
+                    '#4ade80', '#22d3ee', '#818cf8', '#fb7185', '#fbbf24', '#a78bfa', '#f472b6', '#34d399',
+                    '#60a5fa', '#c084fc', '#e879f9', '#2dd4bf'
+                ];
                 if (trajectoryChartWide) trajectoryChartWide.destroy();
 
                 const legendContainer = document.getElementById('height-legend-wide');
@@ -2872,7 +3019,11 @@
                 directionalLight.position.set(50, 50, 50);
                 scene.add(directionalLight);
 
-                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+                const colors = [
+                    '#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899',
+                    '#4ade80', '#22d3ee', '#818cf8', '#fb7185', '#fbbf24', '#a78bfa', '#f472b6', '#34d399',
+                    '#60a5fa', '#c084fc', '#e879f9', '#2dd4bf'
+                ];
 
                 const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, p.z))));
 
