@@ -2695,8 +2695,17 @@
 
                         lastSampledDataWide = sampledData;
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
-                        // Defer 3D trajectory drawing until the tab is clicked
-                        // draw3DTrajectory(lastSampledDataWide);
+
+                        if (useDownsampling) {
+                            show3DTrajectoryBtnWide.disabled = false;
+                            show3DTrajectoryBtnWide.title = '';
+                            show3DTrajectoryBtnWide.classList.remove('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            show3DTrajectoryBtnWide.disabled = true;
+                            show3DTrajectoryBtnWide.title = '高負荷のため、ダウンサンプリング無効時は3D表示を利用できません';
+                            show3DTrajectoryBtnWide.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+
                         lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize, hAxis1, hAxis2);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
