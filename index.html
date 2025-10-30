@@ -552,6 +552,9 @@
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="trajectory-chart-wide" data-format="png">PNGで保存</button>
                                     <button class="download-btn-wide bg-slate-600 hover:bg-slate-700 text-white text-sm h-9 px-4 flex items-center justify-center rounded-md" data-target="trajectory-chart-wide" data-format="pdf">PDFで保存</button>
                                 </div>
+                                <p id="simplification-notice-wide" class="hidden text-xs text-slate-500 mt-3 text-center max-w-2xl mx-auto p-2 bg-slate-50 border rounded-md">
+                                    ※ 描画の安定性のため、軌跡の表示は簡略化されています。ヒートマップや網羅率などの計算には全ての生データが使用されています。
+                                </p>
                             </div>
 
                             <div id="heatmap-view-wide" class="hidden">
@@ -1000,6 +1003,16 @@
                                     <p class="text-sm text-slate-500 mt-2">図2: 異常値除去の概念図。局所的な平均移動量から予測される範囲を逸脱し、短時間で復帰する点をノイズとして除去する。</p>
                                 </div>
 
+
+                                 <h3>軌跡描画のデータ簡略化（Ramer-Douglas-Peucker Algorithm）</h3>
+                                 <p>
+                                     「ダウンサンプリングをしない」オプションを選択して数分間にわたるような長時間のデータを解析すると、データ点数が数十万〜数百万点に達し、ブラウザの描画性能の限界を超えることがあります。これにより、ページの応答性が著しく低下したり、クラッシュしたりする可能性があります。
+                                     この問題に対応するため、2D軌跡グラフを描画する際に、データ点数が一定の閾値（現在5,000点）を超えた場合に、**Ramer-Douglas-Peucker（RDP）アルゴリズム**を用いて軌跡の形状を視覚的に維持しながらデータ点を削減します。
+                                 </p>
+                                 <p>
+                                     このアルゴリズムは、軌跡の始点と終点を結ぶ直線から最も離れた点を探し、その距離が事前に定義された閾値（$\epsilon$）より大きい場合、その点を新しいアンカーポイントとして軌跡を再帰的に分割します。この処理を繰り返すことで、軌跡の全体的な形状に影響の少ない冗長な点を効率的に間引きます。
+                                     この処理は描画データにのみ適用され、ヒートマップや網羅率の計算など、他の全ての解析処理はオリジナルの生データを用いて行われるため、解析精度が低下することはありません。
+                                 </p>
 
                                 <h3>網羅率の計算</h3>
                                 <p>
@@ -2531,15 +2544,29 @@
 
             function parseHeaderWide(data) {
                 let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
+
+                // First, find the most reliable row: the data header
                 for(let i = 0; i < Math.min(20, data.length); i++) {
                     const row = data[i];
-                    if (!row || row.length < 2) continue;
-                    // Robustly find header rows by checking for keywords and empty leading cells
-                    if ((row[0] === '' || row[1] === '') && row.includes('Type')) typeRowIndex = i;
-                    if ((row[0] === '' || row[1] === '') && row.includes('Name')) nameRowIndex = i;
-                    if ((row[0] === '' || row[1] === '') && (row.includes('Position') || row.includes('Rotation'))) propertyRowIndex = i;
-                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                    if (row && row.length > 1 && row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
+                        break;
+                    }
+                }
+
+                if (dataHeaderRowIndex === -1) {
+                     throw new Error("CSVのヘッダー形式を認識できませんでした (Frame/Time not found)。");
+                }
+
+                // Now search for other headers ONLY above the data header
+                for (let i = 0; i < dataHeaderRowIndex; i++) {
+                    const row = data[i];
+                    if (!row) continue;
+                    // Check from column 1 onwards to avoid false positives on metadata in column 0
+                    for (let j = 1; j < row.length; j++) {
+                        if (row[j] === 'Type') typeRowIndex = i;
+                        if (row[j] === 'Name') nameRowIndex = i;
+                        if (row[j] === 'Position' || row[j] === 'Rotation') propertyRowIndex = i;
                     }
                 }
                 if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
@@ -2840,6 +2867,47 @@
                 return cleanedData;
             }
 
+            function perpendicularDistance(point, lineStart, lineEnd) {
+                let dx = lineEnd.x - lineStart.x;
+                let dy = lineEnd.y - lineStart.y;
+                if (dx === 0 && dy === 0) {
+                    return Math.sqrt(Math.pow(point.x - lineStart.x, 2) + Math.pow(point.y - lineStart.y, 2));
+                }
+                const t = ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / (dx * dx + dy * dy);
+                let closestPoint;
+                if (t < 0) {
+                    closestPoint = lineStart;
+                } else if (t > 1) {
+                    closestPoint = lineEnd;
+                } else {
+                    closestPoint = { x: lineStart.x + t * dx, y: lineStart.y + t * dy };
+                }
+                const pdx = point.x - closestPoint.x;
+                const pdy = point.y - closestPoint.y;
+                return Math.sqrt(pdx * pdx + pdy * pdy);
+            }
+
+            function simplifyPathRDP(points, epsilon) {
+                if (points.length < 3) return points;
+                let dmax = 0;
+                let index = 0;
+                const end = points.length - 1;
+                for (let i = 1; i < end; i++) {
+                    const d = perpendicularDistance(points[i], points[0], points[end]);
+                    if (d > dmax) {
+                        index = i;
+                        dmax = d;
+                    }
+                }
+                if (dmax > epsilon) {
+                    const recResults1 = simplifyPathRDP(points.slice(0, index + 1), epsilon);
+                    const recResults2 = simplifyPathRDP(points.slice(index, end + 1), epsilon);
+                    return recResults1.slice(0, recResults1.length - 1).concat(recResults2);
+                } else {
+                    return [points[0], points[end]];
+                }
+            }
+
             function hexToRgb(hex) {
                 let r = 0, g = 0, b = 0;
                 if (hex.length == 4) {
@@ -2923,6 +2991,7 @@
                 let minHeight = Infinity;
                 let maxHeight = -Infinity;
                 let uniqueColors = new Set();
+                let simplificationApplied = false;
 
                 if (showHeightInfo) {
                     const verticalAxis = verticalAxisSelectWide.value.toLowerCase();
@@ -2938,9 +3007,18 @@
                 const datasets = Object.keys(data).map((uniqueKey, index) => {
                      const baseColor = colors[index % colors.length];
                      uniqueColors.add(baseColor);
+
+                     let trajectoryPoints = data[uniqueKey].map(p => ({ x: p[hAxis1.toLowerCase()], y: -p[hAxis2.toLowerCase()] }));
+                     const useDownsampling = !noDownsamplingCheckboxWide.checked;
+                     if (!useDownsampling && trajectoryPoints.length > 5000) {
+                         simplificationApplied = true;
+                         // Epsilon value is a guess, may need tuning. 0.05 means it simplifies paths where points deviate less than 5cm.
+                         trajectoryPoints = simplifyPathRDP(trajectoryPoints, 0.05);
+                     }
+
                      const baseProps = {
                         label: uniqueKey,
-                        data: data[uniqueKey].map(p => ({ x: p[hAxis1.toLowerCase()], y: -p[hAxis2.toLowerCase()] })),
+                        data: trajectoryPoints,
                         showLine: !showHeightInfo,
                         tension: 0.1,
                         borderWidth: showHeightInfo ? 1 : 2,
@@ -2999,6 +3077,9 @@
                         y: { min: midY - maxRange / 2, max: midY + maxRange / 2, grid: { color: '#e2e8f0' }, title: { display: true, text: `${hAxis2}座標 (m)` }}
                     };
                 }
+
+            document.getElementById('simplification-notice-wide').classList.toggle('hidden', !simplificationApplied);
+
                 trajectoryChartWide = new Chart(ctx, {
                     type: 'scatter', data: { datasets }, options: { responsive: true, maintainAspectRatio: true, plugins: { title: { display: true, text: '剛体の移動軌跡' }, legend: { display: !showHeightInfo, position: 'top' }}, scales: scales, aspectRatio: 1 }
                 });
