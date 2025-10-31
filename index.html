@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -161,6 +162,12 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M13.4 10.6 19 5"></path>
                     </svg>
                     <span>基準速度算出ツール</span>
+                </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#data-trimming">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.622 7.622l1.378-1.378A5.25 5.25 0 0113.5 4.5h1.5a5.25 5.25 0 015.25 5.25v1.5a5.25 5.25 0 01-1.752 4.498L17.38 17.38a5.25 5.25 0 01-4.498 1.752h-1.5a5.25 5.25 0 01-5.25-5.25v-1.5a5.25 5.25 0 011.752-4.498zM9 9l6 6" />
+                    </svg>
+                    <span>データトリミングツール</span>
                 </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#how-to-use">
@@ -641,6 +648,61 @@
                     </div>
                 </div>
 
+                <div class="page" id="data-trimming">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">データトリミングツール</h1>
+                            <p class="text-slate-500 mt-2">CSVファイルの時間範囲を指定して、必要な部分だけを切り出します。</p>
+                        </header>
+
+                        <section class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
+                            <div class="max-w-md mx-auto">
+                                <label for="csv-file-trim" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを選択</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="file" id="csv-file-trim" accept=".csv" class="hidden">
+                                    <label for="csv-file-trim" class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを選択</label>
+                                    <button id="clear-file-btn-trim" class="flex-shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-xs shadow-sm">クリア</button>
+                                </div>
+                                <div id="file-info-trim" class="mt-4 text-sm text-slate-600"></div>
+                            </div>
+                        </section>
+
+                        <div id="trimming-main-section" class="hidden space-y-8">
+                            <section class="bg-white p-6 rounded-lg shadow-sm border">
+                                <h2 class="text-xl font-semibold text-center mb-6">2. データの確認と範囲選択</h2>
+                                <p class="text-sm text-slate-500 text-center mb-4">グラフをスクロールやズームして、切り出したい時間範囲を確認してください。</p>
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    <div class="w-full aspect-w-4 aspect-h-3 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full aspect-w-4 aspect-h-3 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full aspect-w-4 aspect-h-3 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
+                                </div>
+                            </section>
+
+                            <section class="bg-white p-6 rounded-lg shadow-sm border">
+                                <h2 class="text-xl font-semibold text-center mb-6">3. 時間範囲の指定とエクスポート</h2>
+                                <div class="max-w-lg mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label for="start-time-trim" class="block text-sm font-medium text-slate-700">開始時間 (秒)</label>
+                                            <input type="number" id="start-time-trim" step="0.01" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="end-time-trim" class="block text-sm font-medium text-slate-700">終了時間 (秒)</label>
+                                            <input type="number" id="end-time-trim" step="0.01" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button id="export-csv-btn-trim" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-md shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                            トリミングしてCSVをエクスポート
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="page" id="how-to-use">
                     <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
 
@@ -1072,6 +1134,7 @@
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#wide-area-analysis">広域解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-trimming">データトリミングツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#algorithms">アルゴリズム仕様</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
@@ -2350,6 +2413,29 @@
             const heatmapCanvas = document.getElementById('heatmap-canvas-wide');
             const heightInfoCheckboxWide = document.getElementById('height-info-checkbox-wide');
 
+            // --- DATA TRIMMING TOOL SCRIPT ---
+            const fileInputTrim = document.getElementById('csv-file-trim');
+            const fileInfoTrim = document.getElementById('file-info-trim');
+            const clearFileBtnTrim = document.getElementById('clear-file-btn-trim');
+            const trimmingMainSection = document.getElementById('trimming-main-section');
+            const startTimeInputTrim = document.getElementById('start-time-trim');
+            const endTimeInputTrim = document.getElementById('end-time-trim');
+            const exportCsvBtnTrim = document.getElementById('export-csv-btn-trim');
+
+            let trimChartInstances = {};
+            let originalCsvDataTrim = {
+                headerRows: [],
+                dataRows: [],
+                fileName: ''
+            };
+
+            if (fileInputTrim) {
+                fileInputTrim.addEventListener('change', handleFileSelectTrim);
+                clearFileBtnTrim.addEventListener('click', clearFileTrim);
+                exportCsvBtnTrim.addEventListener('click', exportTrimmedCsv);
+            }
+
+
             heightInfoCheckboxWide.addEventListener('change', () => {
                 if (lastSampledDataWide) {
                     const verticalAxis = verticalAxisSelectWide.value;
@@ -3224,6 +3310,190 @@
                     });
                 });
             }
+
+            // --- DATA TRIMMING TOOL FUNCTIONS ---
+            function handleFileSelectTrim(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "ファイルを解析中...";
+
+                Papa.parse(file, {
+                    complete: (results) => {
+                        try {
+                            const { headerRows, dataRows, rigidBodyInfo } = parseCsvForTrimming(results.data);
+
+                            if (Object.keys(rigidBodyInfo).length === 0) {
+                                throw new Error("ファイル内に有効な剛体(Rigid Body)データが見つかりませんでした。");
+                            }
+
+                            originalCsvDataTrim = { headerRows, dataRows, fileName: file.name, rigidBodyInfo };
+
+                            const timeColumn = dataRows.map(row => parseFloat(row[1])).filter(t => !isNaN(t));
+                            if (timeColumn.length > 0) {
+                                startTimeInputTrim.value = timeColumn[0].toFixed(2);
+                                endTimeInputTrim.value = timeColumn[timeColumn.length - 1].toFixed(2);
+                            }
+
+                            fileInfoTrim.innerHTML = `
+                                <div class="bg-slate-50 p-3 rounded-md border text-sm">
+                                    <p><strong>ファイル名:</strong> ${file.name}</p>
+                                    <p><strong>剛体:</strong> ${Object.keys(rigidBodyInfo).join(', ')}</p>
+                                    <p><strong>総時間:</strong> ${timeColumn.length > 0 ? timeColumn[timeColumn.length - 1].toFixed(2) : 'N/A'} 秒</p>
+                                </div>`;
+
+                            renderTrimmingCharts(dataRows, rigidBodyInfo);
+
+                            trimmingMainSection.classList.remove('hidden');
+
+                        } catch (e) {
+                            alert(`ファイル解析エラー: ${e.message}`);
+                            clearFileTrim();
+                        } finally {
+                            loadingDiv.classList.add('hidden');
+                        }
+                    },
+                    error: (error) => {
+                        alert(`CSVファイルの読み込みに失敗しました: ${error.message}`);
+                        loadingDiv.classList.add('hidden');
+                    }
+                });
+            }
+
+            function parseCsvForTrimming(data) {
+                let dataHeaderRowIndex = -1;
+                 for(let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (row && row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                        dataHeaderRowIndex = i;
+                        break;
+                    }
+                }
+                if (dataHeaderRowIndex === -1) {
+                    throw new Error("Motive形式のCSVヘッダー(Frame, Time (Seconds))が見つかりませんでした。");
+                }
+                const headerRows = data.slice(0, dataHeaderRowIndex + 1);
+                const dataRows = data.slice(dataHeaderRowIndex + 1).filter(row => row.length > 1 && row[1] !== '');
+
+                const { rigidBodyInfo } = parseHeaderWide(data);
+
+                return { headerRows, dataRows, rigidBodyInfo };
+            }
+
+            function renderTrimmingCharts(dataRows, rigidBodyInfo) {
+                Object.values(trimChartInstances).forEach(chart => chart.destroy());
+
+                const firstBodyName = Object.keys(rigidBodyInfo)[0];
+                const info = rigidBodyInfo[firstBodyName];
+
+                if (!info) {
+                    console.error("剛体情報が見つかりません。");
+                    return;
+                }
+
+                const datasets = {
+                    x: [{ label: `${firstBodyName} X`, data: [], borderColor: '#3b82f6', borderWidth: 1.5, pointRadius: 0 }],
+                    y: [{ label: `${firstBodyName} Y`, data: [], borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0 }],
+                    z: [{ label: `${firstBodyName} Z`, data: [], borderColor: '#10b981', borderWidth: 1.5, pointRadius: 0 }]
+                };
+
+                dataRows.forEach(row => {
+                    const time = parseFloat(row[1]);
+                    if (isNaN(time)) return;
+                    datasets.x[0].data.push({ x: time, y: parseFloat(row[info.xIndex]) });
+                    datasets.y[0].data.push({ x: time, y: parseFloat(row[info.yIndex]) });
+                    datasets.z[0].data.push({ x: time, y: parseFloat(row[info.zIndex]) });
+                });
+
+                ['x', 'y', 'z'].forEach(axis => {
+                    const ctx = document.getElementById(`${axis}-axis-chart-trim`).getContext('2d');
+                    trimChartInstances[axis] = new Chart(ctx, {
+                        type: 'scatter',
+                        data: { datasets: datasets[axis] },
+                        options: getTrimChartOptions(axis.toUpperCase())
+                    });
+                });
+            }
+
+            function getTrimChartOptions(axis) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    showLine: true,
+                    scales: {
+                        x: { type: 'linear', position: 'bottom', title: { display: true, text: '時間 (秒)' } },
+                        y: { title: { display: true, text: `${axis}軸 変位` } }
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        zoom: {
+                            pan: { enabled: true, mode: 'x' },
+                            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+                        }
+                    }
+                };
+            }
+
+            function clearFileTrim() {
+                fileInputTrim.value = '';
+                fileInfoTrim.innerHTML = '';
+                trimmingMainSection.classList.add('hidden');
+                Object.values(trimChartInstances).forEach(chart => chart.destroy());
+                trimChartInstances = {};
+                originalCsvDataTrim = { headerRows: [], dataRows: [], fileName: '' };
+            }
+
+            function exportTrimmedCsv() {
+                const startTime = parseFloat(startTimeInputTrim.value);
+                const endTime = parseFloat(endTimeInputTrim.value);
+
+                if (isNaN(startTime) || isNaN(endTime) || startTime >= endTime) {
+                    alert("有効な開始時間と終了時間を入力してください。");
+                    return;
+                }
+
+                const { headerRows, dataRows, fileName } = originalCsvDataTrim;
+                if (dataRows.length === 0) {
+                    alert("エクスポートするデータがありません。");
+                    return;
+                }
+
+                const trimmedData = dataRows.filter(row => {
+                    const time = parseFloat(row[1]);
+                    return time >= startTime && time <= endTime;
+                });
+
+                if (trimmedData.length === 0) {
+                    alert("指定された時間範囲にデータがありません。");
+                    return;
+                }
+
+                const firstFrame = parseInt(trimmedData[0][0]);
+                const firstTime = parseFloat(trimmedData[0][1]);
+
+                const renumberedData = trimmedData.map((row, index) => {
+                    const newRow = [...row];
+                    newRow[0] = (index + 1).toString(); // Re-number Frame from 1
+                    newRow[1] = (parseFloat(row[1]) - firstTime).toFixed(6); // Re-calculate Time from 0
+                    return newRow;
+                });
+
+                const finalCsvData = headerRows.concat(renumberedData);
+                const csvString = Papa.unparse(finalCsvData, { newline: "\r\n" });
+
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                const originalFileName = fileName.endsWith('.csv') ? fileName.slice(0, -4) : fileName;
+                link.setAttribute("href", url);
+                link.setAttribute("download", `${originalFileName}_trimmed.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
         });
     </script>
 </body>
