@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -671,11 +672,11 @@
                         <div id="trimming-main-section" class="hidden space-y-8">
                             <section class="bg-white p-6 rounded-lg shadow-sm border">
                                 <h2 class="text-xl font-semibold text-center mb-6">2. データの確認と範囲選択</h2>
-                                <p class="text-sm text-slate-500 text-center mb-4">グラフをスクロールやズームして、切り出したい時間範囲を確認してください。</p>
-                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    <div class="w-full aspect-w-4 aspect-h-3 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full aspect-w-4 aspect-h-3 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full aspect-w-4 aspect-h-3 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
+                                <p class="text-sm text-slate-500 text-center mb-4">上のグラフでトリミングしたい区間をドラッグして選択してください。</p>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <div class="lg:col-span-2 w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
                                 </div>
                             </section>
 
@@ -3392,13 +3393,16 @@
                     return;
                 }
 
+                const MAX_POINTS = 2000;
+                const downsampledData = downsampleData(dataRows, MAX_POINTS);
+
                 const datasets = {
                     x: [{ label: `${firstBodyName} X`, data: [], borderColor: '#3b82f6', borderWidth: 1.5, pointRadius: 0 }],
                     y: [{ label: `${firstBodyName} Y`, data: [], borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0 }],
                     z: [{ label: `${firstBodyName} Z`, data: [], borderColor: '#10b981', borderWidth: 1.5, pointRadius: 0 }]
                 };
 
-                dataRows.forEach(row => {
+                downsampledData.forEach(row => {
                     const time = parseFloat(row[1]);
                     if (isNaN(time)) return;
                     datasets.x[0].data.push({ x: time, y: parseFloat(row[info.xIndex]) });
@@ -3408,16 +3412,56 @@
 
                 ['x', 'y', 'z'].forEach(axis => {
                     const ctx = document.getElementById(`${axis}-axis-chart-trim`).getContext('2d');
+                    const isMainChart = axis === 'x';
                     trimChartInstances[axis] = new Chart(ctx, {
                         type: 'scatter',
                         data: { datasets: datasets[axis] },
-                        options: getTrimChartOptions(axis.toUpperCase())
+                        options: getTrimChartOptions(axis.toUpperCase(), isMainChart)
                     });
                 });
             }
 
-            function getTrimChartOptions(axis) {
-                return {
+            function downsampleData(data, maxPoints) {
+                if (data.length <= maxPoints) {
+                    return data;
+                }
+                const step = Math.ceil(data.length / maxPoints);
+                const downsampled = [];
+                for (let i = 0; i < data.length; i += step) {
+                    downsampled.push(data[i]);
+                }
+                return downsampled;
+            }
+
+            function updateAnnotations() {
+                const startValue = parseFloat(startTimeInputTrim.value);
+                const endValue = parseFloat(endTimeInputTrim.value);
+
+                if (isNaN(startValue) || isNaN(endValue)) return;
+
+                Object.values(trimChartInstances).forEach(chart => {
+                    const annotations = chart.options.plugins.annotation.annotations;
+                    if (!annotations) return;
+
+                    if (annotations.startLine) {
+                        annotations.startLine.value = startValue;
+                    }
+                    if (annotations.endLine) {
+                        annotations.endLine.value = endValue;
+                    }
+                    if (annotations.box) {
+                        annotations.box.xMin = startValue;
+                        annotations.box.xMax = endValue;
+                    }
+                    chart.update('none');
+                });
+            }
+
+            startTimeInputTrim.addEventListener('input', updateAnnotations);
+            endTimeInputTrim.addEventListener('input', updateAnnotations);
+
+            function getTrimChartOptions(axis, isMainChart = false) {
+                const options = {
                     responsive: true,
                     maintainAspectRatio: false,
                     showLine: true,
@@ -3433,6 +3477,69 @@
                         }
                     }
                 };
+
+                const startValue = parseFloat(startTimeInputTrim.value);
+                const endValue = parseFloat(endTimeInputTrim.value);
+
+                const annotationConfig = {
+                     box: {
+                        type: 'box',
+                        xScaleID: 'x',
+                        yScaleID: 'y',
+                        xMin: startValue,
+                        xMax: endValue,
+                        backgroundColor: 'rgba(255, 99, 132, 0.15)',
+                        borderColor: 'rgba(255, 99, 132, 0.4)',
+                        borderWidth: 1
+                    }
+                };
+
+                if (isMainChart) {
+                    annotationConfig.startLine = {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: startValue,
+                        borderColor: 'rgba(239, 68, 68, 0.8)',
+                        borderWidth: 2,
+                        label: {
+                            content: 'Start',
+                            enabled: true,
+                            position: 'start',
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            font: { size: 10 }
+                        },
+                        draggable: true,
+                        onDragEnd: function(event) {
+                            startTimeInputTrim.value = event.subject.value.toFixed(2);
+                            updateAnnotations();
+                        }
+                    };
+                    annotationConfig.endLine = {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: endValue,
+                        borderColor: 'rgba(239, 68, 68, 0.8)',
+                        borderWidth: 2,
+                        label: {
+                            content: 'End',
+                            enabled: true,
+                            position: 'start',
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            font: { size: 10 }
+                        },
+                        draggable: true,
+                        onDragEnd: function(event) {
+                           endTimeInputTrim.value = event.subject.value.toFixed(2);
+                           updateAnnotations();
+                        }
+                    };
+                }
+
+                options.plugins.annotation = {
+                    annotations: annotationConfig
+                };
+
+                return options;
             }
 
             function clearFileTrim() {
