@@ -2759,7 +2759,7 @@
 
             function drawTrajectoryWide(data, hAxis1, hAxis2) {
                 const ctx = document.getElementById('trajectory-chart-wide').getContext('2d');
-                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899', '#6929c4', '#1192e8', '#005d5d', '#9f1853', '#fa4d56', '#570408', '#198038', '#002d9c', '#ee538b', '#b28600', '#009d9a', '#012749'];
                 if (trajectoryChartWide) trajectoryChartWide.destroy();
 
                 const legendContainer = document.getElementById('height-legend-wide');
@@ -2872,7 +2872,7 @@
                 directionalLight.position.set(50, 50, 50);
                 scene.add(directionalLight);
 
-                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899'];
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b', '#14b8a6', '#ec4899', '#6929c4', '#1192e8', '#005d5d', '#9f1853', '#fa4d56', '#570408', '#198038', '#002d9c', '#ee538b', '#b28600', '#009d9a', '#012749'];
 
                 const allPoints = [].concat(...Object.values(data).map(arr => arr.map(p => new THREE.Vector3(p.x, p.y, p.z))));
 
