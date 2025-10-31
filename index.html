@@ -2476,7 +2476,13 @@
                 heatmapTooltip.classList.add('hidden');
             });
 
-            csvFileInputWide.addEventListener('change', handleFileSelectWide);
+            console.log("Attempting to add 'change' listener to csvFileInputWide:", csvFileInputWide);
+            if (csvFileInputWide) {
+                csvFileInputWide.addEventListener('change', handleFileSelectWide);
+                console.log("Successfully added 'change' listener to csvFileInputWide.");
+            } else {
+                console.error("csvFileInputWide element not found!");
+            }
             clearFilesBtnWide.addEventListener('click', clearAllFilesWide);
             analyzeBtnWide.addEventListener('click', analyzeDataWide);
             showTrajectoryBtnWide.addEventListener('click', () => switchViewWide('trajectory'));
@@ -2551,7 +2557,8 @@
                         analyzeBtnWide.disabled = false;
                     })
                     .catch(error => {
-                        alert(error.message);
+                        // Use console.error instead of alert for better testability
+                        console.error("Caught in handleFileSelectWide:", error.message);
                     })
                     .finally(() => {
                         loadingDiv.classList.add('hidden');
@@ -2561,19 +2568,31 @@
 
             function parseHeaderWide(data) {
                 let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
-                for(let i = 0; i < Math.min(20, data.length); i++) {
-                    const row = data[i];
-                    if (!row || row.length < 2) continue;
-                    if (row[1] === 'Type') typeRowIndex = i;
-                    if (row[1] === 'Name') nameRowIndex = i;
-                    if (row[1] === 'Property') propertyRowIndex = i;
-                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+
+                // 1. Find the main data header row first, as it's the most reliable anchor
+                for (let i = 0; i < Math.min(20, data.length); i++) {
+                    if (data[i] && data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
                         break;
                     }
                 }
-                if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
-                    throw new Error("OptiTrack CSVのヘッダー形式を認識できませんでした。");
+                if (dataHeaderRowIndex === -1) {
+                    throw new Error("OptiTrack CSVのヘッダー形式を認識できませんでした。('Frame', 'Time (Seconds)'ヘッダーが見つかりません)");
+                }
+
+                // 2. Search for other metadata rows *only above* the data header row
+                for (let i = 0; i < dataHeaderRowIndex; i++) {
+                    const row = data[i];
+                    if (!row) continue;
+                    // These keywords are expected to be in one of the first few columns
+                    const searchArea = row.slice(0, 5).join(',');
+                    if (searchArea.includes('Type')) typeRowIndex = i;
+                    if (searchArea.includes('Name')) nameRowIndex = i;
+                    if (searchArea.includes('Property')) propertyRowIndex = i;
+                }
+
+                if (typeRowIndex === -1 || nameRowIndex === -1 || propertyRowIndex === -1) {
+                    throw new Error(`OptiTrack CSVのヘッダー形式を認識できませんでした。(メタデータ行 'Type', 'Name', 'Property' のいずれかが見つかりません)`);
                 }
 
                 const typeRow = data[typeRowIndex];
@@ -2586,15 +2605,18 @@
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
                         const name = nameRow[i];
-                        if (rigidBodyInfo[name]) continue;
-                        rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
-                        for (let j = 0; j < 3; j++) {
-                            const colIndex = i + j;
-                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
-                            const axis = dataHeaderRow[colIndex].toUpperCase();
-                            if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
-                            else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
-                            else if (axis === 'Z') rigidBodyInfo[name].zIndex = colIndex;
+                        if (name && !rigidBodyInfo[name]) {
+                             rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
+                             // Find the corresponding column indices for X, Y, Z based on the main data header
+                             for(let j = i; j < i + 3 && j < dataHeaderRow.length; j++) {
+                                 // Check if we are still within the columns for the current rigid body
+                                 if (nameRow[j] === name && propertyRow[j] === 'Position') {
+                                    const axis = dataHeaderRow[j].toUpperCase();
+                                    if (axis === 'X') rigidBodyInfo[name].xIndex = j;
+                                    else if (axis === 'Y') rigidBodyInfo[name].yIndex = j;
+                                    else if (axis === 'Z') rigidBodyInfo[name].zIndex = j;
+                                 }
+                             }
                         }
                     }
                 }
@@ -2612,6 +2634,7 @@
             }
 
             function updateFileAndRigidBodyUIWide() {
+                console.log("updateFileAndRigidBodyUIWide called");
                 fileListAreaWide.innerHTML = Object.keys(fileDataStoreWide).map(filename =>
                     `<div class="bg-slate-50 p-2.5 rounded-md border text-sm flex justify-between items-center">
                         <span class="text-slate-700 truncate pr-4">${filename}</span>
@@ -2661,7 +2684,11 @@
                     }
                 });
 
-                rigidbodySelectionAreaWide.classList.toggle('hidden', Object.keys(fileDataStoreWide).length === 0);
+                if (Object.keys(fileDataStoreWide).length > 0) {
+                    rigidbodySelectionAreaWide.classList.remove('hidden');
+                } else {
+                    rigidbodySelectionAreaWide.classList.add('hidden');
+                }
                 clearFilesBtnWide.classList.toggle('hidden', Object.keys(fileDataStoreWide).length === 0);
             }
 
