@@ -673,10 +673,10 @@
                             <section class="bg-white p-6 rounded-lg shadow-sm border">
                                 <h2 class="text-xl font-semibold text-center mb-6">2. データの確認と範囲選択</h2>
                                 <p class="text-sm text-slate-500 text-center mb-4">上のグラフでトリミングしたい区間をドラッグして選択してください。</p>
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    <div class="lg:col-span-2 w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full aspect-video bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
+                                <div class="space-y-4">
+                                    <div class="w-full h-48 md:h-56 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full h-48 md:h-56 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full h-48 md:h-56 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
                                 </div>
                             </section>
 
@@ -3385,29 +3385,29 @@
             function renderTrimmingCharts(dataRows, rigidBodyInfo) {
                 Object.values(trimChartInstances).forEach(chart => chart.destroy());
 
-                const firstBodyName = Object.keys(rigidBodyInfo)[0];
-                const info = rigidBodyInfo[firstBodyName];
-
-                if (!info) {
-                    console.error("剛体情報が見つかりません。");
-                    return;
-                }
-
                 const MAX_POINTS = 2000;
                 const downsampledData = downsampleData(dataRows, MAX_POINTS);
 
-                const datasets = {
-                    x: [{ label: `${firstBodyName} X`, data: [], borderColor: '#3b82f6', borderWidth: 1.5, pointRadius: 0 }],
-                    y: [{ label: `${firstBodyName} Y`, data: [], borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0 }],
-                    z: [{ label: `${firstBodyName} Z`, data: [], borderColor: '#10b981', borderWidth: 1.5, pointRadius: 0 }]
-                };
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b'];
+                const bodyNames = Object.keys(rigidBodyInfo);
 
-                downsampledData.forEach(row => {
-                    const time = parseFloat(row[1]);
-                    if (isNaN(time)) return;
-                    datasets.x[0].data.push({ x: time, y: parseFloat(row[info.xIndex]) });
-                    datasets.y[0].data.push({ x: time, y: parseFloat(row[info.yIndex]) });
-                    datasets.z[0].data.push({ x: time, y: parseFloat(row[info.zIndex]) });
+                const datasets = { x: [], y: [], z: [] };
+
+                bodyNames.forEach((name, index) => {
+                    const info = rigidBodyInfo[name];
+                    const color = colors[index % colors.length];
+
+                    datasets.x.push({ label: `${name} X`, data: [], borderColor: color, borderWidth: 1.5, pointRadius: 0 });
+                    datasets.y.push({ label: `${name} Y`, data: [], borderColor: color, borderWidth: 1.5, pointRadius: 0 });
+                    datasets.z.push({ label: `${name} Z`, data: [], borderColor: color, borderWidth: 1.5, pointRadius: 0 });
+
+                    downsampledData.forEach(row => {
+                        const time = parseFloat(row[1]);
+                        if (isNaN(time)) return;
+                        datasets.x[index].data.push({ x: time, y: parseFloat(row[info.xIndex]) });
+                        datasets.y[index].data.push({ x: time, y: parseFloat(row[info.yIndex]) });
+                        datasets.z[index].data.push({ x: time, y: parseFloat(row[info.zIndex]) });
+                    });
                 });
 
                 ['x', 'y', 'z'].forEach(axis => {
@@ -3509,9 +3509,17 @@
                             font: { size: 10 }
                         },
                         draggable: true,
-                        onDragEnd: function(event) {
-                            startTimeInputTrim.value = event.subject.value.toFixed(2);
-                            updateAnnotations();
+                        events: {
+                            drag: function(event) {
+                                const chart = event.chart;
+                                const box = chart.options.plugins.annotation.annotations.box;
+                                box.xMin = event.subject.value;
+                                chart.update('none');
+                            },
+                            dragend: function(event) {
+                                startTimeInputTrim.value = event.subject.value.toFixed(2);
+                                updateAnnotations();
+                            }
                         }
                     };
                     annotationConfig.endLine = {
@@ -3528,9 +3536,17 @@
                             font: { size: 10 }
                         },
                         draggable: true,
-                        onDragEnd: function(event) {
-                           endTimeInputTrim.value = event.subject.value.toFixed(2);
-                           updateAnnotations();
+                        events: {
+                            drag: function(event) {
+                                const chart = event.chart;
+                                const box = chart.options.plugins.annotation.annotations.box;
+                                box.xMax = event.subject.value;
+                                chart.update('none');
+                            },
+                            dragend: function(event) {
+                               endTimeInputTrim.value = event.subject.value.toFixed(2);
+                               updateAnnotations();
+                            }
                         }
                     };
                 }
