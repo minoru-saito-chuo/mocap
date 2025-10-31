@@ -674,9 +674,9 @@
                                 <h2 class="text-xl font-semibold text-center mb-6">2. データの確認と範囲選択</h2>
                                 <p class="text-sm text-slate-500 text-center mb-4">上のグラフでトリミングしたい区間をドラッグして選択してください。</p>
                                 <div class="space-y-4">
-                                    <div class="w-full h-48 md:h-56 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full h-48 md:h-56 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full h-48 md:h-56 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full h-40 md:h-48 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full h-40 md:h-48 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
+                                    <div class="w-full h-40 md:h-48 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
                                 </div>
                             </section>
 
@@ -2423,7 +2423,7 @@
             const endTimeInputTrim = document.getElementById('end-time-trim');
             const exportCsvBtnTrim = document.getElementById('export-csv-btn-trim');
 
-            let trimChartInstances = {};
+            window.trimChartInstances = {};
             let originalCsvDataTrim = {
                 headerRows: [],
                 dataRows: [],
@@ -2566,7 +2566,7 @@
                     if (!row || row.length < 2) continue;
                     if (row[1] === 'Type') typeRowIndex = i;
                     if (row[1] === 'Name') nameRowIndex = i;
-                    if (row.includes('Position') && row.includes('Rotation')) propertyRowIndex = i;
+                    if (row[1] === 'Property') propertyRowIndex = i;
                     if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
                         break;
@@ -3315,15 +3315,22 @@
             // --- DATA TRIMMING TOOL FUNCTIONS ---
             function handleFileSelectTrim(event) {
                 const file = event.target.files[0];
-                if (!file) return;
+                if (!file) {
+                    console.log("Trim tool: No file selected.");
+                    return;
+                }
 
+                console.log("Trim tool: File selected, starting parse.", file.name);
                 loadingDiv.classList.remove('hidden');
                 loadingText.textContent = "ファイルを解析中...";
 
                 Papa.parse(file, {
                     complete: (results) => {
+                        console.log("Trim tool: Papaparse complete.");
                         try {
+                            console.log("Trim tool: Entering parse try block.");
                             const { headerRows, dataRows, rigidBodyInfo } = parseCsvForTrimming(results.data);
+                            console.log("Trim tool: CSV parsed successfully.", { rigidBodyInfo });
 
                             if (Object.keys(rigidBodyInfo).length === 0) {
                                 throw new Error("ファイル内に有効な剛体(Rigid Body)データが見つかりませんでした。");
@@ -3344,18 +3351,24 @@
                                     <p><strong>総時間:</strong> ${timeColumn.length > 0 ? timeColumn[timeColumn.length - 1].toFixed(2) : 'N/A'} 秒</p>
                                 </div>`;
 
+                            console.log("Trim tool: Rendering charts.");
                             renderTrimmingCharts(dataRows, rigidBodyInfo);
+                            console.log("Trim tool: Charts rendered.");
 
                             trimmingMainSection.classList.remove('hidden');
+                            console.log("Trim tool: Main section is now visible.");
 
                         } catch (e) {
+                            console.error("Trim tool: Error during processing:", e);
                             alert(`ファイル解析エラー: ${e.message}`);
                             clearFileTrim();
                         } finally {
                             loadingDiv.classList.add('hidden');
+                             console.log("Trim tool: Processing finished.");
                         }
                     },
                     error: (error) => {
+                        console.error("Trim tool: Papaparse error:", error);
                         alert(`CSVファイルの読み込みに失敗しました: ${error.message}`);
                         loadingDiv.classList.add('hidden');
                     }
@@ -3472,8 +3485,39 @@
                     plugins: {
                         legend: { display: true, position: 'top' },
                         zoom: {
-                            pan: { enabled: true, mode: 'x' },
-                            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                                onPan: ({chart: sourceChart}) => {
+                                    const {min, max} = sourceChart.scales.x;
+                                    Object.values(window.trimChartInstances).forEach(targetChart => {
+                                        if (targetChart.canvas.id !== sourceChart.canvas.id) {
+                                            if(targetChart.options.scales.x.min !== min || targetChart.options.scales.x.max !== max) {
+                                                targetChart.options.scales.x.min = min;
+                                                targetChart.options.scales.x.max = max;
+                                                targetChart.update('none');
+                                            }
+                                        }
+                                    });
+                                }
+                            },
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'x',
+                                onZoom: ({chart: sourceChart}) => {
+                                    const {min, max} = sourceChart.scales.x;
+                                    Object.values(window.trimChartInstances).forEach(targetChart => {
+                                        if (targetChart.canvas.id !== sourceChart.canvas.id) {
+                                             if(targetChart.options.scales.x.min !== min || targetChart.options.scales.x.max !== max) {
+                                                targetChart.options.scales.x.min = min;
+                                                targetChart.options.scales.x.max = max;
+                                                targetChart.update('none');
+                                            }
+                                        }
+                                    });
+                                }
+                            }
                         }
                     }
                 };
@@ -3509,17 +3553,17 @@
                             font: { size: 10 }
                         },
                         draggable: true,
-                        events: {
-                            drag: function(event) {
-                                const chart = event.chart;
-                                const box = chart.options.plugins.annotation.annotations.box;
-                                box.xMin = event.subject.value;
+                        id: 'startLine',
+                        onDrag: function({ subject }) {
+                            const newValue = subject.value;
+                            Object.values(window.trimChartInstances).forEach(chart => {
+                                chart.options.plugins.annotation.annotations.box.xMin = newValue;
                                 chart.update('none');
-                            },
-                            dragend: function(event) {
-                                startTimeInputTrim.value = event.subject.value.toFixed(2);
-                                updateAnnotations();
-                            }
+                            });
+                        },
+                        onDragEnd: function({ subject }) {
+                            console.log("Trim tool: onDragEnd for startLine triggered! New value:", subject.value);
+                            startTimeInputTrim.value = subject.value.toFixed(2);
                         }
                     };
                     annotationConfig.endLine = {
@@ -3536,17 +3580,17 @@
                             font: { size: 10 }
                         },
                         draggable: true,
-                        events: {
-                            drag: function(event) {
-                                const chart = event.chart;
-                                const box = chart.options.plugins.annotation.annotations.box;
-                                box.xMax = event.subject.value;
+                        id: 'endLine',
+                        onDrag: function({ subject }) {
+                            const newValue = subject.value;
+                            Object.values(window.trimChartInstances).forEach(chart => {
+                                chart.options.plugins.annotation.annotations.box.xMax = newValue;
                                 chart.update('none');
-                            },
-                            dragend: function(event) {
-                               endTimeInputTrim.value = event.subject.value.toFixed(2);
-                               updateAnnotations();
-                            }
+                            });
+                        },
+                        onDragEnd: function({ subject }) {
+                            console.log("Trim tool: onDragEnd for endLine triggered! New value:", subject.value);
+                            endTimeInputTrim.value = subject.value.toFixed(2);
                         }
                     };
                 }
