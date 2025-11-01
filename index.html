@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -624,19 +625,20 @@
                             <h2 class="text-xl font-semibold text-center mb-6">2. 範囲を選択してエクスポート</h2>
                             <div class="text-center mb-4">
                                 <p class="text-sm text-slate-600">チャート上のハンドルをドラッグして、トリミングしたいデータの範囲を選択してください。</p>
+                                <p class="text-xs text-slate-500 mt-1">(ヒント: <kbd class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">Alt</kbd>キーを押しながらドラッグすると、チャートをスクロールできます)</p>
                             </div>
                             <div id="trimming-charts-container" class="space-y-6">
                                 <div>
                                     <h3 class="text-md font-semibold text-slate-700 mb-2">X軸 変位</h3>
-                                    <div class="chart-container h-48"><canvas id="trimming-chart-x"></canvas></div>
+                                    <div class="chart-container h-40"><canvas id="trimming-chart-x"></canvas></div>
                                 </div>
                                 <div>
                                     <h3 class="text-md font-semibold text-slate-700 mb-2">Y軸 変位</h3>
-                                    <div class="chart-container h-48"><canvas id="trimming-chart-y"></canvas></div>
+                                    <div class="chart-container h-40"><canvas id="trimming-chart-y"></canvas></div>
                                 </div>
                                 <div>
                                     <h3 class="text-md font-semibold text-slate-700 mb-2">Z軸 変位</h3>
-                                    <div class="chart-container h-48"><canvas id="trimming-chart-z"></canvas></div>
+                                    <div class="chart-container h-40"><canvas id="trimming-chart-z"></canvas></div>
                                 </div>
                             </div>
                             <div class="mt-8 text-center">
@@ -3595,6 +3597,18 @@
                 });
             }
 
+            function synchronizeTrimmingCharts(sourceChart) {
+                if (!sourceChart || !sourceChart.scales || !sourceChart.scales.x) return;
+                const { min, max } = sourceChart.scales.x;
+                Object.values(trimmingChartInstances).forEach(chart => {
+                    if (chart !== sourceChart) {
+                        chart.options.scales.x.min = min;
+                        chart.options.scales.x.max = max;
+                        chart.update('none');
+                    }
+                });
+            }
+
             function getTrimmingChartOptions(axisLabel, timeRange) {
                 return {
                     responsive: true,
@@ -3606,26 +3620,61 @@
                     plugins: {
                         legend: { display: true, position: 'top' },
                         tooltip: { mode: 'index', intersect: false },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                                modifierKey: 'alt',
+                            },
+                            zoom: {
+                                wheel: { enabled: true, },
+                                pinch: { enabled: true, },
+                                mode: 'x',
+                            },
+                            limits: {
+                                x: { min: timeRange.min, max: timeRange.max }
+                            },
+                            onZoomComplete: ({chart}) => synchronizeTrimmingCharts(chart),
+                            onPanComplete: ({chart}) => synchronizeTrimmingCharts(chart),
+                        },
                         annotation: {
                             annotations: {
                                 startLine: {
                                     type: 'line',
                                     scaleID: 'x',
                                     value: timeRange.min,
-                                    borderColor: 'rgba(239, 68, 68, 0.7)',
-                                    borderWidth: 2,
+                                    borderColor: 'rgba(239, 68, 68, 0.8)',
+                                    borderWidth: 3,
+                                    borderDash: [6, 6],
                                     draggable: true,
-                                    label: { content: 'Start', enabled: true, position: 'start' },
+                                    label: {
+                                        content: 'Start',
+                                        enabled: true,
+                                        position: 'start',
+                                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                                        borderRadius: 4,
+                                        color: 'white',
+                                        font: { size: 10 }
+                                    },
                                     onDragEnd: (e) => handleDragEnd(e, 'startLine')
                                 },
                                 endLine: {
                                     type: 'line',
                                     scaleID: 'x',
                                     value: timeRange.max,
-                                    borderColor: 'rgba(59, 130, 246, 0.7)',
-                                    borderWidth: 2,
+                                    borderColor: 'rgba(59, 130, 246, 0.8)',
+                                    borderWidth: 3,
+                                    borderDash: [6, 6],
                                     draggable: true,
-                                    label: { content: 'End', enabled: true, position: 'end' },
+                                    label: {
+                                        content: 'End',
+                                        enabled: true,
+                                        position: 'end',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                                        borderRadius: 4,
+                                        color: 'white',
+                                        font: { size: 10 }
+                                    },
                                     onDragEnd: (e) => handleDragEnd(e, 'endLine')
                                 }
                             }
