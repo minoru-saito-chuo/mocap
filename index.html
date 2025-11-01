@@ -12,7 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,6 +155,20 @@
                     </svg>
                     <span>広域解析ツール</span>
                 </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#data-trimming">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.622 7.622l-2.122 2.122m10.606-2.122l2.122 2.122m-4.244 4.244L12 16.172l-2.122-2.122m4.244 0l2.122-2.122m-10.606 0l-2.122-2.122" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8.586l2.121-2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8.586L9.879 6.465" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.172l2.121 2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.172l-2.121 2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.172 12l2.121-2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.172 12l2.121 2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.586 12l-2.121 2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.586 12L6.465 9.879" />
+                    </svg>
+                    <span>データトリミングツール</span>
+                </a>
                 <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#standard-velocity">
                     <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15.6 3.3a10 10 0 1 0 5.7 5.7"></path>
@@ -163,12 +176,6 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M13.4 10.6 19 5"></path>
                     </svg>
                     <span>基準速度算出ツール</span>
-                </a>
-                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#data-trimming">
-                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.622 7.622l1.378-1.378A5.25 5.25 0 0113.5 4.5h1.5a5.25 5.25 0 015.25 5.25v1.5a5.25 5.25 0 01-1.752 4.498L17.38 17.38a5.25 5.25 0 01-4.498 1.752h-1.5a5.25 5.25 0 01-5.25-5.25v-1.5a5.25 5.25 0 011.752-4.498zM9 9l6 6" />
-                    </svg>
-                    <span>データトリミングツール</span>
                 </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#how-to-use">
@@ -587,6 +594,60 @@
                     </div>
                 </div>
 
+                <div class="page" id="data-trimming">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">データトリミングツール</h1>
+                            <p class="text-slate-500 mt-2">CSVファイル内のデータを選択した範囲で切り取り、新しいCSVファイルとしてエクスポートします。</p>
+                        </header>
+
+                        <section id="trimming-input-section" class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label for="csv-file-trimming" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを追加</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="csv-file-trimming" accept=".csv" class="hidden">
+                                        <label for="csv-file-trimming" class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを選択</label>
+                                        <button id="clear-file-btn-trimming" class="flex-shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-xs shadow-sm hidden">クリア</button>
+                                    </div>
+                                    <div id="file-info-trimming" class="mt-4 space-y-2"></div>
+                                </div>
+                                <div id="rigidbody-selection-trimming" class="hidden">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">② 解析対象の剛体を選択</label>
+                                     <div id="rigidbody-list-trimming" class="space-y-2 p-3 border rounded-md bg-slate-50/70 max-h-40 overflow-y-auto"></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="trimming-results-section" class="bg-white p-6 rounded-lg shadow-sm border hidden">
+                            <h2 class="text-xl font-semibold text-center mb-6">2. 範囲を選択してエクスポート</h2>
+                            <div class="text-center mb-4">
+                                <p class="text-sm text-slate-600">チャート上のハンドルをドラッグして、トリミングしたいデータの範囲を選択してください。</p>
+                            </div>
+                            <div id="trimming-charts-container" class="space-y-6">
+                                <div>
+                                    <h3 class="text-md font-semibold text-slate-700 mb-2">X軸 変位</h3>
+                                    <div class="chart-container h-48"><canvas id="trimming-chart-x"></canvas></div>
+                                </div>
+                                <div>
+                                    <h3 class="text-md font-semibold text-slate-700 mb-2">Y軸 変位</h3>
+                                    <div class="chart-container h-48"><canvas id="trimming-chart-y"></canvas></div>
+                                </div>
+                                <div>
+                                    <h3 class="text-md font-semibold text-slate-700 mb-2">Z軸 変位</h3>
+                                    <div class="chart-container h-48"><canvas id="trimming-chart-z"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="mt-8 text-center">
+                                <p class="text-sm font-medium text-slate-700">選択範囲: <span id="trimming-range-display">未選択</span></p>
+                                <button id="export-trimmed-csv-btn" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:bg-slate-400 disabled:cursor-not-allowed" disabled>
+                                    トリミングしてCSVをエクスポート
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
 
                 <div class="page" id="standard-velocity">
                     <div class="max-w-3xl mx-auto space-y-8">
@@ -649,65 +710,50 @@
                     </div>
                 </div>
 
-                <div class="page" id="data-trimming">
-                    <div class="max-w-7xl mx-auto space-y-8">
-                        <header class="text-center">
-                            <h1 class="text-3xl font-bold text-slate-800">データトリミングツール</h1>
-                            <p class="text-slate-500 mt-2">CSVファイルの時間範囲を指定して、必要な部分だけを切り出します。</p>
-                        </header>
-
-                        <section class="bg-white p-6 rounded-lg shadow-sm border">
-                            <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
-                            <div class="max-w-md mx-auto">
-                                <label for="csv-file-trim" class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを選択</label>
-                                <div class="flex items-center space-x-2">
-                                    <input type="file" id="csv-file-trim" accept=".csv" class="hidden">
-                                    <label for="csv-file-trim" class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを選択</label>
-                                    <button id="clear-file-btn-trim" class="flex-shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-xs shadow-sm">クリア</button>
-                                </div>
-                                <div id="file-info-trim" class="mt-4 text-sm text-slate-600"></div>
-                            </div>
-                        </section>
-
-                        <div id="trimming-main-section" class="hidden space-y-8">
-                            <section class="bg-white p-6 rounded-lg shadow-sm border">
-                                <h2 class="text-xl font-semibold text-center mb-6">2. データの確認と範囲選択</h2>
-                                <p class="text-sm text-slate-500 text-center mb-4">上のグラフでトリミングしたい区間をドラッグして選択してください。</p>
-                                <div class="space-y-4">
-                                    <div class="w-full h-40 md:h-48 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="x-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full h-40 md:h-48 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="y-axis-chart-trim"></canvas></div></div>
-                                    <div class="w-full h-40 md:h-48 bg-white p-2 border rounded-lg shadow-sm"><div class="chart-container"><canvas id="z-axis-chart-trim"></canvas></div></div>
-                                </div>
-                            </section>
-
-                            <section class="bg-white p-6 rounded-lg shadow-sm border">
-                                <h2 class="text-xl font-semibold text-center mb-6">3. 時間範囲の指定とエクスポート</h2>
-                                <div class="max-w-lg mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label for="start-time-trim" class="block text-sm font-medium text-slate-700">開始時間 (秒)</label>
-                                            <input type="number" id="start-time-trim" step="0.01" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                                        </div>
-                                        <div>
-                                            <label for="end-time-trim" class="block text-sm font-medium text-slate-700">終了時間 (秒)</label>
-                                            <input type="number" id="end-time-trim" step="0.01" class="mt-1 block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                                        </div>
-                                    </div>
-                                    <div class="text-center">
-                                        <button id="export-csv-btn-trim" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-md shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                            トリミングしてCSVをエクスポート
-                                        </button>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="page" id="how-to-use">
                     <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
 
                     <div class="space-y-10">
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-6 w-6 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.622 7.622l-2.122 2.122m10.606-2.122l2.122 2.122m-4.244 4.244L12 16.172l-2.122-2.122m4.244 0l2.122-2.122m-10.606 0l-2.122-2.122" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8.586l2.121-2.121" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 8.586L9.879 6.465" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.172l2.121 2.121" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.172l-2.121 2.121" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.172 12l2.121-2.121" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.172 12l2.121 2.121" /><path stroke-linecap="round" stroke-linejoin="round" d="M8.586 12l-2.121 2.121" /><path stroke-linecap="round" stroke-linejoin="round" d="M8.586 12L6.465 9.879" />
+                                    </svg>
+                                    <span>データトリミングツール</span>
+                                </h2>
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">1</div>
+                                        <div><h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3><p class="text-gray-600 text-sm">「ファイルを選択」ボタンから、トリミングしたいMotiveのCSVファイルを1つ選択します。</p></div>
+                                    </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">2</div>
+                                        <div><h3 class="text-base font-medium text-gray-800 mb-2">剛体の選択</h3><p class="text-gray-600 text-sm">ファイルが読み込まれると、含まれている剛体の一覧が表示されます。チャートに表示したい剛体を1つ以上選択してください。</p></div>
+                                    </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">範囲の選択</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                選択した剛体のX, Y, Z軸の変位が時間軸チャートに表示されます。チャートの上部にある赤い（開始）と青い（終了）のハンドルをドラッグして、エクスポートしたいデータの範囲を直感的に選択します。選択された範囲は、すべてのチャートで同期して表示されます。
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">4</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">エクスポート</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                「トリミングしてCSVをエクスポート」ボタンを押すと、選択した時間範囲のデータのみを含む新しいCSVファイルがダウンロードされます。この際、Frame列は1から、Time列は0から再インデックスされ、Motive形式との互換性が維持されます。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
                             <div class="p-6 sm:p-8">
                                 <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
@@ -1134,8 +1180,8 @@
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#home">ホーム</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#wide-area-analysis">広域解析ツール</a>
+            <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-trimming">データトリミングツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
-                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-trimming">データトリミングツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#algorithms">アルゴリズム仕様</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
@@ -2414,29 +2460,6 @@
             const heatmapCanvas = document.getElementById('heatmap-canvas-wide');
             const heightInfoCheckboxWide = document.getElementById('height-info-checkbox-wide');
 
-            // --- DATA TRIMMING TOOL SCRIPT ---
-            const fileInputTrim = document.getElementById('csv-file-trim');
-            const fileInfoTrim = document.getElementById('file-info-trim');
-            const clearFileBtnTrim = document.getElementById('clear-file-btn-trim');
-            const trimmingMainSection = document.getElementById('trimming-main-section');
-            const startTimeInputTrim = document.getElementById('start-time-trim');
-            const endTimeInputTrim = document.getElementById('end-time-trim');
-            const exportCsvBtnTrim = document.getElementById('export-csv-btn-trim');
-
-            window.trimChartInstances = {};
-            let originalCsvDataTrim = {
-                headerRows: [],
-                dataRows: [],
-                fileName: ''
-            };
-
-            if (fileInputTrim) {
-                fileInputTrim.addEventListener('change', handleFileSelectTrim);
-                clearFileBtnTrim.addEventListener('click', clearFileTrim);
-                exportCsvBtnTrim.addEventListener('click', exportTrimmedCsv);
-            }
-
-
             heightInfoCheckboxWide.addEventListener('change', () => {
                 if (lastSampledDataWide) {
                     const verticalAxis = verticalAxisSelectWide.value;
@@ -2476,13 +2499,7 @@
                 heatmapTooltip.classList.add('hidden');
             });
 
-            console.log("Attempting to add 'change' listener to csvFileInputWide:", csvFileInputWide);
-            if (csvFileInputWide) {
-                csvFileInputWide.addEventListener('change', handleFileSelectWide);
-                console.log("Successfully added 'change' listener to csvFileInputWide.");
-            } else {
-                console.error("csvFileInputWide element not found!");
-            }
+            csvFileInputWide.addEventListener('change', handleFileSelectWide);
             clearFilesBtnWide.addEventListener('click', clearAllFilesWide);
             analyzeBtnWide.addEventListener('click', analyzeDataWide);
             showTrajectoryBtnWide.addEventListener('click', () => switchViewWide('trajectory'));
@@ -2557,8 +2574,7 @@
                         analyzeBtnWide.disabled = false;
                     })
                     .catch(error => {
-                        // Use console.error instead of alert for better testability
-                        console.error("Caught in handleFileSelectWide:", error.message);
+                        alert(error.message);
                     })
                     .finally(() => {
                         loadingDiv.classList.add('hidden');
@@ -2568,31 +2584,19 @@
 
             function parseHeaderWide(data) {
                 let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
-
-                // 1. Find the main data header row first, as it's the most reliable anchor
-                for (let i = 0; i < Math.min(20, data.length); i++) {
-                    if (data[i] && data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') {
+                for(let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (!row || row.length < 2) continue;
+                    if (row[1] === 'Type') typeRowIndex = i;
+                    if (row[1] === 'Name') nameRowIndex = i;
+                    if (row.includes('Position') && row.includes('Rotation')) propertyRowIndex = i;
+                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
                         break;
                     }
                 }
-                if (dataHeaderRowIndex === -1) {
-                    throw new Error("OptiTrack CSVのヘッダー形式を認識できませんでした。('Frame', 'Time (Seconds)'ヘッダーが見つかりません)");
-                }
-
-                // 2. Search for other metadata rows *only above* the data header row
-                for (let i = 0; i < dataHeaderRowIndex; i++) {
-                    const row = data[i];
-                    if (!row) continue;
-                    // These keywords are expected to be in one of the first few columns
-                    const searchArea = row.slice(0, 5).join(',');
-                    if (searchArea.includes('Type')) typeRowIndex = i;
-                    if (searchArea.includes('Name')) nameRowIndex = i;
-                    if (searchArea.includes('Property')) propertyRowIndex = i;
-                }
-
-                if (typeRowIndex === -1 || nameRowIndex === -1 || propertyRowIndex === -1) {
-                    throw new Error(`OptiTrack CSVのヘッダー形式を認識できませんでした。(メタデータ行 'Type', 'Name', 'Property' のいずれかが見つかりません)`);
+                if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
+                    throw new Error("OptiTrack CSVのヘッダー形式を認識できませんでした。");
                 }
 
                 const typeRow = data[typeRowIndex];
@@ -2605,18 +2609,15 @@
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
                         const name = nameRow[i];
-                        if (name && !rigidBodyInfo[name]) {
-                             rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
-                             // Find the corresponding column indices for X, Y, Z based on the main data header
-                             for(let j = i; j < i + 3 && j < dataHeaderRow.length; j++) {
-                                 // Check if we are still within the columns for the current rigid body
-                                 if (nameRow[j] === name && propertyRow[j] === 'Position') {
-                                    const axis = dataHeaderRow[j].toUpperCase();
-                                    if (axis === 'X') rigidBodyInfo[name].xIndex = j;
-                                    else if (axis === 'Y') rigidBodyInfo[name].yIndex = j;
-                                    else if (axis === 'Z') rigidBodyInfo[name].zIndex = j;
-                                 }
-                             }
+                        if (rigidBodyInfo[name]) continue;
+                        rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
+                        for (let j = 0; j < 3; j++) {
+                            const colIndex = i + j;
+                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
+                            const axis = dataHeaderRow[colIndex].toUpperCase();
+                            if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
+                            else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
+                            else if (axis === 'Z') rigidBodyInfo[name].zIndex = colIndex;
                         }
                     }
                 }
@@ -2634,7 +2635,6 @@
             }
 
             function updateFileAndRigidBodyUIWide() {
-                console.log("updateFileAndRigidBodyUIWide called");
                 fileListAreaWide.innerHTML = Object.keys(fileDataStoreWide).map(filename =>
                     `<div class="bg-slate-50 p-2.5 rounded-md border text-sm flex justify-between items-center">
                         <span class="text-slate-700 truncate pr-4">${filename}</span>
@@ -2684,11 +2684,7 @@
                     }
                 });
 
-                if (Object.keys(fileDataStoreWide).length > 0) {
-                    rigidbodySelectionAreaWide.classList.remove('hidden');
-                } else {
-                    rigidbodySelectionAreaWide.classList.add('hidden');
-                }
+                rigidbodySelectionAreaWide.classList.toggle('hidden', Object.keys(fileDataStoreWide).length === 0);
                 clearFilesBtnWide.classList.toggle('hidden', Object.keys(fileDataStoreWide).length === 0);
             }
 
@@ -3339,355 +3335,332 @@
                 });
             }
 
-            // --- DATA TRIMMING TOOL FUNCTIONS ---
-            function handleFileSelectTrim(event) {
-                const file = event.target.files[0];
-                if (!file) {
-                    console.log("Trim tool: No file selected.");
+            // --- DATA TRIMMING TOOL SCRIPT ---
+            const fileInputTrimming = document.getElementById('csv-file-trimming');
+            const fileInfoTrimming = document.getElementById('file-info-trimming');
+            const clearFileBtnTrimming = document.getElementById('clear-file-btn-trimming');
+            const rigidbodySelectionTrimming = document.getElementById('rigidbody-selection-trimming');
+            const rigidbodyListTrimming = document.getElementById('rigidbody-list-trimming');
+            const trimmingResultsSection = document.getElementById('trimming-results-section');
+            const exportBtnTrimming = document.getElementById('export-trimmed-csv-btn');
+            const trimmingRangeDisplay = document.getElementById('trimming-range-display');
+
+            let rawCsvDataTrimming = null;
+            let fileHeaderInfoTrimming = null;
+            let trimmingChartInstances = {};
+            let selectedTimeRange = { min: null, max: null };
+
+            if (fileInputTrimming) {
+                fileInputTrimming.addEventListener('change', handleFileSelectTrimming);
+                clearFileBtnTrimming.addEventListener('click', clearFileTrimming);
+                rigidbodyListTrimming.addEventListener('change', handleRigidbodySelectionChangeTrimming);
+                exportBtnTrimming.addEventListener('click', exportTrimmedCsv);
+            }
+
+            function exportTrimmedCsv() {
+                if (!rawCsvDataTrimming || selectedTimeRange.min === null || selectedTimeRange.max === null) {
+                    alert('エクスポートするデータがありません。');
                     return;
                 }
 
-                console.log("Trim tool: File selected, starting parse.", file.name);
                 loadingDiv.classList.remove('hidden');
-                loadingText.textContent = "ファイルを解析中...";
+                loadingText.textContent = 'CSVファイルを生成中...';
+
+                setTimeout(() => {
+                    try {
+                        const { dataRows, headerRows, file } = rawCsvDataTrimming;
+                        const startTime = selectedTimeRange.min;
+                        const endTime = selectedTimeRange.max;
+
+                        const trimmedData = dataRows.filter(row => {
+                            const time = parseFloat(row[1]);
+                            return time >= startTime && time <= endTime;
+                        });
+
+                        if (trimmedData.length === 0) {
+                            throw new Error('選択範囲にデータがありません。');
+                        }
+
+                        const firstFrameTime = parseFloat(trimmedData[0][1]);
+                        const reIndexedData = trimmedData.map((row, index) => {
+                            const newRow = [...row];
+                            newRow[0] = index + 1; // Re-index Frame
+                            newRow[1] = parseFloat(row[1]) - firstFrameTime; // Re-index Time
+                            return newRow;
+                        });
+
+                        const finalCsvData = [...headerRows, ...reIndexedData];
+                        const csvString = Papa.unparse(finalCsvData, { newline: "\r\n" });
+
+                        const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const originalFilename = file.name.endsWith('.csv') ? file.name.slice(0, -4) : file.name;
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `${originalFilename}_trimmed.csv`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                    } catch (e) {
+                        alert(`エクスポート中にエラーが発生しました: ${e.message}`);
+                    } finally {
+                        loadingDiv.classList.add('hidden');
+                    }
+                }, 50);
+            }
+
+            function handleFileSelectTrimming(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                clearFileTrimming();
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = 'ファイルを解析中...';
 
                 Papa.parse(file, {
                     complete: (results) => {
-                        console.log("Trim tool: Papaparse complete.");
                         try {
-                            console.log("Trim tool: Entering parse try block.");
-                            const { headerRows, dataRows, rigidBodyInfo } = parseCsvForTrimming(results.data);
-                            console.log("Trim tool: CSV parsed successfully.", { rigidBodyInfo });
+                            const { headerInfo, rigidBodyInfo, dataRows } = parseCsvForTrimming(results.data);
+                            rawCsvDataTrimming = { file, headerRows: results.data.slice(0, headerInfo.dataStartIndex), dataRows };
+                            fileHeaderInfoTrimming = { ...headerInfo, rigidBodyInfo };
 
-                            if (Object.keys(rigidBodyInfo).length === 0) {
-                                throw new Error("ファイル内に有効な剛体(Rigid Body)データが見つかりませんでした。");
-                            }
-
-                            originalCsvDataTrim = { headerRows, dataRows, fileName: file.name, rigidBodyInfo };
-
-                            const timeColumn = dataRows.map(row => parseFloat(row[1])).filter(t => !isNaN(t));
-                            if (timeColumn.length > 0) {
-                                startTimeInputTrim.value = timeColumn[0].toFixed(2);
-                                endTimeInputTrim.value = timeColumn[timeColumn.length - 1].toFixed(2);
-                            }
-
-                            fileInfoTrim.innerHTML = `
-                                <div class="bg-slate-50 p-3 rounded-md border text-sm">
-                                    <p><strong>ファイル名:</strong> ${file.name}</p>
-                                    <p><strong>剛体:</strong> ${Object.keys(rigidBodyInfo).join(', ')}</p>
-                                    <p><strong>総時間:</strong> ${timeColumn.length > 0 ? timeColumn[timeColumn.length - 1].toFixed(2) : 'N/A'} 秒</p>
-                                </div>`;
-
-                            console.log("Trim tool: Rendering charts.");
-                            renderTrimmingCharts(dataRows, rigidBodyInfo);
-                            console.log("Trim tool: Charts rendered.");
-
-                            trimmingMainSection.classList.remove('hidden');
-                            console.log("Trim tool: Main section is now visible.");
-
+                            fileInfoTrimming.innerHTML = `<div class="bg-slate-50 p-2.5 rounded-md border text-sm"><span class="font-semibold text-slate-800">${file.name}</span> <span class="text-slate-500 text-xs">(${dataRows.length}行のデータ)</span></div>`;
+                            clearFileBtnTrimming.classList.remove('hidden');
+                            populateRigidbodySelectorTrimming(rigidBodyInfo);
+                            rigidbodySelectionTrimming.classList.remove('hidden');
                         } catch (e) {
-                            console.error("Trim tool: Error during processing:", e);
                             alert(`ファイル解析エラー: ${e.message}`);
-                            clearFileTrim();
+                            clearFileTrimming();
                         } finally {
                             loadingDiv.classList.add('hidden');
-                             console.log("Trim tool: Processing finished.");
                         }
                     },
-                    error: (error) => {
-                        console.error("Trim tool: Papaparse error:", error);
-                        alert(`CSVファイルの読み込みに失敗しました: ${error.message}`);
+                    error: (err) => {
+                        alert(`CSVの読み込みに失敗: ${err.message}`);
                         loadingDiv.classList.add('hidden');
                     }
                 });
             }
 
+            function clearFileTrimming() {
+                fileInputTrimming.value = '';
+                rawCsvDataTrimming = null;
+                fileHeaderInfoTrimming = null;
+                fileInfoTrimming.innerHTML = '';
+                clearFileBtnTrimming.classList.add('hidden');
+                rigidbodySelectionTrimming.classList.add('hidden');
+                rigidbodyListTrimming.innerHTML = '';
+                trimmingResultsSection.classList.add('hidden');
+                Object.values(trimmingChartInstances).forEach(chart => { if (chart) chart.destroy(); });
+                trimmingChartInstances = {};
+                exportBtnTrimming.disabled = true;
+                trimmingRangeDisplay.textContent = '未選択';
+            }
+
             function parseCsvForTrimming(data) {
-                let dataHeaderRowIndex = -1;
-                 for(let i = 0; i < Math.min(20, data.length); i++) {
+                let typeRowIndex = -1, nameRowIndex = -1, dataHeaderRowIndex = -1, propertyRowIndex = -1;
+
+                // First, find the data header row, which is the most reliable anchor
+                for (let i = 0; i < Math.min(20, data.length); i++) {
                     const row = data[i];
                     if (row && row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
                         dataHeaderRowIndex = i;
                         break;
                     }
                 }
+
                 if (dataHeaderRowIndex === -1) {
-                    throw new Error("Motive形式のCSVヘッダー(Frame, Time (Seconds))が見つかりませんでした。");
+                    throw new Error("Motive形式のCSVヘッダーが見つかりません (Frame, Time (Seconds)行がありません)。");
                 }
-                const headerRows = data.slice(0, dataHeaderRowIndex + 1);
-                const dataRows = data.slice(dataHeaderRowIndex + 1).filter(row => row.length > 1 && row[1] !== '');
 
-                const { rigidBodyInfo } = parseHeaderWide(data);
+                // Now search for other header rows *above* the data header
+                for (let i = 0; i < dataHeaderRowIndex; i++) {
+                    const row = data[i];
+                    if (!row || row.length < 2) continue;
+                    if (row[1] === 'Type') typeRowIndex = i;
+                    if (row[1] === 'Name') nameRowIndex = i;
+                    if (row.includes('Position') || row.includes('Rotation')) propertyRowIndex = i;
+                }
 
-                return { headerRows, dataRows, rigidBodyInfo };
+                if ([typeRowIndex, nameRowIndex, propertyRowIndex].includes(-1)) {
+                    throw new Error("Motive形式のCSVヘッダー(Type, Name, Positionなど)が不完全です。");
+                }
+
+                const dataStartIndex = dataHeaderRowIndex + 1;
+                const typeRow = data[typeRowIndex];
+                const nameRow = data[nameRowIndex];
+                const propertyRow = data[propertyRowIndex];
+                const dataHeaderRow = data[dataHeaderRowIndex];
+
+                const rigidBodyInfo = {};
+                for (let i = 2; i < typeRow.length; i++) {
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                        const name = nameRow[i];
+                        if (name && !rigidBodyInfo[name]) {
+                             rigidBodyInfo[name] = { name, xIndex: -1, yIndex: -1, zIndex: -1 };
+                             for (let j = 0; j < 3; j++) {
+                                const colIndex = i + j;
+                                if (colIndex >= dataHeaderRow.length || propertyRow[colIndex] !== 'Position') break;
+
+                                const axis = dataHeaderRow[colIndex];
+                                if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
+                                else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
+                                else if (axis === 'Z') rigidBodyInfo[name].zIndex = colIndex;
+                            }
+                        }
+                    }
+                }
+
+                const validRigidBodies = Object.fromEntries(Object.entries(rigidBodyInfo).filter(([_, info]) => info.xIndex !== -1 && info.yIndex !== -1 && info.zIndex !== -1));
+
+                if (Object.keys(validRigidBodies).length === 0) {
+                    throw new Error("ファイル内に有効な剛体（位置データ付き）が見つかりませんでした。");
+                }
+
+                return {
+                    headerInfo: { dataStartIndex, typeRowIndex, nameRowIndex, dataHeaderRowIndex },
+                    rigidBodyInfo: validRigidBodies,
+                    dataRows: data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '')
+                };
             }
 
-            function renderTrimmingCharts(dataRows, rigidBodyInfo) {
-                Object.values(trimChartInstances).forEach(chart => chart.destroy());
+            function populateRigidbodySelectorTrimming(rigidBodyInfo) {
+                rigidbodyListTrimming.innerHTML = Object.values(rigidBodyInfo).map(body => `
+                    <label class="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-100 cursor-pointer w-full">
+                        <input type="checkbox" class="rigidbody-checkbox-trimming form-checkbox h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" value="${body.name}">
+                        <span class="text-slate-800 text-sm">${body.name}</span>
+                    </label>
+                `).join('');
+            }
 
-                const MAX_POINTS = 2000;
-                const downsampledData = downsampleData(dataRows, MAX_POINTS);
+            function handleRigidbodySelectionChangeTrimming() {
+                const selectedBodies = Array.from(document.querySelectorAll('.rigidbody-checkbox-trimming:checked')).map(cb => cb.value);
+                 Object.values(trimmingChartInstances).forEach(chart => { if (chart) chart.destroy(); });
+                trimmingChartInstances = {};
 
-                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6', '#f59e0b'];
-                const bodyNames = Object.keys(rigidBodyInfo);
+                if (selectedBodies.length > 0) {
+                    trimmingResultsSection.classList.remove('hidden');
+                    drawTrimmingCharts(selectedBodies);
+                } else {
+                    trimmingResultsSection.classList.add('hidden');
+                }
+            }
 
-                const datasets = { x: [], y: [], z: [] };
+            function drawTrimmingCharts(selectedBodyNames) {
+                if (!rawCsvDataTrimming) return;
 
-                bodyNames.forEach((name, index) => {
+                const { dataRows } = rawCsvDataTrimming;
+                const { rigidBodyInfo } = fileHeaderInfoTrimming;
+
+                const downsample = (data, maxPoints = 2000) => {
+                    if (data.length <= maxPoints) return data;
+                    const step = Math.ceil(data.length / maxPoints);
+                    return data.filter((_, i) => i % step === 0);
+                };
+
+                const timeData = dataRows.map(row => parseFloat(row[1]));
+                const fullTimeRange = { min: timeData[0], max: timeData[timeData.length - 1] };
+                selectedTimeRange = { ...fullTimeRange };
+                updateTrimmingRangeDisplay();
+
+                const datasets = {};
+                ['x', 'y', 'z'].forEach(axis => datasets[axis] = []);
+
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6'];
+
+                selectedBodyNames.forEach((name, index) => {
                     const info = rigidBodyInfo[name];
                     const color = colors[index % colors.length];
-
-                    datasets.x.push({ label: `${name} X`, data: [], borderColor: color, borderWidth: 1.5, pointRadius: 0 });
-                    datasets.y.push({ label: `${name} Y`, data: [], borderColor: color, borderWidth: 1.5, pointRadius: 0 });
-                    datasets.z.push({ label: `${name} Z`, data: [], borderColor: color, borderWidth: 1.5, pointRadius: 0 });
-
-                    downsampledData.forEach(row => {
-                        const time = parseFloat(row[1]);
-                        if (isNaN(time)) return;
-                        datasets.x[index].data.push({ x: time, y: parseFloat(row[info.xIndex]) });
-                        datasets.y[index].data.push({ x: time, y: parseFloat(row[info.yIndex]) });
-                        datasets.z[index].data.push({ x: time, y: parseFloat(row[info.zIndex]) });
+                    ['x', 'y', 'z'].forEach(axis => {
+                        const axisIndex = info[`${axis}Index`];
+                        const posData = dataRows.map((row, i) => ({ x: timeData[i], y: parseFloat(row[axisIndex]) }));
+                        datasets[axis].push({
+                            label: name,
+                            data: downsample(posData),
+                            borderColor: color,
+                            backgroundColor: color,
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                        });
                     });
                 });
 
                 ['x', 'y', 'z'].forEach(axis => {
-                    const ctx = document.getElementById(`${axis}-axis-chart-trim`).getContext('2d');
-                    const isMainChart = axis === 'x';
-                    trimChartInstances[axis] = new Chart(ctx, {
-                        type: 'scatter',
+                    const ctx = document.getElementById(`trimming-chart-${axis}`).getContext('2d');
+                    trimmingChartInstances[axis] = new Chart(ctx, {
+                        type: 'line',
                         data: { datasets: datasets[axis] },
-                        options: getTrimChartOptions(axis.toUpperCase(), isMainChart)
+                        options: getTrimmingChartOptions(axis.toUpperCase(), fullTimeRange)
                     });
                 });
             }
 
-            function downsampleData(data, maxPoints) {
-                if (data.length <= maxPoints) {
-                    return data;
-                }
-                const step = Math.ceil(data.length / maxPoints);
-                const downsampled = [];
-                for (let i = 0; i < data.length; i += step) {
-                    downsampled.push(data[i]);
-                }
-                return downsampled;
-            }
-
-            function updateAnnotations() {
-                const startValue = parseFloat(startTimeInputTrim.value);
-                const endValue = parseFloat(endTimeInputTrim.value);
-
-                if (isNaN(startValue) || isNaN(endValue)) return;
-
-                Object.values(trimChartInstances).forEach(chart => {
-                    const annotations = chart.options.plugins.annotation.annotations;
-                    if (!annotations) return;
-
-                    if (annotations.startLine) {
-                        annotations.startLine.value = startValue;
-                    }
-                    if (annotations.endLine) {
-                        annotations.endLine.value = endValue;
-                    }
-                    if (annotations.box) {
-                        annotations.box.xMin = startValue;
-                        annotations.box.xMax = endValue;
-                    }
-                    chart.update('none');
-                });
-            }
-
-            startTimeInputTrim.addEventListener('input', updateAnnotations);
-            endTimeInputTrim.addEventListener('input', updateAnnotations);
-
-            function getTrimChartOptions(axis, isMainChart = false) {
-                const options = {
+            function getTrimmingChartOptions(axisLabel, timeRange) {
+                return {
                     responsive: true,
                     maintainAspectRatio: false,
-                    showLine: true,
                     scales: {
-                        x: { type: 'linear', position: 'bottom', title: { display: true, text: '時間 (秒)' } },
-                        y: { title: { display: true, text: `${axis}軸 変位` } }
+                        x: { type: 'linear', min: timeRange.min, max: timeRange.max, title: { display: true, text: 'Time (Seconds)' } },
+                        y: { title: { display: true, text: `${axisLabel} Position` } }
                     },
                     plugins: {
                         legend: { display: true, position: 'top' },
-                        zoom: {
-                            pan: {
-                                enabled: true,
-                                mode: 'x',
-                                onPan: ({chart: sourceChart}) => {
-                                    const {min, max} = sourceChart.scales.x;
-                                    Object.values(window.trimChartInstances).forEach(targetChart => {
-                                        if (targetChart.canvas.id !== sourceChart.canvas.id) {
-                                            if(targetChart.options.scales.x.min !== min || targetChart.options.scales.x.max !== max) {
-                                                targetChart.options.scales.x.min = min;
-                                                targetChart.options.scales.x.max = max;
-                                                targetChart.update('none');
-                                            }
-                                        }
-                                    });
-                                }
-                            },
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'x',
-                                onZoom: ({chart: sourceChart}) => {
-                                    const {min, max} = sourceChart.scales.x;
-                                    Object.values(window.trimChartInstances).forEach(targetChart => {
-                                        if (targetChart.canvas.id !== sourceChart.canvas.id) {
-                                             if(targetChart.options.scales.x.min !== min || targetChart.options.scales.x.max !== max) {
-                                                targetChart.options.scales.x.min = min;
-                                                targetChart.options.scales.x.max = max;
-                                                targetChart.update('none');
-                                            }
-                                        }
-                                    });
+                        tooltip: { mode: 'index', intersect: false },
+                        annotation: {
+                            annotations: {
+                                startLine: {
+                                    type: 'line',
+                                    scaleID: 'x',
+                                    value: timeRange.min,
+                                    borderColor: 'rgba(239, 68, 68, 0.7)',
+                                    borderWidth: 2,
+                                    draggable: true,
+                                    label: { content: 'Start', enabled: true, position: 'start' },
+                                    onDragEnd: (e) => handleDragEnd(e, 'startLine')
+                                },
+                                endLine: {
+                                    type: 'line',
+                                    scaleID: 'x',
+                                    value: timeRange.max,
+                                    borderColor: 'rgba(59, 130, 246, 0.7)',
+                                    borderWidth: 2,
+                                    draggable: true,
+                                    label: { content: 'End', enabled: true, position: 'end' },
+                                    onDragEnd: (e) => handleDragEnd(e, 'endLine')
                                 }
                             }
                         }
-                    }
+                    },
+                    interaction: { mode: 'index', intersect: false },
                 };
-
-                const startValue = parseFloat(startTimeInputTrim.value);
-                const endValue = parseFloat(endTimeInputTrim.value);
-
-                const annotationConfig = {
-                     box: {
-                        type: 'box',
-                        xScaleID: 'x',
-                        yScaleID: 'y',
-                        xMin: startValue,
-                        xMax: endValue,
-                        backgroundColor: 'rgba(255, 99, 132, 0.15)',
-                        borderColor: 'rgba(255, 99, 132, 0.4)',
-                        borderWidth: 1
-                    }
-                };
-
-                if (isMainChart) {
-                    annotationConfig.startLine = {
-                        type: 'line',
-                        scaleID: 'x',
-                        value: startValue,
-                        borderColor: 'rgba(239, 68, 68, 0.8)',
-                        borderWidth: 2,
-                        label: {
-                            content: 'Start',
-                            enabled: true,
-                            position: 'start',
-                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                            font: { size: 10 }
-                        },
-                        draggable: true,
-                        id: 'startLine',
-                        onDrag: function({ subject }) {
-                            const newValue = subject.value;
-                            Object.values(window.trimChartInstances).forEach(chart => {
-                                chart.options.plugins.annotation.annotations.box.xMin = newValue;
-                                chart.update('none');
-                            });
-                        },
-                        onDragEnd: function({ subject }) {
-                            console.log("Trim tool: onDragEnd for startLine triggered! New value:", subject.value);
-                            startTimeInputTrim.value = subject.value.toFixed(2);
-                        }
-                    };
-                    annotationConfig.endLine = {
-                        type: 'line',
-                        scaleID: 'x',
-                        value: endValue,
-                        borderColor: 'rgba(239, 68, 68, 0.8)',
-                        borderWidth: 2,
-                        label: {
-                            content: 'End',
-                            enabled: true,
-                            position: 'start',
-                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                            font: { size: 10 }
-                        },
-                        draggable: true,
-                        id: 'endLine',
-                        onDrag: function({ subject }) {
-                            const newValue = subject.value;
-                            Object.values(window.trimChartInstances).forEach(chart => {
-                                chart.options.plugins.annotation.annotations.box.xMax = newValue;
-                                chart.update('none');
-                            });
-                        },
-                        onDragEnd: function({ subject }) {
-                            console.log("Trim tool: onDragEnd for endLine triggered! New value:", subject.value);
-                            endTimeInputTrim.value = subject.value.toFixed(2);
-                        }
-                    };
-                }
-
-                options.plugins.annotation = {
-                    annotations: annotationConfig
-                };
-
-                return options;
             }
 
-            function clearFileTrim() {
-                fileInputTrim.value = '';
-                fileInfoTrim.innerHTML = '';
-                trimmingMainSection.classList.add('hidden');
-                Object.values(trimChartInstances).forEach(chart => chart.destroy());
-                trimChartInstances = {};
-                originalCsvDataTrim = { headerRows: [], dataRows: [], fileName: '' };
-            }
+            function handleDragEnd(event, lineId) {
+                const newValue = event.subject.options.value;
+                if (lineId === 'startLine') selectedTimeRange.min = newValue;
+                if (lineId === 'endLine') selectedTimeRange.max = newValue;
 
-            function exportTrimmedCsv() {
-                const startTime = parseFloat(startTimeInputTrim.value);
-                const endTime = parseFloat(endTimeInputTrim.value);
-
-                if (isNaN(startTime) || isNaN(endTime) || startTime >= endTime) {
-                    alert("有効な開始時間と終了時間を入力してください。");
-                    return;
+                if (selectedTimeRange.min > selectedTimeRange.max) {
+                    [selectedTimeRange.min, selectedTimeRange.max] = [selectedTimeRange.max, selectedTimeRange.min];
                 }
 
-                const { headerRows, dataRows, fileName } = originalCsvDataTrim;
-                if (dataRows.length === 0) {
-                    alert("エクスポートするデータがありません。");
-                    return;
-                }
-
-                const trimmedData = dataRows.filter(row => {
-                    const time = parseFloat(row[1]);
-                    return time >= startTime && time <= endTime;
+                Object.values(trimmingChartInstances).forEach(chart => {
+                    chart.options.plugins.annotation.annotations.startLine.value = selectedTimeRange.min;
+                    chart.options.plugins.annotation.annotations.endLine.value = selectedTimeRange.max;
+                    chart.update('none');
                 });
-
-                if (trimmedData.length === 0) {
-                    alert("指定された時間範囲にデータがありません。");
-                    return;
-                }
-
-                const firstFrame = parseInt(trimmedData[0][0]);
-                const firstTime = parseFloat(trimmedData[0][1]);
-
-                const renumberedData = trimmedData.map((row, index) => {
-                    const newRow = [...row];
-                    newRow[0] = (index + 1).toString(); // Re-number Frame from 1
-                    newRow[1] = (parseFloat(row[1]) - firstTime).toFixed(6); // Re-calculate Time from 0
-                    return newRow;
-                });
-
-                const finalCsvData = headerRows.concat(renumberedData);
-                const csvString = Papa.unparse(finalCsvData, { newline: "\r\n" });
-
-                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement("a");
-                const url = URL.createObjectURL(blob);
-                const originalFileName = fileName.endsWith('.csv') ? fileName.slice(0, -4) : fileName;
-                link.setAttribute("href", url);
-                link.setAttribute("download", `${originalFileName}_trimmed.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                updateTrimmingRangeDisplay();
             }
 
+            function updateTrimmingRangeDisplay() {
+                if(selectedTimeRange.min !== null && selectedTimeRange.max !== null){
+                    trimmingRangeDisplay.textContent = `${selectedTimeRange.min.toFixed(3)}s - ${selectedTimeRange.max.toFixed(3)}s`;
+                    exportBtnTrimming.disabled = false;
+                } else {
+                    trimmingRangeDisplay.textContent = '未選択';
+                    exportBtnTrimming.disabled = true;
+                }
+            }
         });
     </script>
 </body>
