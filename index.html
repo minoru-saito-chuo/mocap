@@ -3588,6 +3588,28 @@
                 });
 
                 drawTrimmingSliderChart(datasets.x, fullTimeRange);
+                alignChartYAxes();
+            }
+
+            function alignChartYAxes() {
+                let maxLeftPadding = 0;
+                ['x', 'y', 'z'].forEach(axis => {
+                    const chart = trimmingChartInstances[axis];
+                    if (chart && chart.scales && chart.scales.y) {
+                         const maxLabelWidth = chart.scales.y.maxWidth;
+                         if (maxLabelWidth > maxLeftPadding) {
+                            maxLeftPadding = maxLabelWidth;
+                        }
+                    }
+                });
+
+                ['x', 'y', 'z'].forEach(axis => {
+                    const chart = trimmingChartInstances[axis];
+                    if (chart) {
+                        chart.options.layout.padding.left = maxLeftPadding;
+                        chart.update('none');
+                    }
+                });
             }
 
             function drawTrimmingSliderChart(sliderDataset, timeRange) {
@@ -3649,6 +3671,10 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false },
+                        zoom: {
+                            pan: { enabled: false },
+                            zoom: { wheel: { enabled: false }, pinch: { enabled: false } }
+                        },
                         annotation: {
                             annotations: {
                                 rangeBox: {
