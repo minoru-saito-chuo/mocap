@@ -604,6 +604,19 @@
                             <h2 class="text-xl font-semibold text-center mb-6">2. パラメータ設定</h2>
                              <div class="mt-4 space-y-5 max-w-sm mx-auto">
                                 <div>
+                                    <label class="block text-sm font-medium text-slate-700">① 回転データの形式</label>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <label class="flex items-center">
+                                            <input type="radio" name="rotation-format-std" value="euler" class="form-radio text-blue-600 focus:ring-blue-500" checked>
+                                            <span class="ml-2 text-sm text-slate-700">オイラー角 (度数法)</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="rotation-format-std" value="quaternion" class="form-radio text-blue-600 focus:ring-blue-500">
+                                            <span class="ml-2 text-sm text-slate-700">クウォータニオン</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
                                     <label class="block text-sm font-medium text-slate-700">② 車輪の剛体を選択</label>
                                     <div id="rigidbody-radio-container-std" class="mt-2 space-y-2 max-h-40 overflow-y-auto border p-3 rounded-md bg-slate-50/70"></div>
                                 </div>
@@ -2147,15 +2160,10 @@
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Rotation') {
                         const name = nameRow[i];
                         if (!rigidBodies[name]) {
-                            rigidBodies[name] = {
-                                name: name,
-                                rotation: {
-                                    [dataHeaderRow[i]]: i,
-                                    [dataHeaderRow[i+1]]: i+1,
-                                    [dataHeaderRow[i+2]]: i+2
-                                }
-                            };
+                            rigidBodies[name] = { name: name, rotation: {} };
                         }
+                        const axisName = dataHeaderRow[i];
+                        rigidBodies[name].rotation[axisName] = i;
                     }
                 }
                 return rigidBodies;
@@ -2200,16 +2208,80 @@
                 const radiusM = radiusCm / 100.0;
                 const selectedAxis = axisSelectStd.value;
                 const selectedBodyName = selectedRadio.value;
+                const rotationFormat = document.querySelector('input[name="rotation-format-std"]:checked').value;
 
                 try {
                     const bodyInfo = parsedCsvDataStd.rigidBodies[selectedBodyName];
-                    const rotationColumnIndex = bodyInfo.rotation[selectedAxis];
+                    const timeData = [];
+                    const angleData = [];
 
-                    if (rotationColumnIndex === undefined) {
-                        throw new Error(`選択された剛体に'${selectedAxis}'軸の回転データが存在しません。`);
+                    if (rotationFormat === 'quaternion') {
+                        // Check if we have X, Y, Z, W
+                        if (bodyInfo.rotation['X'] === undefined || bodyInfo.rotation['Y'] === undefined ||
+                            bodyInfo.rotation['Z'] === undefined || bodyInfo.rotation['W'] === undefined) {
+                            throw new Error("クウォータニオンデータ(X, Y, Z, W)が揃っていません。");
+                        }
+
+                        // We will use standard Euler order 'XYZ' for now, but really we just want the selected axis component.
+                        // Assuming the user selected axis is the primary rotation axis.
+                        // THREE.Euler order 'XYZ' -> rotates X, then Y, then Z.
+                        // If selectedAxis is 'Y', we want the rotation around Y.
+                        // However, decomposition depends on order.
+                        // Let's assume standard 'XYZ' order is sufficient for simple wheel rotation.
+                        // Or better, use an order where the selected axis is applied LAST to represent global rotation?
+                        // Actually, for a single axis rotation, any valid order containing that axis should show the change.
+
+                        const idxX = bodyInfo.rotation['X'];
+                        const idxY = bodyInfo.rotation['Y'];
+                        const idxZ = bodyInfo.rotation['Z'];
+                        const idxW = bodyInfo.rotation['W'];
+
+                        parsedCsvDataStd.dataRows.forEach(row => {
+                            const t = parseFloat(row[1]);
+                            const qx = parseFloat(row[idxX]);
+                            const qy = parseFloat(row[idxY]);
+                            const qz = parseFloat(row[idxZ]);
+                            const qw = parseFloat(row[idxW]);
+
+                            if (!isNaN(t) && !isNaN(qx) && !isNaN(qy) && !isNaN(qz) && !isNaN(qw)) {
+                                timeData.push(t);
+                                const q = new THREE.Quaternion(qx, qy, qz, qw);
+
+                                // Select Euler order to avoid gimbal lock/clamping on the target axis.
+                                // The middle axis in Tait-Bryan angles is often clamped to +/- 90 degrees.
+                                // We ensure the selected axis is the first applied rotation (outermost in some conventions, or just consistent).
+                                let eulerOrder = 'XYZ';
+                                if (selectedAxis === 'Y') eulerOrder = 'YXZ';
+                                else if (selectedAxis === 'Z') eulerOrder = 'ZXY';
+                                else eulerOrder = 'XYZ'; // X is first
+
+                                const euler = new THREE.Euler().setFromQuaternion(q, eulerOrder);
+
+                                let angleVal = 0;
+                                if (selectedAxis === 'X') angleVal = euler.x;
+                                else if (selectedAxis === 'Y') angleVal = euler.y;
+                                else if (selectedAxis === 'Z') angleVal = euler.z;
+
+                                // Convert radians to degrees
+                                angleData.push(angleVal * (180 / Math.PI));
+                            }
+                        });
+
+                    } else {
+                        // Euler (Degrees)
+                        const rotationColumnIndex = bodyInfo.rotation[selectedAxis];
+                        if (rotationColumnIndex === undefined) {
+                            throw new Error(`選択された剛体に'${selectedAxis}'軸の回転データが存在しません。`);
+                        }
+                        parsedCsvDataStd.dataRows.forEach(row => {
+                            const t = parseFloat(row[1]);
+                            const a = parseFloat(row[rotationColumnIndex]);
+                            if (!isNaN(t) && !isNaN(a)) {
+                                timeData.push(t);
+                                angleData.push(a);
+                            }
+                        });
                     }
-                    const timeData = parsedCsvDataStd.dataRows.map(row => parseFloat(row[1])).filter(t => !isNaN(t));
-                    const angleData = parsedCsvDataStd.dataRows.map(row => parseFloat(row[rotationColumnIndex])).filter(a => !isNaN(a));
 
                     if (timeData.length !== angleData.length || timeData.length < 2) {
                         throw new Error("有効な時間または角度データが不足しています。");
@@ -2219,7 +2291,7 @@
                     const period = findRotationPeriodStd(timeData, unwrappedAngles);
 
                     if (period === null) {
-                        throw new Error("データ内で1回転以上の回転を検出できませんでした。回転軸の選択が間違っている可能性があります。");
+                        throw new Error("データ内で1回転以上の回転を検出できませんでした。回転軸の選択が間違っているか、データに乱れがある可能性があります。");
                     }
                     const omega = (2 * Math.PI) / period;
                     const velocity = radiusM * omega;
@@ -2249,36 +2321,67 @@
             }
 
             function findRotationPeriodStd(times, unwrappedAngles) {
-                let motionStartIndex = -1;
-                for (let i = 1; i < unwrappedAngles.length; i++) {
-                    if (Math.abs(unwrappedAngles[i] - unwrappedAngles[0]) > 5) {
-                        motionStartIndex = i; break;
+                let currentIndex = 0;
+
+                // Try to find a valid rotation period by searching through the data
+                while (currentIndex < unwrappedAngles.length - 10) {
+                    // 1. Find start of motion relative to currentIndex
+                    let motionStartIndex = -1;
+                    const baseAngle = unwrappedAngles[currentIndex];
+
+                    for (let i = currentIndex + 1; i < unwrappedAngles.length; i++) {
+                        if (Math.abs(unwrappedAngles[i] - baseAngle) > 5) {
+                            motionStartIndex = i;
+                            break;
+                        }
                     }
-                }
-                if (motionStartIndex === -1 || motionStartIndex > unwrappedAngles.length - 10) return null;
 
-                const sampleEndIndex = Math.min(motionStartIndex + 20, unwrappedAngles.length - 1);
-                const angleChange = unwrappedAngles[sampleEndIndex] - unwrappedAngles[motionStartIndex];
-                if (Math.abs(angleChange) < 10) return null;
+                    if (motionStartIndex === -1) return null; // No more motion found
 
-                const direction = Math.sign(angleChange);
-                const targetAngle = unwrappedAngles[motionStartIndex] + (360 * direction);
-                let endIndex = -1;
-                for (let i = motionStartIndex + 1; i < unwrappedAngles.length; i++) {
-                    if ((direction > 0 && unwrappedAngles[i] >= targetAngle) || (direction < 0 && unwrappedAngles[i] <= targetAngle)) {
-                        endIndex = i; break;
+                    // 2. Check if this motion looks valid (not just noise)
+                    const sampleEndIndex = Math.min(motionStartIndex + 20, unwrappedAngles.length - 1);
+                    const angleChange = unwrappedAngles[sampleEndIndex] - unwrappedAngles[motionStartIndex];
+
+                    // If movement is too slow or just noise, skip and try again
+                    if (Math.abs(angleChange) < 5) {
+                        currentIndex = motionStartIndex;
+                        continue;
                     }
+
+                    // 3. Try to find the end of a 360 degree rotation
+                    const direction = Math.sign(angleChange);
+                    const targetAngle = unwrappedAngles[motionStartIndex] + (360 * direction);
+                    let endIndex = -1;
+
+                    for (let i = motionStartIndex + 1; i < unwrappedAngles.length; i++) {
+                        if ((direction > 0 && unwrappedAngles[i] >= targetAngle) ||
+                            (direction < 0 && unwrappedAngles[i] <= targetAngle)) {
+                            endIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (endIndex !== -1) {
+                        // Found a valid rotation! Calculate period.
+                        const T_start = times[motionStartIndex];
+                        const angle_before = unwrappedAngles[endIndex - 1];
+                        const angle_after = unwrappedAngles[endIndex];
+                        const time_before = times[endIndex - 1];
+                        const time_after = times[endIndex];
+
+                        if (angle_after === angle_before) return time_after - T_start;
+
+                        const fraction = (targetAngle - angle_before) / (angle_after - angle_before);
+                        const T_end = time_before + fraction * (time_after - time_before);
+                        return T_end - T_start;
+                    }
+
+                    // If we didn't find a full rotation, advance search to try finding a new start point
+                    // We advance slightly past the motion start to see if a valid rotation starts later
+                    currentIndex = motionStartIndex + 1;
                 }
-                if (endIndex === -1) return null;
 
-                const T_start = times[motionStartIndex];
-                const angle_before = unwrappedAngles[endIndex - 1], angle_after = unwrappedAngles[endIndex];
-                const time_before = times[endIndex - 1], time_after = times[endIndex];
-
-                if (angle_after === angle_before) return time_after - T_start;
-
-                const fraction = (targetAngle - angle_before) / (angle_after - angle_before);
-                return (time_before + fraction * (time_after - time_before)) - T_start;
+                return null;
             }
 
             function handleCopyStd() {
