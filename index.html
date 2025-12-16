@@ -162,6 +162,13 @@
                     </svg>
                     <span>基準速度算出ツール</span>
                 </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#distance-measurement">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> <!-- Placeholder icon, maybe a ruler? -->
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 19h-6a2 2 0 00-2 2v0a2 2 0 002 2h6a2 2 0 002-2v0a2 2 0 00-2-2zM5 5h6a2 2 0 012 2v0a2 2 0 01-2 2H5a2 2 0 01-2-2v0a2 2 0 012-2z"></path>
+                    </svg>
+                    <span>距離測定ツール</span>
+                </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#how-to-use">
                         <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -213,6 +220,10 @@
                                 <a href="#standard-velocity" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-green-300 hover:-translate-y-1">
                                     <h2 class="text-xl font-semibold text-slate-800 mb-2">基準速度の算出</h2>
                                     <p class="text-slate-600">車輪の回転周期から基準となる速度を計算します。</p>
+                                </a>
+                                <a href="#distance-measurement" class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-pink-300 hover:-translate-y-1">
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">距離測定ツール</h2>
+                                    <p class="text-slate-600">マーカー間や剛体間の平均位置からの距離を測定します。</p>
                                 </a>
                             </div>
                         </div>
@@ -654,6 +665,84 @@
                     </div>
                 </div>
 
+                <div class="page" id="distance-measurement">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">距離測定ツール</h1>
+                            <p class="text-slate-500 mt-2">マーカー間または剛体間の平均位置からの距離を測定します。</p>
+                        </header>
+
+                        <section class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. 設定</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを追加</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="csv-files-distance" accept=".csv" class="hidden">
+                                        <label for="csv-files-distance" class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを選択</label>
+                                    </div>
+                                    <div id="file-name-distance" class="mt-2 text-sm text-slate-600"></div>
+                                </div>
+                                <div class="space-y-4">
+                                     <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">② 解析タイプ</label>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <label class="flex items-center"><input type="radio" name="analysis-type-distance" value="marker" class="form-radio" checked> <span class="ml-2 text-sm">マーカー間距離</span></label>
+                                            <label class="flex items-center"><input type="radio" name="analysis-type-distance" value="rigidbody" class="form-radio"> <span class="ml-2 text-sm">剛体間距離</span></label>
+                                        </div>
+                                     </div>
+                                    <div>
+                                        <label for="sampling-rate-distance" class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔 (秒)</label>
+                                        <input type="number" id="sampling-rate-distance" value="0.1" step="0.01" min="0.01" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                    </div>
+                                     <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">④ 元データの単位</label>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <label class="flex items-center"><input type="radio" name="data-unit-distance" value="mm" class="form-radio" checked> <span class="ml-2 text-sm">mm</span></label>
+                                            <label class="flex items-center"><input type="radio" name="data-unit-distance" value="m" class="form-radio"> <span class="ml-2 text-sm">m</span></label>
+                                        </div>
+                                     </div>
+                                </div>
+                            </div>
+
+                            <div id="pair-selection-area" class="mt-8 hidden">
+                                <h3 class="text-lg font-medium text-slate-800 mb-4 border-b pb-2">⑤ 測定対象のペアを選択 (最大5件)</h3>
+                                <div id="pair-list-container" class="space-y-4">
+                                    <!-- Dynamic Rows -->
+                                </div>
+                                <button id="add-pair-btn" class="mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                    ペアを追加
+                                </button>
+                            </div>
+
+                            <div class="text-center mt-8">
+                                <button id="analyze-btn-distance" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-8 rounded-md shadow-sm disabled:bg-slate-400" disabled>
+                                    解析開始
+                                </button>
+                            </div>
+                        </section>
+
+                        <section id="results-card-distance" class="bg-white p-6 rounded-lg shadow-sm border hidden">
+                            <h2 class="text-xl font-semibold text-center mb-6">2. 解析結果</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-200">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">ペア</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">距離 (m)</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">点A 平均座標 (x,y,z)</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">点B 平均座標 (x,y,z)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="results-table-body-distance" class="bg-white divide-y divide-slate-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
                 <div class="page" id="how-to-use">
                     <h1 class="text-2xl font-semibold text-gray-800 mb-8 text-center">使い方ガイド</h1>
 
@@ -1015,6 +1104,21 @@
                                 <div class="formula-block">
                                     $v = r \cdot \omega = \frac{2\pi r}{T}$
                                 </div>
+
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">距離測定ツール</h2>
+                                <h3>距離の算出</h3>
+                                <p>
+                                    指定された2点（点Aと点B）間の距離を測定します。まず、全解析区間における各点の平均座標 $(\bar{x}, \bar{y}, \bar{z})$ を算出します。データ点数を $N$、各時刻 $t$ における座標を $(x_t, y_t, z_t)$ とすると、平均座標は次式で計算されます。
+                                </p>
+                                <div class="formula-block">
+                                    $\bar{x} = \frac{1}{N} \sum_{t=1}^{N} x_t, \quad \bar{y} = \frac{1}{N} \sum_{t=1}^{N} y_t, \quad \bar{z} = \frac{1}{N} \sum_{t=1}^{N} z_t$
+                                </div>
+                                <p>
+                                    点Aの平均座標を $(\bar{x}_A, \bar{y}_A, \bar{z}_A)$、点Bの平均座標を $(\bar{x}_B, \bar{y}_B, \bar{z}_B)$ としたとき、2点間の距離 $D$ はユークリッド距離の公式を用いて次のように求められます。
+                                </p>
+                                <div class="formula-block">
+                                    $D = \sqrt{(\bar{x}_A - \bar{x}_B)^2 + (\bar{y}_A - \bar{y}_B)^2 + (\bar{z}_A - \bar{z}_B)^2}$
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1086,6 +1190,7 @@
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#data-analysis">データ解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#wide-area-analysis">広域解析ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#standard-velocity">基準速度算出ツール</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#distance-measurement">距離測定ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#how-to-use">使い方ガイド</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#algorithms">アルゴリズム仕様</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md" href="#about">このツールについて</a>
@@ -3316,6 +3421,375 @@
                     loadingDiv.classList.add('hidden');
                 }
             }
+
+            // --- DISTANCE MEASUREMENT TOOL SCRIPT ---
+            const csvFilesDistance = document.getElementById('csv-files-distance');
+            const fileNameDistance = document.getElementById('file-name-distance');
+            const analysisTypeDistanceRadios = document.querySelectorAll('input[name="analysis-type-distance"]');
+            const samplingRateDistance = document.getElementById('sampling-rate-distance');
+            const dataUnitDistanceRadios = document.querySelectorAll('input[name="data-unit-distance"]');
+            const pairSelectionArea = document.getElementById('pair-selection-area');
+            const pairListContainer = document.getElementById('pair-list-container');
+            const addPairBtn = document.getElementById('add-pair-btn');
+            const analyzeBtnDistance = document.getElementById('analyze-btn-distance');
+            const resultsCardDistance = document.getElementById('results-card-distance');
+            const resultsTableBodyDistance = document.getElementById('results-table-body-distance');
+
+            let fileDataStoreDistance = null;
+            let pairCount = 0;
+
+            if (csvFilesDistance) {
+                csvFilesDistance.addEventListener('change', handleFileSelectDistance);
+                addPairBtn.addEventListener('click', addPairRow);
+                analyzeBtnDistance.addEventListener('click', calculateDistance);
+                analysisTypeDistanceRadios.forEach(radio => radio.addEventListener('change', updatePairSelectors));
+            }
+
+            function handleFileSelectDistance(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                fileNameDistance.textContent = file.name;
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "ファイルを読み込み中...";
+
+                Papa.parse(file, {
+                    complete: (results) => {
+                        try {
+                            fileDataStoreDistance = parseHeaderDistance(results.data);
+                            pairSelectionArea.classList.remove('hidden');
+                            // Initialize with one pair row if empty
+                            if (pairCount === 0) addPairRow();
+                            updatePairSelectors(); // Populate selectors
+                        } catch (error) {
+                            alert(`解析エラー: ${error.message}`);
+                            fileDataStoreDistance = null;
+                            pairSelectionArea.classList.add('hidden');
+                        } finally {
+                            loadingDiv.classList.add('hidden');
+                        }
+                    },
+                    error: (error) => {
+                        alert(`ファイルの読み込みに失敗しました: ${error.message}`);
+                        loadingDiv.classList.add('hidden');
+                    }
+                });
+            }
+
+            function parseHeaderDistance(data) {
+                // Robust parsing for both Rigid Bodies and Markers
+                let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
+                for(let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (!row || row.length < 2) continue;
+                    if (row[1] === 'Type') typeRowIndex = i;
+                    if (row[1] === 'Name') nameRowIndex = i;
+                    if (row.includes('Position')) propertyRowIndex = i;
+                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                        dataHeaderRowIndex = i;
+                        break;
+                    }
+                }
+
+                if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
+                    throw new Error("CSVのヘッダー形式を認識できませんでした。");
+                }
+
+                const typeRow = data[typeRowIndex];
+                const nameRow = data[nameRowIndex];
+                const propertyRow = data[propertyRowIndex];
+                const dataHeaderRow = data[dataHeaderRowIndex];
+                const dataStartIndex = dataHeaderRowIndex + 1;
+
+                const objects = {
+                    rigidBodies: [],
+                    markers: []
+                };
+
+                for (let i = 2; i < typeRow.length; i++) {
+                    // Check for Position property
+                    if (propertyRow[i] !== 'Position') continue;
+
+                    const type = typeRow[i];
+                    const name = nameRow[i];
+
+                    // Identify object end index (assuming X, Y, Z are contiguous)
+                    // Check if we have X, Y, Z
+                    let xIndex = -1, yIndex = -1, zIndex = -1;
+
+                    for(let j=0; j<3; j++) {
+                        if (i+j < dataHeaderRow.length) {
+                            const axis = dataHeaderRow[i+j].toUpperCase();
+                            if (axis === 'X') xIndex = i+j;
+                            if (axis === 'Y') yIndex = i+j;
+                            if (axis === 'Z') zIndex = i+j;
+                        }
+                    }
+
+                    if (xIndex !== -1 && yIndex !== -1 && zIndex !== -1) {
+                        const objData = { name: name, xIndex, yIndex, zIndex };
+                        if (type === 'Rigid Body') {
+                            if (!objects.rigidBodies.find(o => o.name === name)) {
+                                objects.rigidBodies.push(objData);
+                            }
+                        } else if (type === 'Marker') {
+                             // Try to find if this marker belongs to a rigid body.
+                             // Motive sometimes puts "RigidBodyName:MarkerName" in the Name row, or puts RigidBody name in a separate row if exported differently.
+                             // Based on standard motive export (CSV), Name row usually contains the full unique name.
+                             // However, sometimes it's grouped.
+                             // Let's assume the name in 'Name' row is unique enough or formatted as "RB:Marker".
+                             // The user requested: "マーカー一覧では，マーカー名の前に剛体名を入れることにしてください"
+                             // If the CSV structure has a specific row for ID or Rigid Body Parent, we might use it.
+                             // But standard "Take" export usually flattens it or puts it in Name.
+                             // Let's use the Name column as is, assuming it contains necessary info,
+                             // OR check if there's a convention.
+
+                             // If the name is just "Marker1" and it belongs to "Robot", often it's "Robot:Marker1".
+                             // We will just store it. If we can deduce a prefix from previous columns or similar, we might.
+                             // But parsing strictly from columns:
+
+                             if (!objects.markers.find(o => o.name === name)) {
+                                objects.markers.push(objData);
+                             }
+                        }
+                        // Advance index to skip Y and Z
+                         // Note: The loop increments by 1, so we don't need to skip manually if we just process when propertyRow[i] is 'Position' (usually aligned with X).
+                         // Actually, propertyRow usually has 'Position' for X, Y, Z columns or just one merged cell?
+                         // In CSV, usually: Type, Type, Type... | Name, Name, Name... | Position, Position, Position... | X, Y, Z, X, Y, Z...
+                         // So propertyRow[i] is 'Position' for X, Y, and Z.
+                         // We should process only if we are at X (start of triplet).
+                         // We can detect if dataHeaderRow[i] is 'X'.
+
+                    }
+                }
+
+                // Refined loop to ensure we only pick up the start of a triplet
+                const uniqueObjects = { rigidBodies: [], markers: [] };
+                for (let i = 2; i < typeRow.length; i++) {
+                    if (propertyRow[i] === 'Position' && dataHeaderRow[i].toUpperCase() === 'X') {
+                         const type = typeRow[i];
+                         const name = nameRow[i];
+                         const xIndex = i;
+                         const yIndex = i+1;
+                         const zIndex = i+2;
+
+                         // Verify Y and Z exist
+                         if (yIndex < dataHeaderRow.length && dataHeaderRow[yIndex].toUpperCase() === 'Y' &&
+                             zIndex < dataHeaderRow.length && dataHeaderRow[zIndex].toUpperCase() === 'Z') {
+
+                             const obj = { name, xIndex, yIndex, zIndex };
+                             if (type === 'Rigid Body') {
+                                 if (!uniqueObjects.rigidBodies.find(o => o.name === name)) uniqueObjects.rigidBodies.push(obj);
+                             } else if (type === 'Marker') {
+                                 if (!uniqueObjects.markers.find(o => o.name === name)) uniqueObjects.markers.push(obj);
+                             }
+                         }
+                    }
+                }
+
+                // Filter out empty lines from raw data
+                const rawData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
+
+                return { objects: uniqueObjects, rawData };
+            }
+
+            function addPairRow() {
+                if (pairCount >= 5) {
+                    alert("最大5件まで選択できます。");
+                    return;
+                }
+                pairCount++;
+
+                const rowId = `pair-row-${Date.now()}`;
+                const div = document.createElement('div');
+                div.className = 'pair-row flex items-center space-x-4 p-3 bg-slate-50 border rounded-md';
+                div.id = rowId;
+                div.innerHTML = `
+                    <span class="font-medium text-slate-500 text-sm w-6">#${pairCount}</span>
+                    <div class="flex-1 grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">点A</label>
+                            <select class="pair-select-a w-full text-sm border-slate-300 rounded-md shadow-sm"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">点B</label>
+                            <select class="pair-select-b w-full text-sm border-slate-300 rounded-md shadow-sm"></select>
+                        </div>
+                    </div>
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removePairRow('${rowId}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                `;
+                pairListContainer.appendChild(div);
+
+                // Populate the new selects if data is loaded
+                if (fileDataStoreDistance) {
+                    updateSelectOptions(div.querySelector('.pair-select-a'));
+                    updateSelectOptions(div.querySelector('.pair-select-b'));
+                }
+
+                updateAnalyzeButtonState();
+            }
+
+            // Expose remove function to global scope
+            window.removePairRow = function(rowId) {
+                const row = document.getElementById(rowId);
+                if (row) {
+                    row.remove();
+                    pairCount--;
+                    // Renumber rows? Optional but looks nicer
+                    document.querySelectorAll('#pair-list-container .pair-row').forEach((row, index) => {
+                        row.querySelector('span').textContent = `#${index + 1}`;
+                    });
+                    updateAnalyzeButtonState();
+                }
+            };
+
+            function updateAnalyzeButtonState() {
+                analyzeBtnDistance.disabled = pairCount === 0 || !fileDataStoreDistance;
+            }
+
+            function updatePairSelectors() {
+                if (!fileDataStoreDistance) return;
+                document.querySelectorAll('.pair-select-a, .pair-select-b').forEach(select => {
+                    updateSelectOptions(select);
+                });
+            }
+
+            function updateSelectOptions(selectElement) {
+                const type = document.querySelector('input[name="analysis-type-distance"]:checked').value;
+                const objects = fileDataStoreDistance.objects;
+                const list = type === 'marker' ? objects.markers : objects.rigidBodies;
+
+                const currentValue = selectElement.value;
+                selectElement.innerHTML = '<option value="">選択してください</option>';
+
+                list.forEach(obj => {
+                    const option = document.createElement('option');
+                    option.value = obj.name;
+                    option.textContent = obj.name;
+                    selectElement.appendChild(option);
+                });
+
+                if (currentValue) selectElement.value = currentValue;
+            }
+
+            function calculateDistance() {
+                if (!fileDataStoreDistance) return;
+
+                const pairs = [];
+                document.querySelectorAll('.pair-row').forEach(row => {
+                    const selectA = row.querySelector('.pair-select-a');
+                    const selectB = row.querySelector('.pair-select-b');
+                    if (selectA.value && selectB.value) {
+                        pairs.push({ a: selectA.value, b: selectB.value });
+                    }
+                });
+
+                if (pairs.length === 0) {
+                    alert("有効なペアが選択されていません。");
+                    return;
+                }
+
+                const type = document.querySelector('input[name="analysis-type-distance"]:checked').value;
+                const objectList = type === 'marker' ? fileDataStoreDistance.objects.markers : fileDataStoreDistance.objects.rigidBodies;
+                const samplingRate = parseFloat(samplingRateDistance.value);
+                const dataUnit = document.querySelector('input[name="data-unit-distance"]:checked').value;
+
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "解析中...";
+
+                setTimeout(() => {
+                    try {
+                        const results = pairs.map(pair => {
+                            const objA = objectList.find(o => o.name === pair.a);
+                            const objB = objectList.find(o => o.name === pair.b);
+
+                            if (!objA || !objB) return null;
+
+                            const avgA = calculateAveragePosition(objA, samplingRate, dataUnit);
+                            const avgB = calculateAveragePosition(objB, samplingRate, dataUnit);
+
+                            // Euclidean distance between averages
+                            const distance = Math.sqrt(
+                                Math.pow(avgA.x - avgB.x, 2) +
+                                Math.pow(avgA.y - avgB.y, 2) +
+                                Math.pow(avgA.z - avgB.z, 2)
+                            );
+
+                            return { pair, avgA, avgB, distance };
+                        }).filter(r => r !== null);
+
+                        displayDistanceResults(results);
+
+                    } catch (e) {
+                        console.error(e);
+                        alert("計算中にエラーが発生しました。");
+                    } finally {
+                        loadingDiv.classList.add('hidden');
+                    }
+                }, 50);
+            }
+
+            function calculateAveragePosition(objInfo, samplingRate, dataUnit) {
+                const rawData = fileDataStoreDistance.rawData;
+                let sumX = 0, sumY = 0, sumZ = 0;
+                let count = 0;
+                let nextSampleTime = 0;
+
+                for (const row of rawData) {
+                    const time = parseFloat(row[1]);
+                    if (isNaN(time)) continue;
+
+                    if (time >= nextSampleTime) {
+                        let x = parseFloat(row[objInfo.xIndex]);
+                        let y = parseFloat(row[objInfo.yIndex]);
+                        let z = parseFloat(row[objInfo.zIndex]);
+
+                        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                            if (dataUnit === 'mm') {
+                                x /= 1000;
+                                y /= 1000;
+                                z /= 1000;
+                            }
+                            sumX += x;
+                            sumY += y;
+                            sumZ += z;
+                            count++;
+                        }
+                        nextSampleTime += samplingRate;
+                    }
+                }
+
+                if (count === 0) return { x: 0, y: 0, z: 0 };
+                return { x: sumX / count, y: sumY / count, z: sumZ / count };
+            }
+
+            function displayDistanceResults(results) {
+                resultsTableBodyDistance.innerHTML = '';
+                results.forEach(res => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                            ${res.pair.a} <span class="text-slate-400 mx-1">↔</span> ${res.pair.b}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-bold">
+                            ${res.distance.toFixed(4)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            (${res.avgA.x.toFixed(3)}, ${res.avgA.y.toFixed(3)}, ${res.avgA.z.toFixed(3)})
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            (${res.avgB.x.toFixed(3)}, ${res.avgB.y.toFixed(3)}, ${res.avgB.z.toFixed(3)})
+                        </td>
+                    `;
+                    resultsTableBodyDistance.appendChild(tr);
+                });
+
+                resultsCardDistance.classList.remove('hidden');
+                resultsCardDistance.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
 
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
