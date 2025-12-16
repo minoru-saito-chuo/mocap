@@ -164,7 +164,6 @@
                 </a>
                 <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150" href="#distance-measurement">
                     <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> <!-- Placeholder icon, maybe a ruler? -->
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 19h-6a2 2 0 00-2 2v0a2 2 0 002 2h6a2 2 0 002-2v0a2 2 0 00-2-2zM5 5h6a2 2 0 012 2v0a2 2 0 01-2 2H5a2 2 0 01-2-2v0a2 2 0 012-2z"></path>
                     </svg>
                     <span>距離測定ツール</span>
@@ -692,8 +691,15 @@
                                         </div>
                                      </div>
                                     <div>
-                                        <label for="sampling-rate-distance" class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔 (秒)</label>
-                                        <input type="number" id="sampling-rate-distance" value="0.1" step="0.01" min="0.01" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300">
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔</label>
+                                        <div class="flex items-center mb-2">
+                                            <input type="checkbox" id="enable-downsampling-distance" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label for="enable-downsampling-distance" class="ml-2 text-sm text-slate-700">ダウンサンプリングを行う</label>
+                                        </div>
+                                        <div id="sampling-rate-container-distance" class="hidden">
+                                            <label for="sampling-rate-distance" class="block text-xs font-medium text-slate-500 mb-1">間隔 (秒)</label>
+                                            <input type="number" id="sampling-rate-distance" value="0.1" step="0.01" min="0.01" class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
                                     </div>
                                      <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-2">④ 元データの単位</label>
@@ -3427,6 +3433,8 @@
             const fileNameDistance = document.getElementById('file-name-distance');
             const analysisTypeDistanceRadios = document.querySelectorAll('input[name="analysis-type-distance"]');
             const samplingRateDistance = document.getElementById('sampling-rate-distance');
+            const enableDownsamplingCheckbox = document.getElementById('enable-downsampling-distance');
+            const samplingRateContainer = document.getElementById('sampling-rate-container-distance');
             const dataUnitDistanceRadios = document.querySelectorAll('input[name="data-unit-distance"]');
             const pairSelectionArea = document.getElementById('pair-selection-area');
             const pairListContainer = document.getElementById('pair-list-container');
@@ -3443,6 +3451,9 @@
                 addPairBtn.addEventListener('click', addPairRow);
                 analyzeBtnDistance.addEventListener('click', calculateDistance);
                 analysisTypeDistanceRadios.forEach(radio => radio.addEventListener('change', updatePairSelectors));
+                enableDownsamplingCheckbox.addEventListener('change', (e) => {
+                    samplingRateContainer.classList.toggle('hidden', !e.target.checked);
+                });
             }
 
             function handleFileSelectDistance(event) {
@@ -3609,11 +3620,11 @@
                     <div class="flex-1 grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs text-slate-500 mb-1">点A</label>
-                            <select class="pair-select-a w-full text-sm border-slate-300 rounded-md shadow-sm"></select>
+                            <select class="pair-select-a block w-full bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm max-w-xs"></select>
                         </div>
                         <div>
                             <label class="block text-xs text-slate-500 mb-1">点B</label>
-                            <select class="pair-select-b w-full text-sm border-slate-300 rounded-md shadow-sm"></select>
+                            <select class="pair-select-b block w-full bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm max-w-xs"></select>
                         </div>
                     </div>
                     <button type="button" class="text-red-500 hover:text-red-700" onclick="removePairRow('${rowId}')">
@@ -3693,7 +3704,8 @@
 
                 const type = document.querySelector('input[name="analysis-type-distance"]:checked').value;
                 const objectList = type === 'marker' ? fileDataStoreDistance.objects.markers : fileDataStoreDistance.objects.rigidBodies;
-                const samplingRate = parseFloat(samplingRateDistance.value);
+                const isDownsampling = enableDownsamplingCheckbox.checked;
+                const samplingRate = isDownsampling ? parseFloat(samplingRateDistance.value) : 0;
                 const dataUnit = document.querySelector('input[name="data-unit-distance"]:checked').value;
 
                 loadingDiv.classList.remove('hidden');
@@ -3707,8 +3719,8 @@
 
                             if (!objA || !objB) return null;
 
-                            const avgA = calculateAveragePosition(objA, samplingRate, dataUnit);
-                            const avgB = calculateAveragePosition(objB, samplingRate, dataUnit);
+                            const avgA = calculateAveragePosition(objA, samplingRate, isDownsampling, dataUnit);
+                            const avgB = calculateAveragePosition(objB, samplingRate, isDownsampling, dataUnit);
 
                             // Euclidean distance between averages
                             const distance = Math.sqrt(
@@ -3731,17 +3743,17 @@
                 }, 50);
             }
 
-            function calculateAveragePosition(objInfo, samplingRate, dataUnit) {
+            function calculateAveragePosition(objInfo, samplingRate, isDownsampling, dataUnit) {
                 const rawData = fileDataStoreDistance.rawData;
                 let sumX = 0, sumY = 0, sumZ = 0;
                 let count = 0;
-                let nextSampleTime = 0;
+                let nextSampleTime = -1; // Process first frame always
 
                 for (const row of rawData) {
                     const time = parseFloat(row[1]);
                     if (isNaN(time)) continue;
 
-                    if (time >= nextSampleTime) {
+                    if (!isDownsampling || time >= nextSampleTime) {
                         let x = parseFloat(row[objInfo.xIndex]);
                         let y = parseFloat(row[objInfo.yIndex]);
                         let z = parseFloat(row[objInfo.zIndex]);
@@ -3757,7 +3769,10 @@
                             sumZ += z;
                             count++;
                         }
-                        nextSampleTime += samplingRate;
+                        if (isDownsampling) {
+                            if (nextSampleTime === -1) nextSampleTime = time; // Initialize on first valid frame
+                            nextSampleTime += samplingRate;
+                        }
                     }
                 }
 
