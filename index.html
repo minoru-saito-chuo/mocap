@@ -4431,8 +4431,10 @@
             let trimmingDragState = {
                 active: false,
                 element: null, // 'lineStart', 'lineEnd', 'box1'
-                lastX: 0,
-                hovered: null
+                hovered: null,
+                originX: 0,
+                originStart: 0,
+                originEnd: 0
             };
 
             if (csvFileTrimming) {
@@ -4771,7 +4773,9 @@
                             if (trimmingDragState.hovered) {
                                 trimmingDragState.active = true;
                                 trimmingDragState.element = trimmingDragState.hovered;
-                                trimmingDragState.lastX = event.x;
+                                trimmingDragState.originX = event.x;
+                                trimmingDragState.originStart = trimmingRange.start;
+                                trimmingDragState.originEnd = trimmingRange.end;
                                 return false; // Stop other plugins (Zoom)
                             }
                         }
@@ -4779,32 +4783,27 @@
                         // Handle Drag Move
                         if (event.type === 'mousemove' || event.type === 'touchmove') {
                             if (trimmingDragState.active) {
-                                const deltaPixels = event.x - trimmingDragState.lastX;
-                                if (deltaPixels === 0) return false;
-
                                 const scale = chart.scales.x;
                                 const valCurrent = scale.getValueForPixel(event.x);
-                                const valPrev = scale.getValueForPixel(trimmingDragState.lastX);
-                                const deltaVal = valCurrent - valPrev;
-
-                                trimmingDragState.lastX = event.x;
+                                const valOrigin = scale.getValueForPixel(trimmingDragState.originX);
+                                const diff = valCurrent - valOrigin;
 
                                 if (trimmingDragState.element === 'box1') {
                                     // Move entire range
-                                    const newStart = trimmingRange.start + deltaVal;
-                                    const newEnd = trimmingRange.end + deltaVal;
+                                    const newStart = trimmingDragState.originStart + diff;
+                                    const newEnd = trimmingDragState.originEnd + diff;
                                     updateTrimmingRange(newStart, newEnd, true, axis);
                                 } else if (trimmingDragState.element === 'lineStart') {
                                     // Resize Start
-                                    const newStart = trimmingRange.start + deltaVal;
-                                    if (newStart < trimmingRange.end) {
-                                        updateTrimmingRange(newStart, trimmingRange.end, true, axis);
+                                    const newStart = trimmingDragState.originStart + diff;
+                                    if (newStart < trimmingDragState.originEnd) {
+                                        updateTrimmingRange(newStart, trimmingDragState.originEnd, true, axis);
                                     }
                                 } else if (trimmingDragState.element === 'lineEnd') {
                                     // Resize End
-                                    const newEnd = trimmingRange.end + deltaVal;
-                                    if (newEnd > trimmingRange.start) {
-                                        updateTrimmingRange(trimmingRange.start, newEnd, true, axis);
+                                    const newEnd = trimmingDragState.originEnd + diff;
+                                    if (newEnd > trimmingDragState.originStart) {
+                                        updateTrimmingRange(trimmingDragState.originStart, newEnd, true, axis);
                                     }
                                 }
 
@@ -4849,6 +4848,7 @@
                             }
                         },
                         plugins: {
+                            tooltip: { enabled: false }, // Disable tooltips
                             legend: { display: axis === 'x', labels: { boxWidth: 10 } },
                             zoom: {
                                 zoom: {
