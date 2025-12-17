@@ -4499,14 +4499,17 @@
                 for (let i = startCol; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position' && dataHeaderRow[i].toUpperCase() === 'X') {
                         const name = nameRow[i];
-                        if (!bodies.find(b => b.name === name)) {
-                            bodies.push({
-                                name: name,
-                                xIndex: i,
-                                yIndex: i + 1,
-                                zIndex: i + 2
-                            });
+                        let uniqueName = name;
+                        let count = 2;
+                        while (bodies.find(b => b.name === uniqueName)) {
+                             uniqueName = `${name} (${count++})`;
                         }
+                        bodies.push({
+                            name: uniqueName,
+                            xIndex: i,
+                            yIndex: i + 1,
+                            zIndex: i + 2
+                        });
                     }
                 }
 
