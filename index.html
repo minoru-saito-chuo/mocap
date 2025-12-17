@@ -982,7 +982,7 @@
                                         <canvas id="trimming-chart"></canvas>
                                     </div>
                                     <div class="absolute top-2 right-2 text-xs text-slate-500 bg-white/80 p-1 rounded border">
-                                        ドラッグでズーム / Ctrl+ドラッグでパン / 線をドラッグして範囲選択
+                                        ドラッグでパン / スクロールでズーム / 線をドラッグして範囲選択
                                     </div>
                                 </div>
                                 <div class="text-center mt-2 mb-6">
@@ -4454,20 +4454,34 @@
 
             function parseHeaderTrimming(data) {
                 let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
+                let headerColIndex = -1;
+
                 for (let i = 0; i < Math.min(20, data.length); i++) {
                     const row = data[i];
-                    if (!row || row.length < 2) continue;
-                    if (row[1] === 'Type') typeRowIndex = i;
-                    if (row[1] === 'Name') nameRowIndex = i;
+                    if (!row || row.length < 1) continue;
+
+                    if (row[0] === 'Type') { typeRowIndex = i; headerColIndex = 0; }
+                    else if (row.length > 1 && row[1] === 'Type') { typeRowIndex = i; headerColIndex = 1; }
+
+                    if (headerColIndex !== -1) break;
+                }
+
+                if (headerColIndex === -1) throw new Error("ヘッダーの'Type'行が見つかりませんでした。");
+
+                for (let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (!row || row.length <= headerColIndex) continue;
+
+                    if (row[headerColIndex] === 'Name') nameRowIndex = i;
                     if (row.includes('Position')) propertyRowIndex = i;
-                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+
+                    if (row[0] === 'Frame' && row.length > 1 && (row[1] === 'Time (Seconds)' || row[1].includes('Time'))) {
                         dataHeaderRowIndex = i;
-                        break;
                     }
                 }
 
                 if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
-                    throw new Error("CSVのヘッダー形式を認識できませんでした。");
+                    throw new Error("CSVのヘッダー形式を認識できませんでした。必要な行(Name, Position, Frame等)が不足しています。");
                 }
 
                 const typeRow = data[typeRowIndex];
@@ -4481,7 +4495,8 @@
 
                 // Identify Rigid Bodies
                 const bodies = [];
-                for (let i = 2; i < typeRow.length; i++) {
+                const startCol = headerColIndex + 1;
+                for (let i = startCol; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position' && dataHeaderRow[i].toUpperCase() === 'X') {
                         const name = nameRow[i];
                         if (!bodies.find(b => b.name === name)) {
@@ -4619,13 +4634,13 @@
                                 pan: {
                                     enabled: true,
                                     mode: 'x',
-                                    modifierKey: 'ctrl', // Press Ctrl to pan
+                                    modifierKey: null,
                                 },
                                 zoom: {
                                     wheel: { enabled: true },
                                     pinch: { enabled: true },
                                     mode: 'x',
-                                    drag: { enabled: true, backgroundColor: 'rgba(59, 130, 246, 0.1)' }
+                                    drag: { enabled: false }
                                 }
                             },
                             annotation: {
