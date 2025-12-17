@@ -13,6 +13,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -238,6 +241,15 @@
                     </svg>
                     <span>距離測定ツール</span>
                 </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150"
+                    href="#data-trimming">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                    </svg>
+                    <span>データトリミング</span>
+                </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150"
                         href="#how-to-use">
@@ -315,6 +327,11 @@
                                     <h2 class="text-xl font-semibold text-slate-800 mb-2">距離測定</h2>
                                     <p class="text-slate-600">マーカー間や剛体間の平均位置からの距離を測定します。</p>
                                 </a>
+                                <a href="#data-trimming"
+                                    class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-orange-300 hover:-translate-y-1">
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">データトリミング</h2>
+                                    <p class="text-slate-600">データの範囲を選択し、必要な区間だけを抽出してCSVとして出力します。</p>
+                                </a>
                             </div>
                         </div>
 
@@ -322,6 +339,12 @@
                             <h2 class="text-2xl font-bold text-slate-800 mb-4">お知らせ</h2>
                             <div class="space-y-4">
                                 <!-- MODIFICATION: Added new development log -->
+                                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                    <p class="text-sm text-slate-500">2025/12/17</p>
+                                    <p class="font-semibold text-slate-800 mt-1">「データトリミングツール」を追加</p>
+                                    <p class="text-sm text-slate-600 mt-2">
+                                        データの範囲を選択し、必要な区間だけを抽出してMotive互換のCSVファイルとして出力する機能を追加しました。</p>
+                                </div>
                                 <div class="bg-white p-5 rounded-xl shadow-sm border">
                                     <p class="text-sm text-slate-500">2025/12/16</p>
                                     <p class="font-semibold text-slate-800 mt-1">「距離測定ツール」を追加</p>
@@ -354,6 +377,100 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="page" id="data-trimming">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">データトリミングツール</h1>
+                            <p class="text-slate-500 mt-2">データの範囲を選択し、必要な区間だけを抽出してCSVとして出力します。</p>
+                        </header>
+
+                        <section class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. データ入力</h2>
+                            <div class="flex flex-col items-center gap-3">
+                                <label for="csv-file-trimming"
+                                    class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-2 px-5 border border-slate-300 rounded-md shadow-sm transition-colors">
+                                    ファイルを選択
+                                </label>
+                                <input type="file" id="csv-file-trimming" class="hidden" accept=".csv">
+                                <p id="file-name-trimming" class="text-sm text-slate-500 mt-2">ファイルが選択されていません</p>
+                            </div>
+                        </section>
+
+                        <section id="trimming-ui" class="hidden bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">2. 範囲選択</h2>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                                <div class="lg:col-span-1 space-y-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">表示設定</label>
+                                        <div class="flex items-center mb-2">
+                                            <input type="checkbox" id="trimming-downsample"
+                                                class="h-4 w-4 text-blue-600 rounded border-slate-300">
+                                            <label for="trimming-downsample"
+                                                class="ml-2 text-sm text-slate-700">描画をダウンサンプリング</label>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">剛体選択</label>
+                                        <select id="trimming-rigidbody-select"
+                                            class="block w-full text-sm border-slate-300 rounded-md shadow-sm p-2">
+                                            <option value="all">すべて表示</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="p-4 bg-slate-50 rounded border">
+                                        <label
+                                            class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">選択範囲
+                                            (秒)</label>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-xs text-slate-400">開始 (Start)</label>
+                                                <input type="number" id="trim-start-time"
+                                                    class="block w-full text-sm border-slate-300 rounded-md p-1.5"
+                                                    step="0.001">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs text-slate-400">終了 (End)</label>
+                                                <input type="number" id="trim-end-time"
+                                                    class="block w-full text-sm border-slate-300 rounded-md p-1.5"
+                                                    step="0.001">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs text-slate-400">期間 (Duration)</label>
+                                                <input type="number" id="trim-duration"
+                                                    class="block w-full text-sm border-slate-300 rounded-md p-1.5 bg-slate-100"
+                                                    readonly>
+                                            </div>
+                                            <button id="reset-zoom-trimming"
+                                                class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 py-1.5 rounded text-xs font-medium">ズームリセット</button>
+                                        </div>
+                                    </div>
+
+                                    <button id="export-trimmed-csv"
+                                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow-sm">
+                                        選択範囲をエクスポート
+                                    </button>
+                                </div>
+
+                                <div class="lg:col-span-3 space-y-4">
+                                    <div class="h-48 bg-slate-50 border rounded p-2 relative">
+                                        <canvas id="trim-chart-x"></canvas>
+                                    </div>
+                                    <div class="h-48 bg-slate-50 border rounded p-2 relative">
+                                        <canvas id="trim-chart-y"></canvas>
+                                    </div>
+                                    <div class="h-48 bg-slate-50 border rounded p-2 relative">
+                                        <canvas id="trim-chart-z"></canvas>
+                                    </div>
+                                    <p class="text-xs text-center text-slate-400">グラフ上でドラッグしてズーム / シフト+ドラッグで範囲選択 /
+                                        範囲端をドラッグして調整</p>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
 
@@ -1625,7 +1742,7 @@
                                         <p><span class="w-24 inline-block font-medium text-slate-500">アプリ名:</span> Mocap
                                             Plus</p>
                                         <p><span class="w-24 inline-block font-medium text-slate-500">バージョン:</span>
-                                            3.1.0</p>
+                                            3.2.0</p>
                                         <p><span class="w-24 inline-block font-medium text-slate-500">製作者:</span>
                                             中央大学理工学部 國井研究室 西藤 実</p>
                                         <p><span class="w-24 inline-block font-medium text-slate-500">リポジトリ:</span> <a
@@ -1638,6 +1755,8 @@
                                 <div>
                                     <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                                     <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                                        <li><span class="font-semibold">2025-12-17:</span>
+                                            新たにデータトリミングツールを追加。データの範囲を選択し、必要な区間だけを抽出してMotive互換のCSVファイルとして出力する機能を提供。</li>
                                         <li><span class="font-semibold">2025-12-16:</span>
                                             新たに距離測定ツールを追加。点Aと点Bの平均座標を計算し、ユークリッド距離を測定する機能を提供。</li>
                                         <li><span class="font-semibold">2025-12-15:</span>
@@ -4315,6 +4434,606 @@
                 resultsCardDistance.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
+
+            // --- DATA TRIMMING TOOL SCRIPT ---
+            const csvFileTrimming = document.getElementById('csv-file-trimming');
+            const fileNameTrimming = document.getElementById('file-name-trimming');
+            const trimmingUI = document.getElementById('trimming-ui');
+            const trimmingRigidbodySelect = document.getElementById('trimming-rigidbody-select');
+            const trimmingDownsampleCheckbox = document.getElementById('trimming-downsample');
+            const trimStartTimeInput = document.getElementById('trim-start-time');
+            const trimEndTimeInput = document.getElementById('trim-end-time');
+            const trimDurationInput = document.getElementById('trim-duration');
+            const resetZoomTrimmingBtn = document.getElementById('reset-zoom-trimming');
+            const exportTrimmedCsvBtn = document.getElementById('export-trimmed-csv');
+            const chartCanvasX = document.getElementById('trim-chart-x');
+            const chartCanvasY = document.getElementById('trim-chart-y');
+            const chartCanvasZ = document.getElementById('trim-chart-z');
+
+            let trimmingData = null; // { headerLines, rigidBodies: [...], rawData: [...] }
+            let trimmingCharts = { x: null, y: null, z: null };
+            let trimmingRange = { start: 0, end: 0 };
+            let isTrimmingUpdating = false;
+            let trimmingDragState = {
+                active: false,
+                element: null, // 'lineStart', 'lineEnd', 'box1'
+                hovered: null,
+                originX: 0,
+                originStart: 0,
+                originEnd: 0
+            };
+
+            if (csvFileTrimming) {
+                csvFileTrimming.addEventListener('change', handleFileSelectTrimming);
+                trimmingRigidbodySelect.addEventListener('change', updateTrimmingCharts);
+                trimmingDownsampleCheckbox.addEventListener('change', updateTrimmingCharts);
+                resetZoomTrimmingBtn.addEventListener('click', resetTrimmingZoom);
+                exportTrimmedCsvBtn.addEventListener('click', exportTrimmedData);
+
+                [trimStartTimeInput, trimEndTimeInput].forEach(input => {
+                    input.addEventListener('change', () => {
+                        const s = parseFloat(trimStartTimeInput.value);
+                        const e = parseFloat(trimEndTimeInput.value);
+                        if (!isNaN(s) && !isNaN(e) && s < e) {
+                            updateTrimmingRange(s, e, true);
+                        }
+                    });
+                });
+            }
+
+            function handleFileSelectTrimming(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                fileNameTrimming.textContent = file.name;
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "ファイルを読み込み中...";
+
+                Papa.parse(file, {
+                    complete: (results) => {
+                        try {
+                            trimmingData = parseHeaderTrimming(results.data);
+                            setupTrimmingUI();
+                        } catch (error) {
+                            alert(`解析エラー: ${error.message}`);
+                        } finally {
+                            loadingDiv.classList.add('hidden');
+                        }
+                    },
+                    error: (error) => {
+                        alert(`ファイルの読み込みに失敗しました: ${error.message}`);
+                        loadingDiv.classList.add('hidden');
+                    }
+                });
+            }
+
+            function parseHeaderTrimming(data) {
+                // Determine header structure
+                let dataStartIndex = -1;
+                for (let i = 0; i < Math.min(20, data.length); i++) {
+                    if (data[i][0] === 'Frame' && data[i][1] === 'Time (Seconds)') {
+                        dataStartIndex = i + 1;
+                        break;
+                    }
+                }
+                if (dataStartIndex === -1) throw new Error("Motive CSV形式として認識できませんでした。");
+
+                const headerLines = data.slice(0, dataStartIndex);
+                const rawData = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== ''); // Filter empty
+
+                // Parse Rigid Bodies for selector
+                // Assume Type row is at dataStartIndex - 5 (standard) or scan for "Type"
+                let typeRowIndex = -1, nameRowIndex = -1;
+                for (let i = 0; i < dataStartIndex; i++) {
+                    if (data[i][1] === 'Type') typeRowIndex = i;
+                    if (data[i][1] === 'Name') nameRowIndex = i;
+                }
+
+                const rigidBodies = [];
+                const nameCounts = {};
+                const parsedBodyData = {};
+
+                // We need to find Position X, Y, Z for each rigid body
+                let propertyRowIndex = -1;
+                for (let i = 0; i < dataStartIndex; i++) {
+                    if (data[i].includes('Position')) propertyRowIndex = i;
+                }
+
+                if (typeRowIndex !== -1 && nameRowIndex !== -1 && propertyRowIndex !== -1) {
+                    const typeRow = data[typeRowIndex];
+                    const nameRow = data[nameRowIndex];
+                    const propRow = data[propertyRowIndex];
+                    const headerRow = data[dataStartIndex - 1];
+
+                    // Identify distinct rigid bodies (considering duplicates)
+                    // We iterate columns and find the start of a RigidBody Position block
+                    for (let i = 2; i < typeRow.length; i++) {
+                        if (typeRow[i] === 'Rigid Body' && propRow[i] === 'Position') {
+                            // Check if this is the start of a triplet X, Y, Z
+                            const axis = headerRow[i].toUpperCase();
+                            if (axis === 'X') {
+                                // Found a position block start
+                                let rawName = nameRow[i];
+
+                                // Generate unique name
+                                if (!nameCounts[rawName]) {
+                                    nameCounts[rawName] = 0;
+                                }
+                                nameCounts[rawName]++;
+
+                                let uniqueName = rawName;
+                                if (nameCounts[rawName] > 1 || (nameRow.indexOf(rawName, i + 3) !== -1)) {
+                                    // If count > 1 OR duplicates exist ahead
+                                    uniqueName = `${rawName} (${nameCounts[rawName]})`;
+                                }
+
+                                // Store indices
+                                const xIdx = i;
+                                const yIdx = i + 1; // Assume contiguous X, Y, Z
+                                const zIdx = i + 2;
+
+                                // Verify Y and Z
+                                if (headerRow[yIdx].toUpperCase() === 'Y' && headerRow[zIdx].toUpperCase() === 'Z') {
+                                    rigidBodies.push(uniqueName);
+                                    parsedBodyData[uniqueName] = { xIdx, yIdx, zIdx };
+
+                                    // Skip processing Y and Z columns for this block
+                                    // But loop increments by 1, so we just let it continue?
+                                    // No, we should probably mark them handled or just rely on 'X' check.
+                                    // The loop check `axis === 'X'` handles skipping Y and Z naturally.
+                                }
+                            }
+                        }
+                    }
+
+                    // If we found duplicates but the first one didn't get a suffix (because we didn't know yet),
+                    // we might want to retroactively fix?
+                    // The above logic gives "Name (1)" only if it sees a second one?
+                    // No, `nameCounts[rawName] > 1`. This check is only true for the 2nd instance onwards.
+                    // To handle the first one correctly if duplicates exist:
+                    // We need a two-pass approach.
+                }
+
+                // Second pass approach for better naming
+                rigidBodies.length = 0; // Clear
+                Object.keys(parsedBodyData).forEach(key => delete parsedBodyData[key]);
+
+                const tempBodyLocations = []; // { rawName, xIdx }
+
+                if (typeRowIndex !== -1 && nameRowIndex !== -1 && propertyRowIndex !== -1) {
+                    const typeRow = data[typeRowIndex];
+                    const nameRow = data[nameRowIndex];
+                    const propRow = data[propertyRowIndex];
+                    const headerRow = data[dataStartIndex - 1];
+
+                    for (let i = 2; i < typeRow.length; i++) {
+                        if (typeRow[i] === 'Rigid Body' && propRow[i] === 'Position' && headerRow[i].toUpperCase() === 'X') {
+                            tempBodyLocations.push({ rawName: nameRow[i], xIdx: i });
+                        }
+                    }
+                }
+
+                // Count totals
+                const totalCounts = {};
+                tempBodyLocations.forEach(loc => {
+                    totalCounts[loc.rawName] = (totalCounts[loc.rawName] || 0) + 1;
+                });
+
+                // Assign unique names
+                const currentCounts = {};
+                tempBodyLocations.forEach(loc => {
+                    const rawName = loc.rawName;
+                    let uniqueName = rawName;
+                    if (totalCounts[rawName] > 1) {
+                        currentCounts[rawName] = (currentCounts[rawName] || 0) + 1;
+                        uniqueName = `${rawName} (${currentCounts[rawName]})`;
+                    }
+
+                    rigidBodies.push(uniqueName);
+                    parsedBodyData[uniqueName] = {
+                        xIdx: loc.xIdx,
+                        yIdx: loc.xIdx + 1,
+                        zIdx: loc.xIdx + 2
+                    };
+                });
+
+                return { headerLines, rawData, rigidBodies, parsedBodyData };
+            }
+
+            function setupTrimmingUI() {
+                trimmingUI.classList.remove('hidden');
+
+                // Populate Rigid Body Selector
+                trimmingRigidbodySelect.innerHTML = '<option value="all">すべて表示</option>';
+                trimmingData.rigidBodies.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    trimmingRigidbodySelect.appendChild(option);
+                });
+
+                // Init Range
+                if (trimmingData.rawData.length > 0) {
+                    const startTime = parseFloat(trimmingData.rawData[0][1]);
+                    const endTime = parseFloat(trimmingData.rawData[trimmingData.rawData.length - 1][1]);
+                    trimmingRange = { start: startTime, end: endTime };
+                    trimStartTimeInput.value = startTime;
+                    trimEndTimeInput.value = endTime;
+                    trimDurationInput.value = (endTime - startTime).toFixed(3);
+                }
+
+                updateTrimmingCharts();
+            }
+
+            function updateTrimmingCharts() {
+                if (!trimmingData) return;
+
+                const downsample = trimmingDownsampleCheckbox.checked;
+                const targetBody = trimmingRigidbodySelect.value;
+                const bodiesToPlot = targetBody === 'all' ? Object.keys(trimmingData.parsedBodyData) : [targetBody];
+
+                const datasetsX = [];
+                const datasetsY = [];
+                const datasetsZ = [];
+
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f97316', '#8b5cf6'];
+
+                bodiesToPlot.forEach((name, idx) => {
+                    const indices = trimmingData.parsedBodyData[name];
+                    if (!indices) return;
+
+                    const color = colors[idx % colors.length];
+                    const dataX = [];
+                    const dataY = [];
+                    const dataZ = [];
+
+                    // Sampling
+                    const step = downsample ? Math.max(1, Math.floor(trimmingData.rawData.length / 1000)) : 1;
+
+                    for (let i = 0; i < trimmingData.rawData.length; i += step) {
+                        const row = trimmingData.rawData[i];
+                        const t = parseFloat(row[1]);
+                        const x = parseFloat(row[indices.xIdx]);
+                        const y = parseFloat(row[indices.yIdx]);
+                        const z = parseFloat(row[indices.zIdx]);
+
+                        if (!isNaN(t)) {
+                            if (!isNaN(x)) dataX.push({ x: t, y: x });
+                            if (!isNaN(y)) dataY.push({ x: t, y: y });
+                            if (!isNaN(z)) dataZ.push({ x: t, y: z });
+                        }
+                    }
+
+                    const common = {
+                        label: name,
+                        borderColor: color,
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        tension: 0,
+                        fill: false
+                    };
+
+                    datasetsX.push({ ...common, data: dataX });
+                    datasetsY.push({ ...common, data: dataY });
+                    datasetsZ.push({ ...common, data: dataZ });
+                });
+
+                createTrimmingChart('x', chartCanvasX, datasetsX, 'X軸');
+                createTrimmingChart('y', chartCanvasY, datasetsY, 'Y軸');
+                createTrimmingChart('z', chartCanvasZ, datasetsZ, 'Z軸');
+            }
+
+            function createTrimmingChart(axis, canvas, datasets, title) {
+                if (trimmingCharts[axis]) trimmingCharts[axis].destroy();
+
+                const annotations = {
+                    box1: {
+                        type: 'box',
+                        xMin: trimmingRange.start,
+                        xMax: trimmingRange.end,
+                        backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                        borderWidth: 0,
+                        init: true,
+                        xScaleID: 'x',
+                        yScaleID: 'y',
+                        z: -1,
+                        enter: (ctx) => {
+                            ctx.chart.canvas.style.cursor = 'move';
+                            ctx.chart.options.plugins.zoom.pan.enabled = false;
+                            trimmingDragState.hovered = 'box1';
+                        },
+                        leave: (ctx) => {
+                            ctx.chart.canvas.style.cursor = 'default';
+                            ctx.chart.options.plugins.zoom.pan.enabled = true;
+                            trimmingDragState.hovered = null;
+                        }
+                    },
+                    lineStart: {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: trimmingRange.start,
+                        borderColor: 'rgb(0, 0, 255)',
+                        borderWidth: 6,
+                        label: { display: false },
+                        z: 100,
+                        enter: (ctx) => {
+                            ctx.chart.canvas.style.cursor = 'ew-resize';
+                            ctx.chart.options.plugins.zoom.pan.enabled = false;
+                            trimmingDragState.hovered = 'lineStart';
+                        },
+                        leave: (ctx) => {
+                            ctx.chart.canvas.style.cursor = 'default';
+                            ctx.chart.options.plugins.zoom.pan.enabled = true;
+                            trimmingDragState.hovered = null;
+                        }
+                    },
+                    lineEnd: {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: trimmingRange.end,
+                        borderColor: 'rgb(0, 0, 255)',
+                        borderWidth: 6,
+                        label: { display: false },
+                        z: 100,
+                        enter: (ctx) => {
+                            ctx.chart.canvas.style.cursor = 'ew-resize';
+                            ctx.chart.options.plugins.zoom.pan.enabled = false;
+                            trimmingDragState.hovered = 'lineEnd';
+                        },
+                        leave: (ctx) => {
+                            ctx.chart.canvas.style.cursor = 'default';
+                            ctx.chart.options.plugins.zoom.pan.enabled = true;
+                            trimmingDragState.hovered = null;
+                        }
+                    }
+                };
+
+                // Custom Plugin for Dragging
+                const dragPlugin = {
+                    id: 'trimmingDrag',
+                    beforeEvent(chart, args) {
+                        const event = args.event;
+
+                        // Handle Drag Start
+                        if (event.type === 'mousedown' || event.type === 'touchstart') {
+                            if (trimmingDragState.hovered) {
+                                trimmingDragState.active = true;
+                                trimmingDragState.element = trimmingDragState.hovered;
+                                trimmingDragState.originX = event.x;
+                                trimmingDragState.originStart = trimmingRange.start;
+                                trimmingDragState.originEnd = trimmingRange.end;
+                                return false; // Stop other plugins (Zoom)
+                            }
+                        }
+
+                        // Handle Drag Move
+                        if (event.type === 'mousemove' || event.type === 'touchmove') {
+                            if (trimmingDragState.active) {
+                                const scale = chart.scales.x;
+                                const valCurrent = scale.getValueForPixel(event.x);
+                                const valOrigin = scale.getValueForPixel(trimmingDragState.originX);
+                                const diff = valCurrent - valOrigin;
+
+                                if (trimmingDragState.element === 'box1') {
+                                    // Move entire range
+                                    const newStart = trimmingDragState.originStart + diff;
+                                    const newEnd = trimmingDragState.originEnd + diff;
+                                    updateTrimmingRange(newStart, newEnd, true, axis);
+                                } else if (trimmingDragState.element === 'lineStart') {
+                                    // Resize Start
+                                    const newStart = trimmingDragState.originStart + diff;
+                                    if (newStart < trimmingDragState.originEnd) {
+                                        updateTrimmingRange(newStart, trimmingDragState.originEnd, true, axis);
+                                    }
+                                } else if (trimmingDragState.element === 'lineEnd') {
+                                    // Resize End
+                                    const newEnd = trimmingDragState.originEnd + diff;
+                                    if (newEnd > trimmingDragState.originStart) {
+                                        updateTrimmingRange(trimmingDragState.originStart, newEnd, true, axis);
+                                    }
+                                }
+
+                                return false; // Stop other plugins
+                            }
+                        }
+
+                        // Handle Drag End
+                        if (event.type === 'mouseup' || event.type === 'mouseout' || event.type === 'touchend') {
+                            if (trimmingDragState.active) {
+                                trimmingDragState.active = false;
+                                chart.options.plugins.zoom.pan.enabled = true; // Restore pan
+                                chart.canvas.style.cursor = 'default';
+                            }
+                        }
+                    }
+                };
+
+                trimmingCharts[axis] = new Chart(canvas, {
+                    type: 'line',
+                    data: { datasets: datasets },
+                    plugins: [dragPlugin],
+                    options: {
+                        events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'mousedown', 'mouseup'],
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: { display: false },
+                                min: trimmingData.rawData.length > 0 ? parseFloat(trimmingData.rawData[0][1]) : 0,
+                                max: trimmingData.rawData.length > 0 ? parseFloat(trimmingData.rawData[trimmingData.rawData.length - 1][1]) : 10
+                            },
+                            y: {
+                                title: { display: true, text: title }
+                            }
+                        },
+                        plugins: {
+                            tooltip: { enabled: false }, // Disable tooltips
+                            legend: { display: axis === 'x', labels: { boxWidth: 10 } },
+                            zoom: {
+                                zoom: {
+                                    wheel: { enabled: true },
+                                    pinch: { enabled: true },
+                                    mode: 'x',
+                                    onZoom: ({ chart }) => syncCharts(chart, axis)
+                                },
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x',
+                                    threshold: 10,
+                                    onPan: ({ chart }) => syncCharts(chart, axis)
+                                }
+                            },
+                            annotation: {
+                                annotations: annotations,
+                                interaction: {
+                                    mode: 'nearest',
+                                    axis: 'x',
+                                    intersect: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function syncCharts(sourceChart, sourceAxis) {
+                const min = sourceChart.scales.x.min;
+                const max = sourceChart.scales.x.max;
+
+                ['x', 'y', 'z'].forEach(ax => {
+                    if (ax !== sourceAxis && trimmingCharts[ax]) {
+                        trimmingCharts[ax].options.scales.x.min = min;
+                        trimmingCharts[ax].options.scales.x.max = max;
+                        trimmingCharts[ax].update('none');
+                    }
+                });
+            }
+
+            function updateTrimmingRange(start, end, updateCharts = true, sourceAxis = null) {
+                if (isTrimmingUpdating) return;
+                isTrimmingUpdating = true;
+
+                // Validate
+                const totalMin = parseFloat(trimmingData.rawData[0][1]);
+                const totalMax = parseFloat(trimmingData.rawData[trimmingData.rawData.length - 1][1]);
+
+                // Allow some flexibility but clamp eventually
+                // start = Math.max(totalMin, start);
+                // end = Math.min(totalMax, end);
+
+                trimmingRange.start = start;
+                trimmingRange.end = end;
+
+                trimStartTimeInput.value = start.toFixed(3);
+                trimEndTimeInput.value = end.toFixed(3);
+                trimDurationInput.value = (end - start).toFixed(3);
+
+                if (updateCharts) {
+                    ['x', 'y', 'z'].forEach(ax => {
+                        const chart = trimmingCharts[ax];
+                        if (chart) {
+                            // Update annotations
+                            chart.options.plugins.annotation.annotations.box1.xMin = start;
+                            chart.options.plugins.annotation.annotations.box1.xMax = end;
+                            chart.options.plugins.annotation.annotations.lineStart.value = start;
+                            chart.options.plugins.annotation.annotations.lineEnd.value = end;
+                            chart.update('none');
+                        }
+                    });
+                }
+
+                isTrimmingUpdating = false;
+            }
+
+            function resetTrimmingZoom() {
+                if (!trimmingData) return;
+                const min = parseFloat(trimmingData.rawData[0][1]);
+                const max = parseFloat(trimmingData.rawData[trimmingData.rawData.length - 1][1]);
+                ['x', 'y', 'z'].forEach(ax => {
+                    if (trimmingCharts[ax]) {
+                        trimmingCharts[ax].options.scales.x.min = min;
+                        trimmingCharts[ax].options.scales.x.max = max;
+                        trimmingCharts[ax].update('none');
+                    }
+                });
+            }
+
+            function exportTrimmedData() {
+                if (!trimmingData) return;
+
+                const start = parseFloat(trimStartTimeInput.value);
+                const end = parseFloat(trimEndTimeInput.value);
+
+                if (start >= end) {
+                    alert('開始時間は終了時間より前である必要があります。');
+                    return;
+                }
+
+                // Filter data
+                // We need to preserve header but re-index Frames and Times
+                // Frame usually starts at 1? Or original?
+                // Motive usually restarts frame count if we treat it as a new take, or keeps it.
+                // User requirement: "Motiveと同様の形式で出力" "区間のデータだけを含めたCSV"
+                // Usually trimming implies new take -> Frame 0/1, Time 0.
+
+                // Let's re-index Frame to start from 1, Time to start from 0.
+
+                const frameColIdx = 0; // "Frame"
+                const timeColIdx = 1; // "Time (Seconds)"
+
+                const trimmedRows = [];
+                let newFrame = 0; // Will increment
+
+                // Need to find the rows within range
+                // Assumes rawData is sorted by time
+
+                for (const row of trimmingData.rawData) {
+                    const t = parseFloat(row[timeColIdx]);
+                    if (t >= start && t <= end) {
+                        // Clone row
+                        const newRow = [...row];
+                        newFrame++;
+                        newRow[frameColIdx] = newFrame;
+                        newRow[timeColIdx] = (t - start).toFixed(3); // Relative time
+                        trimmedRows.push(newRow);
+                    }
+                }
+
+                if (trimmedRows.length === 0) {
+                    alert('選択範囲内にデータがありません。');
+                    return;
+                }
+
+                // Construct CSV
+                // Header lines
+                const csvContent = [];
+                // Original headers
+                trimmingData.headerLines.forEach(line => {
+                    csvContent.push(line.join(','));
+                });
+
+                // Data
+                trimmedRows.forEach(row => {
+                    csvContent.push(row.join(','));
+                });
+
+                const csvString = csvContent.join('\n');
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `trimmed_${fileNameTrimming.textContent}`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
 
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
