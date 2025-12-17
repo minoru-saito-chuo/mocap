@@ -4916,10 +4916,8 @@
                             // Update annotations
                             chart.options.plugins.annotation.annotations.box1.xMin = start;
                             chart.options.plugins.annotation.annotations.box1.xMax = end;
-                            chart.options.plugins.annotation.annotations.lineStart.xMin = start;
-                            chart.options.plugins.annotation.annotations.lineStart.xMax = start;
-                            chart.options.plugins.annotation.annotations.lineEnd.xMin = end;
-                            chart.options.plugins.annotation.annotations.lineEnd.xMax = end;
+                            chart.options.plugins.annotation.annotations.lineStart.value = start;
+                            chart.options.plugins.annotation.annotations.lineEnd.value = end;
                             chart.update('none');
                         }
                     });
