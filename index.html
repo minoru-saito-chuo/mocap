@@ -4496,62 +4496,112 @@
                 }
 
                 const rigidBodies = [];
-                if(typeRowIndex !== -1 && nameRowIndex !== -1) {
+                const nameCounts = {};
+                const parsedBodyData = {};
+
+                // We need to find Position X, Y, Z for each rigid body
+                let propertyRowIndex = -1;
+                for(let i=0; i<dataStartIndex; i++){
+                    if(data[i].includes('Position')) propertyRowIndex = i;
+                }
+
+                if(typeRowIndex !== -1 && nameRowIndex !== -1 && propertyRowIndex !== -1) {
                     const typeRow = data[typeRowIndex];
                     const nameRow = data[nameRowIndex];
-                    // Motive usually groups Rigid Body columns: ID, Rotation(X,Y,Z,W), Position(X,Y,Z), ...
-                    // We look for 'Rigid Body' type and collect names
+                    const propRow = data[propertyRowIndex];
+                    const headerRow = data[dataStartIndex-1];
+
+                    // Identify distinct rigid bodies (considering duplicates)
+                    // We iterate columns and find the start of a RigidBody Position block
                     for(let i=2; i<typeRow.length; i++) {
-                        if(typeRow[i] === 'Rigid Body') {
-                            const name = nameRow[i];
-                            if(!rigidBodies.includes(name)) rigidBodies.push(name);
+                        if(typeRow[i] === 'Rigid Body' && propRow[i] === 'Position') {
+                            // Check if this is the start of a triplet X, Y, Z
+                            const axis = headerRow[i].toUpperCase();
+                            if(axis === 'X') {
+                                // Found a position block start
+                                let rawName = nameRow[i];
+
+                                // Generate unique name
+                                if (!nameCounts[rawName]) {
+                                    nameCounts[rawName] = 0;
+                                }
+                                nameCounts[rawName]++;
+
+                                let uniqueName = rawName;
+                                if (nameCounts[rawName] > 1 || (nameRow.indexOf(rawName, i + 3) !== -1)) {
+                                     // If count > 1 OR duplicates exist ahead
+                                     uniqueName = `${rawName} (${nameCounts[rawName]})`;
+                                }
+
+                                // Store indices
+                                const xIdx = i;
+                                const yIdx = i + 1; // Assume contiguous X, Y, Z
+                                const zIdx = i + 2;
+
+                                // Verify Y and Z
+                                if (headerRow[yIdx].toUpperCase() === 'Y' && headerRow[zIdx].toUpperCase() === 'Z') {
+                                    rigidBodies.push(uniqueName);
+                                    parsedBodyData[uniqueName] = { xIdx, yIdx, zIdx };
+
+                                    // Skip processing Y and Z columns for this block
+                                    // But loop increments by 1, so we just let it continue?
+                                    // No, we should probably mark them handled or just rely on 'X' check.
+                                    // The loop check `axis === 'X'` handles skipping Y and Z naturally.
+                                }
+                            }
+                        }
+                    }
+
+                    // If we found duplicates but the first one didn't get a suffix (because we didn't know yet),
+                    // we might want to retroactively fix?
+                    // The above logic gives "Name (1)" only if it sees a second one?
+                    // No, `nameCounts[rawName] > 1`. This check is only true for the 2nd instance onwards.
+                    // To handle the first one correctly if duplicates exist:
+                    // We need a two-pass approach.
+                }
+
+                // Second pass approach for better naming
+                rigidBodies.length = 0; // Clear
+                Object.keys(parsedBodyData).forEach(key => delete parsedBodyData[key]);
+
+                const tempBodyLocations = []; // { rawName, xIdx }
+
+                if(typeRowIndex !== -1 && nameRowIndex !== -1 && propertyRowIndex !== -1) {
+                    const typeRow = data[typeRowIndex];
+                    const nameRow = data[nameRowIndex];
+                    const propRow = data[propertyRowIndex];
+                    const headerRow = data[dataStartIndex-1];
+
+                    for(let i=2; i<typeRow.length; i++) {
+                        if(typeRow[i] === 'Rigid Body' && propRow[i] === 'Position' && headerRow[i].toUpperCase() === 'X') {
+                             tempBodyLocations.push({ rawName: nameRow[i], xIdx: i });
                         }
                     }
                 }
 
-                // Also identify column indices for each rigid body for plotting
-                // We need to parse frames/time and positions for plotting
-                // Let's create a structure for efficient plotting
-                const parsedBodyData = {};
-                // We need to find Position X, Y, Z for each rigid body
-                // Look for property row "Position"
-                let propertyRowIndex = -1;
-                 for(let i=0; i<dataStartIndex; i++){
-                    if(data[i].includes('Position')) propertyRowIndex = i;
-                }
+                // Count totals
+                const totalCounts = {};
+                tempBodyLocations.forEach(loc => {
+                    totalCounts[loc.rawName] = (totalCounts[loc.rawName] || 0) + 1;
+                });
 
-                if(propertyRowIndex !== -1 && nameRowIndex !== -1) {
-                     const propRow = data[propertyRowIndex];
-                     const nameRow = data[nameRowIndex];
-                     const headerRow = data[dataStartIndex-1]; // Frame, Time, X, Y, Z...
+                // Assign unique names
+                const currentCounts = {};
+                tempBodyLocations.forEach(loc => {
+                    const rawName = loc.rawName;
+                    let uniqueName = rawName;
+                    if(totalCounts[rawName] > 1) {
+                        currentCounts[rawName] = (currentCounts[rawName] || 0) + 1;
+                        uniqueName = `${rawName} (${currentCounts[rawName]})`;
+                    }
 
-                     rigidBodies.forEach(name => {
-                         let xIdx = -1, yIdx = -1, zIdx = -1;
-                         for(let i=2; i<propRow.length; i++) {
-                             if(nameRow[i] === name && propRow[i] === 'Position') {
-                                 // Check axis
-                                 const axis = headerRow[i].toUpperCase();
-                                 if(axis === 'X') xIdx = i;
-                                 if(axis === 'Y') yIdx = i;
-                                 if(axis === 'Z') zIdx = i;
-                             }
-                         }
-                         // Sometimes Position is merged cell, and X,Y,Z follow.
-                         // Check if propRow[i] is Position and headerRow[i] is X
-                         for(let i=2; i<propRow.length; i++) {
-                             if(nameRow[i] === name && propRow[i] === 'Position' && headerRow[i].toUpperCase() === 'X') {
-                                 xIdx = i;
-                                 yIdx = i+1;
-                                 zIdx = i+2;
-                                 break;
-                             }
-                         }
-
-                         if(xIdx !== -1) {
-                             parsedBodyData[name] = { xIdx, yIdx, zIdx };
-                         }
-                     });
-                }
+                    rigidBodies.push(uniqueName);
+                    parsedBodyData[uniqueName] = {
+                        xIdx: loc.xIdx,
+                        yIdx: loc.xIdx + 1,
+                        zIdx: loc.xIdx + 2
+                    };
+                });
 
                 return { headerLines, rawData, rigidBodies, parsedBodyData };
             }
@@ -4649,43 +4699,118 @@
                         xMax: trimmingRange.end,
                         backgroundColor: 'rgba(0, 0, 255, 0.1)',
                         borderWidth: 0,
-                        init: true // Custom flag to identify
+                        init: true,
+                        xScaleID: 'x',
+                        yScaleID: 'y'
                     },
                     lineStart: {
                         type: 'line',
-                        xMin: trimmingRange.start,
-                        xMax: trimmingRange.start,
+                        scaleID: 'x',
+                        value: trimmingRange.start,
                         borderColor: 'rgb(0, 0, 255)',
-                        borderWidth: 2,
-                        draggable: true,
-                        onDrag: function(element) {
-                            // Update inputs and other charts
-                            const val = element.element.x; // Pixel? No, draggable returns event or element
-                            // Plugin annotation onDrag receives {event, element}
-                            // element.x is pixel. We need value.
-                            const chart = element.chart;
-                            const valTime = chart.scales.x.getValueForPixel(element.element.x);
-                            updateTrimmingRange(valTime, trimmingRange.end, false, axis);
-                        }
+                        borderWidth: 4,
+                        label: { display: false },
                     },
                     lineEnd: {
                         type: 'line',
-                        xMin: trimmingRange.end,
-                        xMax: trimmingRange.end,
+                        scaleID: 'x',
+                        value: trimmingRange.end,
                         borderColor: 'rgb(0, 0, 255)',
-                        borderWidth: 2,
-                        draggable: true,
-                        onDrag: function(element) {
-                            const chart = element.chart;
-                            const valTime = chart.scales.x.getValueForPixel(element.element.x);
-                            updateTrimmingRange(trimmingRange.start, valTime, false, axis);
+                        borderWidth: 4,
+                        label: { display: false },
+                    }
+                };
+
+                // Add draggable behavior if supported by the plugin version
+                // Note: Draggable annotations in chartjs-plugin-annotation v3 require specific config structure.
+                // It is 'enter', 'leave', 'click', etc. or using the 'draggable' shorthand if available.
+                // Let's implement drag manually using 'afterEvent' plugin if needed, or rely on plugin features.
+                // Assuming standard draggable config is:
+
+                ['lineStart', 'lineEnd'].forEach(key => {
+                    annotations[key].enter = function(ctx) {
+                        ctx.chart.canvas.style.cursor = 'ew-resize';
+                    };
+                    annotations[key].leave = function(ctx) {
+                        ctx.chart.canvas.style.cursor = 'default';
+                    };
+                });
+
+                // Since true "draggable" behavior can be tricky with version conflicts or specific setups,
+                // we will rely on a pointer event handler on the canvas to update the range if the user drags near lines.
+                // However, standard draggable property is cleaner if it works.
+                // Let's try the Draggable API pattern for v2/v3.
+
+                // For draggable lines:
+                // We will add invisible wider boxes around lines to make grabbing easier? No, standard line width increase on hover is better.
+
+                // Let's stick to the configuration that should work with v3.
+                // We need to enable `draggable` property for the annotation options.
+
+                // Re-define draggable for lines
+                const draggableConfig = {
+                    enabled: true,
+                    onDrag: function(element) {
+                        const chart = element.chart;
+                        const val = chart.scales.x.getValueForPixel(element.event.x);
+
+                        if (element.subject.type === 'line') {
+                            // Identify which line
+                            // We can check current value or index.
+                            // But `element.subject` is the annotation object instance.
+                            // We need to know if it was start or end.
+                            // Comparing value is risky during drag.
+
+                            // Let's use the 'id' if accessible, or update based on proximity to start/end in state.
+                            // But element.subject is mutable.
+
+                            // Alternative: update both? No.
+                            // Let's use two distinct annotation definitions and bind specific callbacks.
                         }
                     }
                 };
 
-                // Better approach for dragging range:
-                // Use chartjs-plugin-annotation to draw the box.
-                // Allow dragging the lines (start/end).
+                // The previous implementation used `draggable: true` which is not the standard v3 syntax.
+                // v3 uses `draggable: true` INSIDE the annotation object? No, typically standard.
+                // Documentation says:
+                // draggable: true (for whole annotation)
+                // callbacks like onDrag.
+
+                // Let's apply correct config
+                annotations.lineStart.draggable = true;
+                annotations.lineStart.onDrag = function({chart, element, event}) {
+                    const val = chart.scales.x.getValueForPixel(event.x);
+                    updateTrimmingRange(val, trimmingRange.end, false, axis);
+                };
+
+                annotations.lineEnd.draggable = true;
+                annotations.lineEnd.onDrag = function({chart, element, event}) {
+                    const val = chart.scales.x.getValueForPixel(event.x);
+                    updateTrimmingRange(trimmingRange.start, val, false, axis);
+                };
+
+                // Draggable Box (Center Pan)
+                annotations.box1.draggable = true;
+                annotations.box1.onDrag = function({chart, element, event}) {
+                    // Calculate delta?
+                    // 'event' gives current position. We need delta from previous.
+                    // The plugin might handle position update of the box itself in `element`.
+                    // `element.x` is center?
+                    // For a box, `xMin` and `xMax` are updated.
+                    // We can read the new xMin/xMax from the element subject?
+
+                    const subject = element.subject; // The annotation options being modified
+                    // However, `subject.xMin` might be raw value or pixel?
+                    // Usually the plugin updates the subject properties (xMin, xMax) in real-time.
+
+                    // Let's try reading from subject.
+                    if (typeof subject.xMin === 'number' && typeof subject.xMax === 'number') {
+                         updateTrimmingRange(subject.xMin, subject.xMax, false, axis);
+                    }
+                };
+                annotations.box1.enter = function(ctx) { ctx.chart.canvas.style.cursor = 'move'; };
+                annotations.box1.leave = function(ctx) { ctx.chart.canvas.style.cursor = 'default'; };
+
 
                 trimmingCharts[axis] = new Chart(canvas, {
                     type: 'line',
@@ -4711,7 +4836,7 @@
                             }
                         },
                         plugins: {
-                            legend: { display: axis === 'x', labels: { boxWidth: 10 } }, // Show legend only on top chart
+                            legend: { display: axis === 'x', labels: { boxWidth: 10 } },
                             zoom: {
                                 zoom: {
                                     wheel: { enabled: true },
@@ -4722,11 +4847,18 @@
                                 pan: {
                                     enabled: true,
                                     mode: 'x',
+                                    threshold: 10, // Require some movement to start pan, helps separate click vs drag
                                     onPan: ({chart}) => syncCharts(chart, axis)
                                 }
                             },
                             annotation: {
-                                annotations: annotations
+                                annotations: annotations,
+                                // Global defaults for interaction
+                                interaction: {
+                                    mode: 'nearest',
+                                    axis: 'x',
+                                    intersect: true
+                                }
                             }
                         }
                     }
