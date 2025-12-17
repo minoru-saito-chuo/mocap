@@ -2217,7 +2217,6 @@
 
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                    console.log("Found RB candidate at", i);
                         const name = nameRow[i];
                         if (!rigidBodies[name]) rigidBodies[name] = { name: name, posIndices: {} };
                         rigidBodies[name].posIndices = { X: i, Y: i + 1, Z: i + 2 };
@@ -3332,14 +3331,12 @@
                 let rigidBodyInfo = {};
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                    console.log("Found RB candidate at", i);
                         const name = nameRow[i];
                         if (rigidBodyInfo[name]) continue;
                         rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
                         for (let j = 0; j < 3; j++) {
                             const colIndex = i + j;
                             if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
-                            console.log("Fail details:", colIndex, name, nameRow[colIndex], name === nameRow[colIndex], propertyRow[colIndex], propertyRow[colIndex] === "Position");
                             const axis = dataHeaderRow[colIndex].toUpperCase();
                             if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
                             else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
@@ -4160,7 +4157,6 @@
                     }
 
                     if (xIndex !== -1 && yIndex !== -1 && zIndex !== -1) {
-                        console.log("Found valid axes for", name);
                         const objData = { name: name, xIndex, yIndex, zIndex };
                         if (type === 'Rigid Body') {
                             if (!objects.rigidBodies.find(o => o.name === name)) {
@@ -4442,6 +4438,7 @@
 
             window.trimmingDataStore = null; let trimmingDataStore = null;
             window.trimmingChart = null; let trimmingChart = null;
+            let trimmingDragTarget = null;
 
             if (csvFileTrimming) {
                 csvFileTrimming.addEventListener('change', handleFileSelectTrimming);
@@ -4521,26 +4518,22 @@
                 const dataStartIndex = dataHeaderRowIndex + 1;
 
                 const rigidBodies = [];
-                console.log("Parsing Trimming Header: Type Row Index:", typeRowIndex);
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                    console.log("Found RB candidate at", i);
                         const name = nameRow[i];
                         if (rigidBodies.find(rb => rb.name === name)) continue;
 
-                        let xIndex = -1, yIndex = -1, zIndex = -1;
-                        for (let j = 0; j < 3; j++) {
-                            const colIndex = i + j;
-                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
-                            console.log("Fail details:", colIndex, name, nameRow[colIndex], name === nameRow[colIndex], propertyRow[colIndex], propertyRow[colIndex] === "Position");
-                            const axis = dataHeaderRow[colIndex].toUpperCase();
-                            if (axis === 'X') xIndex = colIndex;
-                            else if (axis === 'Y') yIndex = colIndex;
-                            else if (axis === 'Z') zIndex = colIndex;
-                        }
+                        // Assume contiguous columns for X, Y, Z if Position property found
+                        // This mirrors the robust logic in Data Analysis tool
+                        const xIndex = i;
+                        const yIndex = i + 1;
+                        const zIndex = i + 2;
 
-                        if (xIndex !== -1 && yIndex !== -1 && zIndex !== -1) {
-                        console.log("Found valid axes for", name);
+                        // Basic validation that columns exist and belong to the same rigid body/property
+                        if (zIndex < typeRow.length &&
+                            nameRow[yIndex] === name && propertyRow[yIndex] === 'Position' &&
+                            nameRow[zIndex] === name && propertyRow[zIndex] === 'Position') {
+
                             rigidBodies.push({
                                 name: name,
                                 xIndex: xIndex,
@@ -4708,6 +4701,10 @@
                                 pan: {
                                     enabled: true,
                                     mode: 'x',
+                                    onPan: function({chart}) {
+                                        // Block panning if dragging lines
+                                        return !trimmingDragTarget;
+                                    }
                                 }
                             },
                             annotation: {
@@ -4818,7 +4815,7 @@
             }
 
             function enableChartDrag(chart) {
-                let dragTarget = null;
+                // trimmingDragTarget is global to share state with zoom plugin
 
                 chart.canvas.addEventListener('pointerdown', (evt) => {
                     const points = Chart.helpers.getRelativePosition(evt, chart);
@@ -4833,13 +4830,13 @@
 
                     const threshold = 10;
                     if (Math.abs(points.x - startX) < threshold) {
-                        dragTarget = 'start';
+                        trimmingDragTarget = 'start';
                         chart.canvas.style.cursor = 'ew-resize';
                     } else if (Math.abs(points.x - endX) < threshold) {
-                        dragTarget = 'end';
+                        trimmingDragTarget = 'end';
                         chart.canvas.style.cursor = 'ew-resize';
                     } else {
-                        dragTarget = null;
+                        trimmingDragTarget = null;
                         chart.canvas.style.cursor = 'default';
                     }
                 });
@@ -4847,14 +4844,14 @@
                 chart.canvas.addEventListener('pointermove', (evt) => {
                     const points = Chart.helpers.getRelativePosition(evt, chart);
 
-                    if (dragTarget) {
+                    if (trimmingDragTarget) {
                         let newVal = chart.scales.x.getValueForPixel(points.x);
                         // Clamp to data range
                         const minTime = trimmingDataStore.times[0];
                         const maxTime = trimmingDataStore.times[trimmingDataStore.times.length-1];
                         newVal = Math.max(minTime, Math.min(maxTime, newVal));
 
-                        if (dragTarget === 'start') {
+                        if (trimmingDragTarget === 'start') {
                              trimStartTimeInput.value = newVal.toFixed(3);
                         } else {
                              trimEndTimeInput.value = newVal.toFixed(3);
@@ -4876,7 +4873,7 @@
                 });
 
                 chart.canvas.addEventListener('pointerup', () => {
-                    dragTarget = null;
+                    trimmingDragTarget = null;
                     chart.canvas.style.cursor = 'grab';
                 });
 
