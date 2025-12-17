@@ -4113,7 +4113,8 @@
                     if (row[1] === 'Type') typeRowIndex = i;
                     if (row[1] === 'Name') nameRowIndex = i;
                     if (row.includes('Position')) propertyRowIndex = i;
-                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                    // Allow looser Time column match (starts with Time)
+                    if (row[0] === 'Frame' && row[1] && row[1].startsWith('Time')) {
                         dataHeaderRowIndex = i;
                         break;
                     }
@@ -4435,7 +4436,7 @@
             const trimmingDownsampleCheckbox = document.getElementById('trimming-downsample');
 
             let trimmingDataStore = null;
-            let trimmingChart = null;
+            window.trimmingChart = null; let trimmingChart = null;
 
             if (csvFileTrimming) {
                 csvFileTrimming.addEventListener('change', handleFileSelectTrimming);
@@ -4496,7 +4497,8 @@
                     if (row[1] === 'Type') typeRowIndex = i;
                     if (row[1] === 'Name') nameRowIndex = i;
                     if (row.includes('Position')) propertyRowIndex = i;
-                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                    // Allow looser Time column match
+                    if (row[0] === 'Frame' && row[1] && row[1].startsWith('Time')) {
                         dataHeaderRowIndex = i;
                         break;
                     }
@@ -4517,7 +4519,8 @@
                     // Check for Rigid Body and Position.
                     // We don't strictly check for 'X' in dataHeaderRow because some formats might put 'Position' there too.
                     // We assume standard grouping: X, Y, Z.
-                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                    // Also check if Name is present to avoid empty columns
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position' && nameRow[i]) {
                         const name = nameRow[i];
                         if (!rigidBodies.find(rb => rb.name === name)) {
                             rigidBodies.push({
@@ -4660,7 +4663,7 @@
                 const startTime = parseFloat(trimStartTimeInput.value);
                 const endTime = parseFloat(trimEndTimeInput.value);
 
-                trimmingChart = new Chart(ctx, {
+                window.trimmingChart = trimmingChart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         datasets: datasets
@@ -4855,14 +4858,14 @@
                          if (Math.abs(points.x - startX) < threshold || Math.abs(points.x - endX) < threshold) {
                              chart.canvas.style.cursor = 'ew-resize';
                          } else {
-                             chart.canvas.style.cursor = 'default';
+                             chart.canvas.style.cursor = 'grab'; // Indicate panning is possible
                          }
                     }
                 });
 
                 chart.canvas.addEventListener('pointerup', () => {
                     dragTarget = null;
-                    chart.canvas.style.cursor = 'default';
+                    chart.canvas.style.cursor = 'grab';
                 });
 
                 // Disable chart zoom pan while dragging
