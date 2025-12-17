@@ -1700,6 +1700,22 @@
                                             $D = \sqrt{(\bar{x}_A - \bar{x}_B)^2 + (\bar{y}_A - \bar{y}_B)^2 +
                                             (\bar{z}_A - \bar{z}_B)^2}$
                                         </div>
+
+                                        <h2 class="text-xl font-semibold text-slate-700 mt-8">データのトリミングツール</h2>
+                                        <h3>データの再インデックス</h3>
+                                        <p>
+                                            指定された区間 $[t_{start}, t_{end}]$ に含まれるデータを抽出した後、Motive形式の互換性を維持するために、フレーム番号と時刻の再計算を行います。
+                                            抽出されたデータ列の最初のフレームの時刻を $t_{start}$、フレーム番号を $F_{start}$ としたとき、抽出後の $i$ 番目のデータ（$0$始まり）の新しい時刻 $t'_i$ とフレーム番号 $F'_i$ は以下のように定義されます。
+                                        </p>
+                                        <div class="formula-block">
+                                            $t'_i = t_{start+i} - t_{start}$
+                                        </div>
+                                        <div class="formula-block">
+                                            $F'_i = i + 1$
+                                        </div>
+                                        <p>
+                                            これにより、トリミング後のデータは常に時刻 0.0 秒、フレーム 1 から開始するように正規化されます。
+                                        </p>
                             </div>
                         </div>
                     </div>
