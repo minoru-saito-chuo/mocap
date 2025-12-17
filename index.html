@@ -8,6 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -2216,6 +2217,7 @@
 
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                    console.log("Found RB candidate at", i);
                         const name = nameRow[i];
                         if (!rigidBodies[name]) rigidBodies[name] = { name: name, posIndices: {} };
                         rigidBodies[name].posIndices = { X: i, Y: i + 1, Z: i + 2 };
@@ -3330,12 +3332,14 @@
                 let rigidBodyInfo = {};
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                    console.log("Found RB candidate at", i);
                         const name = nameRow[i];
                         if (rigidBodyInfo[name]) continue;
                         rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
                         for (let j = 0; j < 3; j++) {
                             const colIndex = i + j;
                             if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
+                            console.log("Fail details:", colIndex, name, nameRow[colIndex], name === nameRow[colIndex], propertyRow[colIndex], propertyRow[colIndex] === "Position");
                             const axis = dataHeaderRow[colIndex].toUpperCase();
                             if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
                             else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
@@ -4156,6 +4160,7 @@
                     }
 
                     if (xIndex !== -1 && yIndex !== -1 && zIndex !== -1) {
+                        console.log("Found valid axes for", name);
                         const objData = { name: name, xIndex, yIndex, zIndex };
                         if (type === 'Rigid Body') {
                             if (!objects.rigidBodies.find(o => o.name === name)) {
@@ -4435,7 +4440,7 @@
             const exportTrimmingBtn = document.getElementById('export-trimming-btn');
             const trimmingDownsampleCheckbox = document.getElementById('trimming-downsample');
 
-            let trimmingDataStore = null;
+            window.trimmingDataStore = null; let trimmingDataStore = null;
             window.trimmingChart = null; let trimmingChart = null;
 
             if (csvFileTrimming) {
@@ -4458,7 +4463,7 @@
                 Papa.parse(file, {
                     complete: (results) => {
                         try {
-                            trimmingDataStore = parseHeaderTrimming(results.data);
+                            window.trimmingDataStore = trimmingDataStore = parseHeaderTrimming(results.data);
                             populateTrimmingRigidBodies();
                             trimmingEditorArea.classList.remove('hidden');
 
@@ -4490,6 +4495,7 @@
 
             function parseHeaderTrimming(data) {
                 // Similar parsing logic, but we keep raw rows for export
+                // Adopt robust logic from parseHeaderWide
                 let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
                 for (let i = 0; i < Math.min(20, data.length); i++) {
                     const row = data[i];
@@ -4515,26 +4521,32 @@
                 const dataStartIndex = dataHeaderRowIndex + 1;
 
                 const rigidBodies = [];
+                console.log("Parsing Trimming Header: Type Row Index:", typeRowIndex);
                 for (let i = 2; i < typeRow.length; i++) {
-                    // Check for Rigid Body and Position.
-                    // We don't strictly check for 'X' in dataHeaderRow because some formats might put 'Position' there too.
-                    // We assume standard grouping: X, Y, Z.
-                    // Also check if Name is present to avoid empty columns
-                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position' && nameRow[i]) {
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                    console.log("Found RB candidate at", i);
                         const name = nameRow[i];
-                        if (!rigidBodies.find(rb => rb.name === name)) {
+                        if (rigidBodies.find(rb => rb.name === name)) continue;
+
+                        let xIndex = -1, yIndex = -1, zIndex = -1;
+                        for (let j = 0; j < 3; j++) {
+                            const colIndex = i + j;
+                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
+                            console.log("Fail details:", colIndex, name, nameRow[colIndex], name === nameRow[colIndex], propertyRow[colIndex], propertyRow[colIndex] === "Position");
+                            const axis = dataHeaderRow[colIndex].toUpperCase();
+                            if (axis === 'X') xIndex = colIndex;
+                            else if (axis === 'Y') yIndex = colIndex;
+                            else if (axis === 'Z') zIndex = colIndex;
+                        }
+
+                        if (xIndex !== -1 && yIndex !== -1 && zIndex !== -1) {
+                        console.log("Found valid axes for", name);
                             rigidBodies.push({
                                 name: name,
-                                xIndex: i,
-                                yIndex: i + 1,
-                                zIndex: i + 2
+                                xIndex: xIndex,
+                                yIndex: yIndex,
+                                zIndex: zIndex
                             });
-                            // Skip next two columns (Y and Z)
-                            // But the loop increments by 1. So we just rely on the 'find' check to skip duplicates,
-                            // OR we can rely on propertyRow[i] only being 'Position' for the first col?
-                            // Usually propertyRow has 'Position' for all 3 cols.
-                            // If we don't skip, next loop will see 'Position' at i+1.
-                            // But rigidBodies.find prevents re-adding.
                         }
                     }
                 }
