@@ -8,6 +8,8 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -238,6 +240,23 @@
                     </svg>
                     <span>距離測定ツール</span>
                 </a>
+                <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150"
+                    href="#data-trimming">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.12 14.12 21 21M7 7l7 7" />
+                        <!-- Scissors icon -->
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
+                        <!-- Replacing with a simpler scissors icon representation for clarity -->
+                        <circle cx="6" cy="6" r="3" />
+                        <circle cx="6" cy="18" r="3" />
+                        <line x1="20" y1="4" x2="8.12" y2="15.88" />
+                        <line x1="14.47" y1="14.48" x2="20" y2="20" />
+                        <line x1="8.12" y1="8.12" x2="12" y2="12" />
+                    </svg>
+                    <span>データのトリミング</span>
+                </a>
                 <div class="pt-4 mt-4 border-t border-slate-300/60">
                     <a class="nav-link flex items-center px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-md transition-colors duration-150"
                         href="#how-to-use">
@@ -314,6 +333,11 @@
                                     class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-pink-300 hover:-translate-y-1">
                                     <h2 class="text-xl font-semibold text-slate-800 mb-2">距離測定</h2>
                                     <p class="text-slate-600">マーカー間や剛体間の平均位置からの距離を測定します。</p>
+                                </a>
+                                <a href="#data-trimming"
+                                    class="nav-card group block bg-slate-50 p-6 rounded-lg border transition-all duration-300 hover:shadow-lg hover:border-gray-300 hover:-translate-y-1">
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2">データのトリミング</h2>
+                                    <p class="text-slate-600">データの範囲を選択し、必要な区間だけを切り出して出力します。</p>
                                 </a>
                             </div>
                         </div>
@@ -1137,6 +1161,73 @@
                                     <tbody id="results-table-body-distance" class="bg-white divide-y divide-slate-200">
                                     </tbody>
                                 </table>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="page" id="data-trimming">
+                    <div class="max-w-7xl mx-auto space-y-8">
+                        <header class="text-center">
+                            <h1 class="text-3xl font-bold text-slate-800">データのトリミングツール</h1>
+                            <p class="text-slate-500 mt-2">グラフを見ながら直感的にデータの範囲を選択し、必要な区間だけをMotive形式でエクスポートします。</p>
+                        </header>
+
+                        <section class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h2 class="text-xl font-semibold text-center mb-6">1. ファイル読み込み</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">① CSVファイルを選択</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="csv-file-trimming" accept=".csv" class="hidden">
+                                        <label for="csv-file-trimming"
+                                            class="w-full cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-md text-sm text-center">ファイルを選択</label>
+                                    </div>
+                                    <div id="file-name-trimming" class="mt-2 text-sm text-slate-600"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">② 表示する剛体</label>
+                                    <select id="rigidbody-select-trimming" disabled
+                                        class="block w-full bg-slate-100 border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                        <option value="">ファイルを読み込んでください</option>
+                                    </select>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="checkbox" id="trimming-downsample" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label for="trimming-downsample" class="ml-2 text-xs text-slate-500">描画時にダウンサンプリングを行う（動作が軽くなります）</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="trimming-editor-area" class="bg-white p-6 rounded-lg shadow-sm border hidden">
+                            <h2 class="text-xl font-semibold text-center mb-6">2. 範囲の選択</h2>
+
+                            <div class="w-full aspect-[21/9] bg-white p-2 border rounded-lg shadow-sm mb-6 relative">
+                                <div class="chart-container">
+                                    <canvas id="trimming-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded border">
+                                        <label class="text-sm font-medium text-slate-700">開始時間 (秒)</label>
+                                        <input type="number" id="trim-start-time" step="0.01" class="w-32 text-right border-slate-300 rounded-md shadow-sm p-1">
+                                    </div>
+                                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded border">
+                                        <label class="text-sm font-medium text-slate-700">終了時間 (秒)</label>
+                                        <input type="number" id="trim-end-time" step="0.01" class="w-32 text-right border-slate-300 rounded-md shadow-sm p-1">
+                                    </div>
+                                </div>
+                                <div class="text-center pb-2">
+                                    <button id="export-trimming-btn"
+                                        class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md shadow-lg transition-transform transform hover:scale-105">
+                                        選択範囲をCSVでエクスポート
+                                    </button>
+                                    <p class="text-xs text-slate-500 mt-2">
+                                        ※ エクスポートされたファイルは、Frameが1から、Timeが0から始まるように再計算されます。
+                                    </p>
+                                </div>
                             </div>
                         </section>
                     </div>
@@ -1981,7 +2072,7 @@
                             console.warn("Pasted content is not a valid number.");
                         }
                     } catch (err) {
-                        console.error('Failed to read clipboard contents: ', err);
+                        alert('Failed to read clipboard contents: ', err);
                         alert("クリップボードの読み取りに失敗しました。ブラウザの権限設定を確認してください。");
                     }
                 });
@@ -2194,7 +2285,7 @@
                         resultsSection.classList.remove('hidden');
                         setTimeout(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
                     } catch (error) {
-                        console.error("解析エラー:", error);
+                        alert("解析エラー:", error);
                         alert(`解析中にエラーが発生しました: ${error.message}`);
                     } finally {
                         loadingDiv.classList.add('hidden');
@@ -2682,7 +2773,7 @@
                         pdf.save(`${chartId}.pdf`);
                     }
                 } catch (e) {
-                    console.error("Failed to generate download:", e);
+                    alert("Failed to generate download:", e);
                     alert("An error occurred during download. Please check the console.");
                 } finally {
                     tempChart.destroy();
@@ -3931,7 +4022,7 @@
                         pdf.save(`${target}.pdf`);
                     }
                 } catch (error) {
-                    console.error("Download failed:", error);
+                    alert("Download failed:", error);
                     alert("画像の生成に失敗しました。");
                 } finally {
                     loadingDiv.classList.add('hidden');
@@ -4245,7 +4336,7 @@
                         displayDistanceResults(results);
 
                     } catch (e) {
-                        console.error(e);
+                        alert(e);
                         alert("計算中にエラーが発生しました。");
                     } finally {
                         loadingDiv.classList.add('hidden');
@@ -4313,6 +4404,545 @@
 
                 resultsCardDistance.classList.remove('hidden');
                 resultsCardDistance.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+
+            // --- DATA TRIMMING TOOL SCRIPT ---
+            const csvFileTrimming = document.getElementById('csv-file-trimming');
+            const fileNameTrimming = document.getElementById('file-name-trimming');
+            const rigidbodySelectTrimming = document.getElementById('rigidbody-select-trimming');
+            const trimmingEditorArea = document.getElementById('trimming-editor-area');
+            const trimmingChartCanvas = document.getElementById('trimming-chart');
+            const trimStartTimeInput = document.getElementById('trim-start-time');
+            const trimEndTimeInput = document.getElementById('trim-end-time');
+            const exportTrimmingBtn = document.getElementById('export-trimming-btn');
+            const trimmingDownsampleCheckbox = document.getElementById('trimming-downsample');
+
+            let trimmingDataStore = null;
+            let trimmingChart = null;
+
+            if (csvFileTrimming) {
+                csvFileTrimming.addEventListener('change', handleFileSelectTrimming);
+                rigidbodySelectTrimming.addEventListener('change', updateTrimmingChart);
+                trimStartTimeInput.addEventListener('change', updateChartAnnotations);
+                trimEndTimeInput.addEventListener('change', updateChartAnnotations);
+                exportTrimmingBtn.addEventListener('click', exportTrimmedCSV);
+                trimmingDownsampleCheckbox.addEventListener('change', updateTrimmingChart);
+            }
+
+            function handleFileSelectTrimming(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                fileNameTrimming.textContent = file.name;
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "ファイルを読み込み中...";
+
+                Papa.parse(file, {
+                    complete: (results) => {
+                        try {
+                            trimmingDataStore = parseHeaderTrimming(results.data);
+                            populateTrimmingRigidBodies();
+                            trimmingEditorArea.classList.remove('hidden');
+
+                            // Initialize times based on data range
+                            const firstTime = trimmingDataStore.times[0];
+                            const lastTime = trimmingDataStore.times[trimmingDataStore.times.length - 1];
+                            trimStartTimeInput.value = firstTime.toFixed(3);
+                            trimEndTimeInput.value = lastTime.toFixed(3);
+
+                            // Select first rigid body and draw
+                            if (rigidbodySelectTrimming.options.length > 1) {
+                                rigidbodySelectTrimming.selectedIndex = 1;
+                                updateTrimmingChart();
+                            }
+                        } catch (error) {
+                            alert(`解析エラー: ${error.message}`);
+                            trimmingDataStore = null;
+                            trimmingEditorArea.classList.add('hidden');
+                        } finally {
+                            loadingDiv.classList.add('hidden');
+                        }
+                    },
+                    error: (error) => {
+                        alert(`ファイルの読み込みに失敗しました: ${error.message}`);
+                        loadingDiv.classList.add('hidden');
+                    }
+                });
+            }
+
+            function parseHeaderTrimming(data) {
+                // Similar parsing logic, but we keep raw rows for export
+                let typeRowIndex = -1, nameRowIndex = -1, propertyRowIndex = -1, dataHeaderRowIndex = -1;
+                for (let i = 0; i < Math.min(20, data.length); i++) {
+                    const row = data[i];
+                    if (!row || row.length < 2) continue;
+                    if (row[1] === 'Type') typeRowIndex = i;
+                    if (row[1] === 'Name') nameRowIndex = i;
+                    if (row.includes('Position')) propertyRowIndex = i;
+                    if (row[0] === 'Frame' && row[1] === 'Time (Seconds)') {
+                        dataHeaderRowIndex = i;
+                        break;
+                    }
+                }
+
+                if ([typeRowIndex, nameRowIndex, propertyRowIndex, dataHeaderRowIndex].includes(-1)) {
+                    throw new Error("CSVのヘッダー形式を認識できませんでした。");
+                }
+
+                const typeRow = data[typeRowIndex];
+                const nameRow = data[nameRowIndex];
+                const propertyRow = data[propertyRowIndex];
+                const dataHeaderRow = data[dataHeaderRowIndex];
+                const dataStartIndex = dataHeaderRowIndex + 1;
+
+                const rigidBodies = [];
+                for (let i = 2; i < typeRow.length; i++) {
+                    // Check for Rigid Body and Position.
+                    // We don't strictly check for 'X' in dataHeaderRow because some formats might put 'Position' there too.
+                    // We assume standard grouping: X, Y, Z.
+                    if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
+                        const name = nameRow[i];
+                        if (!rigidBodies.find(rb => rb.name === name)) {
+                            rigidBodies.push({
+                                name: name,
+                                xIndex: i,
+                                yIndex: i + 1,
+                                zIndex: i + 2
+                            });
+                            // Skip next two columns (Y and Z)
+                            // But the loop increments by 1. So we just rely on the 'find' check to skip duplicates,
+                            // OR we can rely on propertyRow[i] only being 'Position' for the first col?
+                            // Usually propertyRow has 'Position' for all 3 cols.
+                            // If we don't skip, next loop will see 'Position' at i+1.
+                            // But rigidBodies.find prevents re-adding.
+                        }
+                    }
+                }
+
+                // Extract times and raw data
+                // We keep raw data rows to allow slicing for export
+                const rawDataRows = data.slice(dataStartIndex).filter(row => row.length > 1 && row[1] !== '');
+                const times = rawDataRows.map(row => parseFloat(row[1]));
+                const frames = rawDataRows.map(row => parseInt(row[0]));
+
+                return {
+                    headerRows: data.slice(0, dataStartIndex),
+                    rawDataRows: rawDataRows,
+                    times: times,
+                    frames: frames,
+                    rigidBodies: rigidBodies
+                };
+            }
+
+            function populateTrimmingRigidBodies() {
+                rigidbodySelectTrimming.innerHTML = '<option value="">剛体を選択してください</option>';
+                rigidbodySelectTrimming.disabled = false;
+                trimmingDataStore.rigidBodies.forEach(rb => {
+                    const option = document.createElement('option');
+                    option.value = rb.name;
+                    option.textContent = rb.name;
+                    rigidbodySelectTrimming.appendChild(option);
+                });
+
+                // Add "All" option if needed, but plotting all might be messy. The user asked for it though.
+                const allOption = document.createElement('option');
+                allOption.value = 'ALL_BODIES';
+                allOption.textContent = 'すべての剛体';
+                rigidbodySelectTrimming.appendChild(allOption);
+            }
+
+            function updateTrimmingChart() {
+                if (!trimmingDataStore) return;
+
+                const selectedBodyName = rigidbodySelectTrimming.value;
+                if (!selectedBodyName) return;
+
+                const isDownsampling = trimmingDownsampleCheckbox.checked;
+
+                const ctx = trimmingChartCanvas.getContext('2d');
+                if (trimmingChart) trimmingChart.destroy();
+
+                const datasets = [];
+                const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+
+                let targetBodies = [];
+                if (selectedBodyName === 'ALL_BODIES') {
+                    targetBodies = trimmingDataStore.rigidBodies;
+                } else {
+                    targetBodies = trimmingDataStore.rigidBodies.filter(rb => rb.name === selectedBodyName);
+                }
+
+                targetBodies.forEach((rb, index) => {
+                    const colorGroup = colors[index % colors.length];
+
+                    const dataX = [];
+                    const dataY = [];
+                    const dataZ = [];
+
+                    const rawRows = trimmingDataStore.rawDataRows;
+                    const step = isDownsampling ? Math.max(1, Math.floor(rawRows.length / 2000)) : 1; // Limit to ~2000 points
+
+                    for(let i=0; i<rawRows.length; i+=step) {
+                        const row = rawRows[i];
+                        const t = parseFloat(row[1]);
+                        const x = parseFloat(row[rb.xIndex]);
+                        const y = parseFloat(row[rb.yIndex]);
+                        const z = parseFloat(row[rb.zIndex]);
+
+                        if (!isNaN(t) && !isNaN(x)) {
+                            dataX.push({x: t, y: x});
+                            dataY.push({x: t, y: y});
+                            dataZ.push({x: t, y: z});
+                        }
+                    }
+
+                    datasets.push({
+                        label: `${rb.name} X`,
+                        data: dataX,
+                        borderColor: '#ef4444', // Red for X
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        hidden: selectedBodyName === 'ALL_BODIES' // Hide detailed axes if ALL selected to prevent clutter, logic below
+                    });
+                    datasets.push({
+                        label: `${rb.name} Y`,
+                        data: dataY,
+                        borderColor: '#10b981', // Green for Y (Motive style usually Y up) or just distinct
+                        borderWidth: 1,
+                        pointRadius: 0,
+                         hidden: selectedBodyName === 'ALL_BODIES'
+                    });
+                    datasets.push({
+                        label: `${rb.name} Z`,
+                        data: dataZ,
+                        borderColor: '#3b82f6', // Blue for Z
+                        borderWidth: 1,
+                        pointRadius: 0,
+                         hidden: selectedBodyName === 'ALL_BODIES'
+                    });
+                });
+
+                // If ALL_BODIES, maybe just plot one axis or magnitude? Or just plotting X of all?
+                // The user said "All rigid bodies".
+                // To avoid chaos, if ALL is selected, let's plot only Y (Height) or maybe a magnitude?
+                // Or just loop and add them all. The user can toggle legend.
+                // Let's stick to adding them all but maybe just one representative axis if too many?
+                // No, let's keep it simple: Standard X, Y, Z for selected.
+                // For "ALL", the code above adds 3 datasets per body.
+
+                if (selectedBodyName === 'ALL_BODIES') {
+                    // Override colors to distinguish bodies instead of axes
+                    datasets.forEach((ds, i) => {
+                        const bodyIndex = Math.floor(i / 3);
+                        ds.borderColor = colors[bodyIndex % colors.length];
+                        ds.hidden = false;
+                        ds.label = `${ds.label}`; // Already includes body name
+                    });
+                }
+
+                const startTime = parseFloat(trimStartTimeInput.value);
+                const endTime = parseFloat(trimEndTimeInput.value);
+
+                trimmingChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: { display: true, text: 'Time (s)' }
+                            },
+                            y: {
+                                title: { display: true, text: 'Position (m)' } // Assuming M? Or matches input unit.
+                                // Actually raw data unit.
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    wheel: { enabled: true },
+                                    pinch: { enabled: true },
+                                    mode: 'x',
+                                },
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x',
+                                }
+                            },
+                            annotation: {
+                                annotations: {
+                                    box1: {
+                                        type: 'box',
+                                        xMin: startTime,
+                                        xMax: endTime,
+                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                        borderColor: 'rgba(59, 130, 246, 0.5)',
+                                        borderWidth: 1,
+                                        init: function(chart) {
+                                             // This init runs once?
+                                        }
+                                    },
+                                    lineStart: {
+                                        type: 'line',
+                                        scaleID: 'x',
+                                        value: startTime,
+                                        borderColor: '#2563eb',
+                                        borderWidth: 2,
+                                        label: {
+                                            display: true,
+                                            content: 'Start',
+                                            position: 'start'
+                                        },
+                                        draggable: true,
+                                        onDrag: function(event) {
+                                            // event.subject.value is the new value
+                                            // But for 'line' annotation in chartjs-plugin-annotation v3, checking docs
+                                            // v1 used onDrag. v3 uses event listeners?
+                                            // Let's check typical usage for v3.
+                                            // It supports `draggable` inside `enter`, `leave`, etc? No.
+                                            // Actually chartjs-plugin-annotation supports dragging but requires configuration.
+                                        }
+                                    },
+                                    lineEnd: {
+                                        type: 'line',
+                                        scaleID: 'x',
+                                        value: endTime,
+                                        borderColor: '#2563eb',
+                                        borderWidth: 2,
+                                        label: {
+                                            display: true,
+                                            content: 'End',
+                                            position: 'start'
+                                        },
+                                        draggable: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Add drag handlers manually since simpler config might fail or differ by version
+                // For Annotation v3, we need to enable events.
+                // Re-configuring annotations correctly for dragging:
+
+                const annotationOptions = {
+                    common: {
+                        drawTime: 'afterDatasetsDraw'
+                    },
+                    annotations: {
+                        rangeBox: {
+                            type: 'box',
+                            xMin: startTime,
+                            xMax: endTime,
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            borderWidth: 0
+                        },
+                        startLine: {
+                            type: 'line',
+                            scaleID: 'x',
+                            value: startTime,
+                            borderColor: '#2563eb',
+                            borderWidth: 4,
+                            label: { content: 'Start', display: true, position: 'top' },
+                        },
+                        endLine: {
+                            type: 'line',
+                            scaleID: 'x',
+                            value: endTime,
+                            borderColor: '#2563eb',
+                            borderWidth: 4,
+                            label: { content: 'End', display: true, position: 'top' },
+                        }
+                    }
+                };
+
+                trimmingChart.options.plugins.annotation = annotationOptions;
+
+                // Add event listeners for dragging simulation or use built-in if configured correctly
+                // Dragging in chartjs-plugin-annotation is tricky to get right without explicit 'draggable' config which changed between versions.
+                // Assuming v3 (CDN loaded), we use a custom drag logic using chart events or use the 'enter'/'leave' hooks to change cursor.
+
+                // Simplest approach: Use chart `onClick` to snap closest line to click position?
+                // Or implement standard drag logic on the canvas.
+
+                // Let's implement a simple "Click to move closest limit" logic for robustness,
+                // OR standard dragging logic.
+                // Given "Video editor style", dragging is best.
+
+                // Let's try to use the `dragger` logic attached to the chart instance
+                enableChartDrag(trimmingChart);
+
+                trimmingChart.update();
+            }
+
+            function enableChartDrag(chart) {
+                let dragTarget = null;
+
+                chart.canvas.addEventListener('pointerdown', (evt) => {
+                    const points = Chart.helpers.getRelativePosition(evt, chart);
+                    const dataX = chart.scales.x.getValueForPixel(points.x);
+
+                    const startVal = parseFloat(trimStartTimeInput.value);
+                    const endVal = parseFloat(trimEndTimeInput.value);
+
+                    // Check proximity (in pixels)
+                    const startX = chart.scales.x.getPixelForValue(startVal);
+                    const endX = chart.scales.x.getPixelForValue(endVal);
+
+                    const threshold = 10;
+                    if (Math.abs(points.x - startX) < threshold) {
+                        dragTarget = 'start';
+                        chart.canvas.style.cursor = 'ew-resize';
+                    } else if (Math.abs(points.x - endX) < threshold) {
+                        dragTarget = 'end';
+                        chart.canvas.style.cursor = 'ew-resize';
+                    } else {
+                        dragTarget = null;
+                        chart.canvas.style.cursor = 'default';
+                    }
+                });
+
+                chart.canvas.addEventListener('pointermove', (evt) => {
+                    const points = Chart.helpers.getRelativePosition(evt, chart);
+
+                    if (dragTarget) {
+                        let newVal = chart.scales.x.getValueForPixel(points.x);
+                        // Clamp to data range
+                        const minTime = trimmingDataStore.times[0];
+                        const maxTime = trimmingDataStore.times[trimmingDataStore.times.length-1];
+                        newVal = Math.max(minTime, Math.min(maxTime, newVal));
+
+                        if (dragTarget === 'start') {
+                             trimStartTimeInput.value = newVal.toFixed(3);
+                        } else {
+                             trimEndTimeInput.value = newVal.toFixed(3);
+                        }
+                        updateChartAnnotations(); // Refresh chart visuals
+                    } else {
+                        // Just hover effect
+                         const startVal = parseFloat(trimStartTimeInput.value);
+                         const endVal = parseFloat(trimEndTimeInput.value);
+                         const startX = chart.scales.x.getPixelForValue(startVal);
+                         const endX = chart.scales.x.getPixelForValue(endVal);
+                         const threshold = 10;
+                         if (Math.abs(points.x - startX) < threshold || Math.abs(points.x - endX) < threshold) {
+                             chart.canvas.style.cursor = 'ew-resize';
+                         } else {
+                             chart.canvas.style.cursor = 'default';
+                         }
+                    }
+                });
+
+                chart.canvas.addEventListener('pointerup', () => {
+                    dragTarget = null;
+                    chart.canvas.style.cursor = 'default';
+                });
+
+                // Disable chart zoom pan while dragging
+                // (Handled by checking if dragTarget is set? Zoom plugin might interfere)
+                // We might need to disable zoom/pan dynamically if dragging.
+            }
+
+            function updateChartAnnotations() {
+                if (!trimmingChart) return;
+
+                let start = parseFloat(trimStartTimeInput.value);
+                let end = parseFloat(trimEndTimeInput.value);
+
+                if (start > end) {
+                    // Don't swap inputs while dragging, just visualize correctly or clamp?
+                    // Let's just allow it but box will be weird.
+                }
+
+                trimmingChart.options.plugins.annotation.annotations.startLine.value = start;
+                trimmingChart.options.plugins.annotation.annotations.endLine.value = end;
+                trimmingChart.options.plugins.annotation.annotations.rangeBox.xMin = Math.min(start, end);
+                trimmingChart.options.plugins.annotation.annotations.rangeBox.xMax = Math.max(start, end);
+
+                trimmingChart.update('none'); // Update without animation
+            }
+
+            function exportTrimmedCSV() {
+                if (!trimmingDataStore) return;
+
+                const start = parseFloat(trimStartTimeInput.value);
+                const end = parseFloat(trimEndTimeInput.value);
+
+                if (start >= end) {
+                    alert('開始時間は終了時間より前である必要があります。');
+                    return;
+                }
+
+                loadingDiv.classList.remove('hidden');
+                loadingText.textContent = "CSVを生成中...";
+
+                setTimeout(() => {
+                    try {
+                        // Filter rows
+                        const dataStartIndex = 0; // Relative to rawDataRows
+                        // Find index of start time
+                        // Assuming times are sorted
+                        const times = trimmingDataStore.times;
+
+                        let startIndex = times.findIndex(t => t >= start);
+                        if (startIndex === -1) startIndex = 0;
+
+                        let endIndex = times.findIndex(t => t > end);
+                        if (endIndex === -1) endIndex = times.length; // Until end
+
+                        const slicedRows = trimmingDataStore.rawDataRows.slice(startIndex, endIndex);
+
+                        if (slicedRows.length === 0) {
+                            throw new Error("選択された範囲にデータがありません。");
+                        }
+
+                        // Re-index Frame and Time
+                        const startTimeOffset = parseFloat(slicedRows[0][1]);
+                        const processedRows = slicedRows.map((row, idx) => {
+                            const newRow = [...row];
+                            newRow[0] = (idx + 1).toString(); // Frame starts at 1
+                            const oldTime = parseFloat(newRow[1]);
+                            newRow[1] = (oldTime - startTimeOffset).toFixed(3); // Time starts at 0
+                            return newRow;
+                        });
+
+                        // Construct CSV
+                        // 1. Header Rows (unparsed, from PapaParse meta? No, we kept them manually)
+                        // Papa.unparse takes array of objects or arrays.
+                        // We have array of arrays.
+
+                        const headerCsv = Papa.unparse(trimmingDataStore.headerRows, { delimiter: ",", newline: "\r\n" });
+                        const dataCsv = Papa.unparse(processedRows, { delimiter: ",", newline: "\r\n" });
+
+                        const fullCsv = headerCsv + "\r\n" + dataCsv;
+
+                        const blob = new Blob([fullCsv], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `trimmed_${fileNameTrimming.textContent}`);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                    } catch (e) {
+                        alert(`エクスポートエラー: ${e.message}`);
+                    } finally {
+                        loadingDiv.classList.add('hidden');
+                    }
+                }, 100);
             }
 
 
