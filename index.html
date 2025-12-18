@@ -378,133 +378,6 @@
                             </div>
                         </div>
 
-                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
-                            <div class="p-6 sm:p-8">
-                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="text-gray-500">
-                                        <rect x="3" y="8" width="18" height="8" rx="1"></rect>
-                                        <line x1="6" y1="12" x2="6" y2="15"></line>
-                                        <line x1="12" y1="12" x2="12" y2="15"></line>
-                                        <line x1="18" y1="12" x2="18" y2="15"></line>
-                                    </svg>
-                                    <span>距離測定ツール</span>
-                                </h2>
-
-                                <div class="space-y-6">
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            1</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
-                                            <p class="text-gray-600 text-sm">
-                                                ファイルを選択ボタンをクリックして、解析したいCSVファイル（Motiveエクスポート形式）を読み込みます。
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            2</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">設定</h3>
-                                            <div class="space-y-2 text-gray-600 text-sm">
-                                                <p><strong>② 解析タイプ:</strong> マーカー間の距離を測るか、剛体間の距離を測るかを選択します。</p>
-                                                <p><strong>③ データ取得間隔:</strong>
-                                                    計算に使用するデータの間引き（ダウンサンプリング）を行うかどうか設定します。</p>
-                                                <p><strong>④ 元データの単位:</strong> CSVデータの座標単位を選択します（通常はmm）。</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            3</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">ペアの選択</h3>
-                                            <p class="text-gray-600 text-sm">
-                                                距離を測定したい2つの点（点A、点B）をプルダウンから選択します。「ペアを追加」ボタンで最大5組まで同時に計算できます。
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            4</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">解析開始・結果確認</h3>
-                                            <p class="text-gray-600 text-sm">
-                                                「解析開始」ボタンを押すと結果が表示されます。2点間の平均座標間のユークリッド距離と、各点の平均座標および標準偏差（ばらつき）が確認できます。
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
-                            <div class="p-6 sm:p-8">
-                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="text-gray-500">
-                                        <path
-                                            d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-                                    </svg>
-                                    <span>データトリミングツール</span>
-                                </h2>
-
-                                <div class="space-y-6">
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            1</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
-                                            <p class="text-gray-600 text-sm">
-                                                編集したいCSVファイルを選択して読み込みます。
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            2</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">範囲の選択</h3>
-                                            <p class="text-gray-600 text-sm">
-                                                表示されたグラフ上で、抽出したい時間範囲を指定します。
-                                            </p>
-                                            <ul class="list-disc list-inside mt-2 text-gray-500 text-xs ml-2">
-                                                <li>青い垂直バーをドラッグして開始・終了時間を調整</li>
-                                                <li>青い範囲ボックスをドラッグして区間全体を移動</li>
-                                                <li>数値入力ボックスで直接時間を指定することも可能</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-start gap-4">
-                                        <div
-                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
-                                            3</div>
-                                        <div>
-                                            <h3 class="text-base font-medium text-gray-800 mb-2">エクスポート</h3>
-                                            <p class="text-gray-600 text-sm">
-                                                「選択範囲をエクスポート」ボタンを押すと、指定した区間のデータのみを含んだCSVファイルがダウンロードされます。
-                                                出力ファイルはFrame番号が1から、Timeが0から再計算され、Motiveの新しいテイクとして扱える形式になります。
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -1645,6 +1518,133 @@
                                         <div>
                                             <h3 class="text-base font-medium text-gray-800 mb-2">結果確認</h3>
                                             <p class="text-gray-600 text-sm">計算された基準速度が表示され、結果をクリップボードにコピーできます。</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="text-gray-500">
+                                        <rect x="3" y="8" width="18" height="8" rx="1"></rect>
+                                        <line x1="6" y1="12" x2="6" y2="15"></line>
+                                        <line x1="12" y1="12" x2="12" y2="15"></line>
+                                        <line x1="18" y1="12" x2="18" y2="15"></line>
+                                    </svg>
+                                    <span>距離測定ツール</span>
+                                </h2>
+
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                ファイルを選択ボタンをクリックして、解析したいCSVファイル（Motiveエクスポート形式）を読み込みます。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">設定</h3>
+                                            <div class="space-y-2 text-gray-600 text-sm">
+                                                <p><strong>② 解析タイプ:</strong> マーカー間の距離を測るか、剛体間の距離を測るかを選択します。</p>
+                                                <p><strong>③ データ取得間隔:</strong>
+                                                    計算に使用するデータの間引き（ダウンサンプリング）を行うかどうか設定します。</p>
+                                                <p><strong>④ 元データの単位:</strong> CSVデータの座標単位を選択します（通常はmm）。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">ペアの選択</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                距離を測定したい2つの点（点A、点B）をプルダウンから選択します。「ペアを追加」ボタンで最大5組まで同時に計算できます。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            4</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">解析開始・結果確認</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                「解析開始」ボタンを押すと結果が表示されます。2点間の平均座標間のユークリッド距離と、各点の平均座標および標準偏差（ばらつき）が確認できます。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="text-gray-500">
+                                        <path
+                                            d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                                    </svg>
+                                    <span>データトリミングツール</span>
+                                </h2>
+
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                編集したいCSVファイルを選択して読み込みます。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">範囲の選択</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                表示されたグラフ上で、抽出したい時間範囲を指定します。
+                                            </p>
+                                            <ul class="list-disc list-inside mt-2 text-gray-500 text-xs ml-2">
+                                                <li>青い垂直バーをドラッグして開始・終了時間を調整</li>
+                                                <li>青い範囲ボックスをドラッグして区間全体を移動</li>
+                                                <li>数値入力ボックスで直接時間を指定することも可能</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">エクスポート</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                「選択範囲をエクスポート」ボタンを押すと、指定した区間のデータのみを含んだCSVファイルがダウンロードされます。
+                                                出力ファイルはFrame番号が1から、Timeが0から再計算され、Motiveの新しいテイクとして扱える形式になります。
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -4599,7 +4599,8 @@
                 resultsTableBodyDistance.innerHTML = '';
                 results.forEach(res => {
                     const tr = document.createElement('tr');
-                    const fmt = (val, sd) => `${val.toFixed(3)} <span class="text-slate-400 text-xs">± ${sd.toFixed(3)}</span>`;
+                    // Display raw digits as requested (using default string conversion)
+                    const fmt = (val, sd) => `${val} <span class="text-slate-400 text-xs">± ${sd}</span>`;
 
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
