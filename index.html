@@ -377,6 +377,134 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="text-gray-500">
+                                        <rect x="3" y="8" width="18" height="8" rx="1"></rect>
+                                        <line x1="6" y1="12" x2="6" y2="15"></line>
+                                        <line x1="12" y1="12" x2="12" y2="15"></line>
+                                        <line x1="18" y1="12" x2="18" y2="15"></line>
+                                    </svg>
+                                    <span>距離測定ツール</span>
+                                </h2>
+
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                ファイルを選択ボタンをクリックして、解析したいCSVファイル（Motiveエクスポート形式）を読み込みます。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">設定</h3>
+                                            <div class="space-y-2 text-gray-600 text-sm">
+                                                <p><strong>② 解析タイプ:</strong> マーカー間の距離を測るか、剛体間の距離を測るかを選択します。</p>
+                                                <p><strong>③ データ取得間隔:</strong>
+                                                    計算に使用するデータの間引き（ダウンサンプリング）を行うかどうか設定します。</p>
+                                                <p><strong>④ 元データの単位:</strong> CSVデータの座標単位を選択します（通常はmm）。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">ペアの選択</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                距離を測定したい2つの点（点A、点B）をプルダウンから選択します。「ペアを追加」ボタンで最大5組まで同時に計算できます。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            4</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">解析開始・結果確認</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                「解析開始」ボタンを押すと結果が表示されます。2点間の平均座標間のユークリッド距離と、各点の平均座標および標準偏差（ばらつき）が確認できます。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/70 backdrop-blur-xl rounded-xl border border-gray-200/80 shadow-sm">
+                            <div class="p-6 sm:p-8">
+                                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-3 mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="text-gray-500">
+                                        <path
+                                            d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                                    </svg>
+                                    <span>データトリミングツール</span>
+                                </h2>
+
+                                <div class="space-y-6">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            1</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">データ入力</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                編集したいCSVファイルを選択して読み込みます。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            2</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">範囲の選択</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                表示されたグラフ上で、抽出したい時間範囲を指定します。
+                                            </p>
+                                            <ul class="list-disc list-inside mt-2 text-gray-500 text-xs ml-2">
+                                                <li>青い垂直バーをドラッグして開始・終了時間を調整</li>
+                                                <li>青い範囲ボックスをドラッグして区間全体を移動</li>
+                                                <li>数値入力ボックスで直接時間を指定することも可能</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="flex-shrink-0 bg-gray-200 text-gray-600 rounded-full h-7 w-7 text-sm flex items-center justify-center font-medium mt-1">
+                                            3</div>
+                                        <div>
+                                            <h3 class="text-base font-medium text-gray-800 mb-2">エクスポート</h3>
+                                            <p class="text-gray-600 text-sm">
+                                                「選択範囲をエクスポート」ボタンを押すと、指定した区間のデータのみを含んだCSVファイルがダウンロードされます。
+                                                出力ファイルはFrame番号が1から、Timeが0から再計算され、Motiveの新しいテイクとして扱える形式になります。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -1659,8 +1787,45 @@
                                             $C [\%] = \frac{N_{reached}}{N_{total}} \times 100$
                                         </div>
 
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">基準速度算出ツール</h2>
+                                <h3>回転周期の検出</h3>
+                                <p>
+                                    車輪などの回転体に取り付けられたマーカーの角度変化から、回転の周期 $T$ を検出します。
+                                    角度データ（オイラー角）は不連続（-180度から180度へのジャンプなど）を含む場合があるため、まずこれを連続的な値に展開（アンラップ）します。
+                                    その後、データの始点から回転を開始したとみなせる点を探し、そこから360度（またはそれ以上）回転した時点を特定することで、1回転にかかる時間を算出します。
+                                    終点の時刻は、前後のフレームの角度データを用いた線形補間により精密に計算されます。
+                                </p>
+                                <h3>基準速度の計算</h3>
+                                <p>
+                                    算出された回転周期 $T$ [秒] と、ユーザーが入力した車輪の半径 $r$ [m] を用いて、基準速度（周速度） $v$ [m/s] を計算します。
+                                </p>
+                                <div class="formula-block">
+                                    $\omega = \frac{2\pi}{T}, \quad v = r \times \omega$
+                                </div>
 
-                                        <h2 class="text-xl font-semibold text-slate-700 mt-8">基準速度算出ツール</h2>
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">距離測定ツール</h2>
+                                <h3>平均座標の算出</h3>
+                                <p>
+                                    指定された期間（またはダウンサンプリングされた各時点）における、マーカーまたは剛体の座標 $(x_i, y_i, z_i)$ の算術平均 $(\bar{x}, \bar{y}, \bar{z})$ を計算します。
+                                    また、各座標のばらつきを示す指標として、標準偏差 $\sigma$ も算出・表示されます（$N$はデータ点数）。
+                                </p>
+                                <div class="formula-block">
+                                    $\bar{x} = \frac{1}{N}\sum_{i=1}^{N} x_i, \quad \sigma_x = \sqrt{\frac{1}{N-1}\sum_{i=1}^{N}(x_i - \bar{x})^2}$
+                                </div>
+                                <h3>ユークリッド距離</h3>
+                                <p>
+                                    2つの点 A, B の平均座標間の直線距離（ユークリッド距離） $D$ を計算します。
+                                </p>
+                                <div class="formula-block">
+                                    $D = \sqrt{(\bar{x}_A - \bar{x}_B)^2 + (\bar{y}_A - \bar{y}_B)^2 + (\bar{z}_A - \bar{z}_B)^2}$
+                                </div>
+
+                                <h2 class="text-xl font-semibold text-slate-700 mt-8">データトリミングツール</h2>
+                                <p>
+                                    指定された時間範囲のデータを抽出し、Motive互換のCSV形式で出力します。
+                                    この際、抽出されたデータの最初のフレームを1フレーム目とし、時間（Time）も0秒から開始するように再インデックス化を行います。
+                                    これにより、トリミング後のデータを独立したテイクとして他のツールで読み込むことが可能になります。
+                                </p>
 
                                         <h3>角度データのアンラップ</h3>
                                         <p>
@@ -4375,6 +4540,7 @@
             function calculateAveragePosition(objInfo, samplingRate, isDownsampling, dataUnit) {
                 const rawData = fileDataStoreDistance.rawData;
                 let sumX = 0, sumY = 0, sumZ = 0;
+                let sumSqX = 0, sumSqY = 0, sumSqZ = 0;
                 let count = 0;
                 let nextSampleTime = -1; // Process first frame always
 
@@ -4396,6 +4562,9 @@
                             sumX += x;
                             sumY += y;
                             sumZ += z;
+                            sumSqX += x * x;
+                            sumSqY += y * y;
+                            sumSqZ += z * z;
                             count++;
                         }
                         if (isDownsampling) {
@@ -4405,14 +4574,33 @@
                     }
                 }
 
-                if (count === 0) return { x: 0, y: 0, z: 0 };
-                return { x: sumX / count, y: sumY / count, z: sumZ / count };
+                if (count === 0) return { x: 0, y: 0, z: 0, sdX: 0, sdY: 0, sdZ: 0 };
+
+                const avgX = sumX / count;
+                const avgY = sumY / count;
+                const avgZ = sumZ / count;
+
+                // Sample Variance calculation
+                const varX = (sumSqX - (sumX * sumX) / count) / (count > 1 ? count - 1 : 1);
+                const varY = (sumSqY - (sumY * sumY) / count) / (count > 1 ? count - 1 : 1);
+                const varZ = (sumSqZ - (sumZ * sumZ) / count) / (count > 1 ? count - 1 : 1);
+
+                return {
+                    x: avgX,
+                    y: avgY,
+                    z: avgZ,
+                    sdX: Math.sqrt(Math.max(0, varX)),
+                    sdY: Math.sqrt(Math.max(0, varY)),
+                    sdZ: Math.sqrt(Math.max(0, varZ))
+                };
             }
 
             function displayDistanceResults(results) {
                 resultsTableBodyDistance.innerHTML = '';
                 results.forEach(res => {
                     const tr = document.createElement('tr');
+                    const fmt = (val, sd) => `${val.toFixed(3)} <span class="text-slate-400 text-xs">± ${sd.toFixed(3)}</span>`;
+
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                             ${res.pair.a} <span class="text-slate-400 mx-1">↔</span> ${res.pair.b}
@@ -4421,10 +4609,18 @@
                             ${res.distance.toFixed(4)}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            (${res.avgA.x.toFixed(3)}, ${res.avgA.y.toFixed(3)}, ${res.avgA.z.toFixed(3)})
+                            <div class="flex flex-col gap-0.5">
+                                <span>x: ${fmt(res.avgA.x, res.avgA.sdX)}</span>
+                                <span>y: ${fmt(res.avgA.y, res.avgA.sdY)}</span>
+                                <span>z: ${fmt(res.avgA.z, res.avgA.sdZ)}</span>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            (${res.avgB.x.toFixed(3)}, ${res.avgB.y.toFixed(3)}, ${res.avgB.z.toFixed(3)})
+                            <div class="flex flex-col gap-0.5">
+                                <span>x: ${fmt(res.avgB.x, res.avgB.sdX)}</span>
+                                <span>y: ${fmt(res.avgB.y, res.avgB.sdY)}</span>
+                                <span>z: ${fmt(res.avgB.z, res.avgB.sdZ)}</span>
+                            </div>
                         </td>
                     `;
                     resultsTableBodyDistance.appendChild(tr);
