@@ -1891,6 +1891,18 @@
                                             $D = \sqrt{(\bar{x}_A - \bar{x}_B)^2 + (\bar{y}_A - \bar{y}_B)^2 +
                                             (\bar{z}_A - \bar{z}_B)^2}$
                                         </div>
+
+                                        <h2 class="text-xl font-semibold text-slate-700 mt-8">データトリミングツール</h2>
+                                        <h3>概要</h3>
+                                        <p>
+                                            本ツールは、選択された剛体のデータから、ユーザーが指定した時間範囲のデータのみを抽出します。
+                                            出力されるCSVファイルは、Motiveの新しいテイクとして読み込めるように、以下の処理が行われます。
+                                        </p>
+                                        <ul class="list-disc list-inside space-y-2 text-slate-600 mb-4">
+                                            <li><strong>Frame番号の再インデックス:</strong> 開始時点を1として連番を振り直します。</li>
+                                            <li><strong>Timeの正規化:</strong> 開始時点を0秒として、相対時間を計算します。</li>
+                                            <li><strong>ヘッダーの保持:</strong> Motive互換のメタデータヘッダーを維持します。</li>
+                                        </ul>
                             </div>
                         </div>
                     </div>
@@ -4599,28 +4611,52 @@
                 resultsTableBodyDistance.innerHTML = '';
                 results.forEach(res => {
                     const tr = document.createElement('tr');
-                    // Display raw digits as requested (using default string conversion)
-                    const fmt = (val, sd) => `${val} <span class="text-slate-400 text-xs">± ${sd}</span>`;
+
+                    // Display raw digits as requested
+                    // Using a block layout with font-mono for better readability of long numbers
+                    const fmt = (val, sd) => `
+                        <div class="font-mono text-xs break-all leading-tight">
+                            <div>${val}</div>
+                            <div class="text-slate-400">± ${sd}</div>
+                        </div>`;
 
                     tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                            ${res.pair.a} <span class="text-slate-400 mx-1">↔</span> ${res.pair.b}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 align-top">
+                            ${res.pair.a} <br><span class="text-slate-400 mx-1 text-xs">↔</span><br> ${res.pair.b}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-bold">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-bold align-top">
                             ${res.distance.toFixed(4)}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            <div class="flex flex-col gap-0.5">
-                                <span>x: ${fmt(res.avgA.x, res.avgA.sdX)}</span>
-                                <span>y: ${fmt(res.avgA.y, res.avgA.sdY)}</span>
-                                <span>z: ${fmt(res.avgA.z, res.avgA.sdZ)}</span>
+                        <td class="px-6 py-4 text-sm text-slate-500 align-top max-w-xs">
+                            <div class="flex flex-col gap-3">
+                                <div class="flex items-start gap-2 border-b border-slate-100 pb-1">
+                                    <span class="font-bold w-3 mt-0.5 text-xs text-slate-400">x</span>
+                                    ${fmt(res.avgA.x, res.avgA.sdX)}
+                                </div>
+                                <div class="flex items-start gap-2 border-b border-slate-100 pb-1">
+                                    <span class="font-bold w-3 mt-0.5 text-xs text-slate-400">y</span>
+                                    ${fmt(res.avgA.y, res.avgA.sdY)}
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <span class="font-bold w-3 mt-0.5 text-xs text-slate-400">z</span>
+                                    ${fmt(res.avgA.z, res.avgA.sdZ)}
+                                </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            <div class="flex flex-col gap-0.5">
-                                <span>x: ${fmt(res.avgB.x, res.avgB.sdX)}</span>
-                                <span>y: ${fmt(res.avgB.y, res.avgB.sdY)}</span>
-                                <span>z: ${fmt(res.avgB.z, res.avgB.sdZ)}</span>
+                        <td class="px-6 py-4 text-sm text-slate-500 align-top max-w-xs">
+                            <div class="flex flex-col gap-3">
+                                <div class="flex items-start gap-2 border-b border-slate-100 pb-1">
+                                    <span class="font-bold w-3 mt-0.5 text-xs text-slate-400">x</span>
+                                    ${fmt(res.avgB.x, res.avgB.sdX)}
+                                </div>
+                                <div class="flex items-start gap-2 border-b border-slate-100 pb-1">
+                                    <span class="font-bold w-3 mt-0.5 text-xs text-slate-400">y</span>
+                                    ${fmt(res.avgB.y, res.avgB.sdY)}
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <span class="font-bold w-3 mt-0.5 text-xs text-slate-400">z</span>
+                                    ${fmt(res.avgB.z, res.avgB.sdZ)}
+                                </div>
                             </div>
                         </td>
                     `;
