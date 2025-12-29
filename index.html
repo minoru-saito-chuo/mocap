@@ -863,22 +863,46 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <label for="sampling-rate-wide"
-                                            class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔 (秒)</label>
-                                        <input type="number" id="sampling-rate-wide" value="1.0" step="0.1" min="0.01"
-                                            class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">③ データ取得間隔</label>
+                                        <select id="sampling-mode-wide"
+                                            class="block w-full mb-2 bg-white border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                                            <option value="seconds" selected>秒数で指定</option>
+                                            <option value="frames">フレーム数で指定</option>
+                                            <option value="none">ダウンサンプリングしない</option>
+                                        </select>
+
+                                        <div id="sampling-seconds-container">
+                                            <label for="sampling-rate-wide" class="block text-xs text-slate-500 mb-1">間隔
+                                                (秒)</label>
+                                            <input type="number" id="sampling-rate-wide" value="0.1" step="0.01"
+                                                min="0.01"
+                                                class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500">
+                                        </div>
+
+                                        <div id="sampling-frames-container" class="hidden">
+                                            <label for="sampling-frames-wide"
+                                                class="block text-xs text-slate-500 mb-1">間隔 (フレーム)</label>
+                                            <input type="number" id="sampling-frames-wide" value="10" step="1" min="1"
+                                                class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500">
+                                        </div>
+
+                                        <div id="sampling-warning-wide"
+                                            class="hidden mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                                            <strong>注意:</strong>
+                                            データ量によっては処理落ちする可能性があります。<br>また、このモードでは3D軌跡機能は無効になります。
+                                        </div>
                                     </div>
                                     <div>
                                         <label for="heatmap-grid-size-wide"
                                             class="block text-sm font-medium text-slate-700 mb-2">④ ヒートマップのマス目のサイズ
                                             (<span class="unit-label">mm</span>)</label>
-                                        <input type="number" id="heatmap-grid-size-wide" value="500" step="100"
+                                        <input type="number" id="heatmap-grid-size-wide" value="200" step="100"
                                             class="block w-full rounded-md shadow-sm p-2 text-sm border-slate-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-2">⑤ 方向の定義</label>
-                                        <div class="flex space-x-4">
-                                            <div class="flex-1">
+                                        <div class="space-y-3">
+                                            <div>
                                                 <label for="vertical-axis-wide"
                                                     class="block text-xs font-medium text-slate-500">鉛直方向の軸</label>
                                                 <select id="vertical-axis-wide"
@@ -887,6 +911,12 @@
                                                     <option value="Y" selected>Y</option>
                                                     <option value="Z">Z</option>
                                                 </select>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" id="invert-z-wide"
+                                                    class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                                <label for="invert-z-wide"
+                                                    class="ml-2 text-sm text-slate-700">Z軸を反転する</label>
                                             </div>
                                         </div>
                                     </div>
@@ -1755,6 +1785,8 @@
                                 <div>
                                     <h2 class="text-xl font-semibold text-slate-700">更新履歴</h2>
                                     <ul class="mt-3 list-disc list-inside space-y-2 text-sm">
+                                        <li><span class="font-semibold">2025-12-29:</span>
+                                            広域解析ツールにおいて、Z軸を反転する機能，ダウンサンプリングをより細やかに設定できる機能を追加。</li>
                                         <li><span class="font-semibold">2025-12-17:</span>
                                             新たにデータトリミングツールを追加。データの範囲を選択し、必要な区間だけを抽出してMotive互換のCSVファイルとして出力する機能を提供。</li>
                                         <li><span class="font-semibold">2025-12-16:</span>
@@ -1784,7 +1816,7 @@
                                         <li>本ツールは、OptiTrackの解析ソフト「Motive」からエクスポートされたCSVファイルに最適化されています。</li>
                                         <li>データ処理は全てブラウザ内で完結し、添付したデータが外部に送信されることはありません。</li>
                                         <li>本ツールの利用によって生じた直接的または間接的な損害について、製作者は一切責任を負いません。</li>
-                                        <li>本ツールの作成にあたっては、複数のLLMを利用しています。</li>
+                                        <li>本ツールの作成にあたっては、複数のLLM（Gemini、Claude、Chat GPT、Jules、Antigravity）を利用しています。</li>
                                     </ul>
                                 </div>
                             </div>
@@ -1820,6 +1852,8 @@
                     href="#standard-velocity">基準速度算出ツール</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md"
                     href="#distance-measurement">距離測定ツール</a>
+                <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md"
+                    href="#data-trimming">データトリミング</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md"
                     href="#how-to-use">使い方ガイド</a>
                 <a class="nav-link block px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-md"
@@ -3154,7 +3188,16 @@
             const csvFileInputWide = document.getElementById('csv-files-wide');
             const fileListAreaWide = document.getElementById('file-list-area-wide');
             const clearFilesBtnWide = document.getElementById('clear-files-btn-wide');
+
+            // UI Elements for Sampling Settings
+            const samplingModeSelectWide = document.getElementById('sampling-mode-wide');
+            const samplingSecondsContainer = document.getElementById('sampling-seconds-container');
+            const samplingFramesContainer = document.getElementById('sampling-frames-container');
+            const samplingWarningWide = document.getElementById('sampling-warning-wide');
             const samplingRateInputWide = document.getElementById('sampling-rate-wide');
+            const samplingFramesInputWide = document.getElementById('sampling-frames-wide');
+            const invertZCheckboxWide = document.getElementById('invert-z-wide');
+
             const gridSizeInputWide = document.getElementById('heatmap-grid-size-wide');
             const verticalAxisSelectWide = document.getElementById('vertical-axis-wide');
             const rigidbodySelectionAreaWide = document.getElementById('rigidbody-selection-area-wide');
@@ -3249,6 +3292,22 @@
                 customCenterInputsWide.classList.toggle('hidden', e.target.value === 'data');
             }));
 
+            // Handle Sampling Mode Change
+            samplingModeSelectWide.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                samplingSecondsContainer.classList.add('hidden');
+                samplingFramesContainer.classList.add('hidden');
+                samplingWarningWide.classList.add('hidden');
+
+                if (mode === 'seconds') {
+                    samplingSecondsContainer.classList.remove('hidden');
+                } else if (mode === 'frames') {
+                    samplingFramesContainer.classList.remove('hidden');
+                } else if (mode === 'none') {
+                    samplingWarningWide.classList.remove('hidden');
+                }
+            });
+
             dataUnitRadiosWide.forEach(radio => radio.addEventListener('change', (e) => {
                 const selectedUnit = e.target.value;
                 unitLabels.forEach(label => label.textContent = selectedUnit);
@@ -3340,18 +3399,35 @@
                 const dataStartIndex = dataHeaderRowIndex + 1;
 
                 let rigidBodyInfo = {};
+                let nameCounts = {};
+
                 for (let i = 2; i < typeRow.length; i++) {
                     if (typeRow[i] === 'Rigid Body' && propertyRow[i] === 'Position') {
-                        const name = nameRow[i];
-                        if (rigidBodyInfo[name]) continue;
-                        rigidBodyInfo[name] = { name: name, xIndex: -1, yIndex: -1, zIndex: -1 };
+                        // Check if this is the start of a triplet (X)
+                        // This prevents processing Y and Z columns as new bodies
+                        if (dataHeaderRow[i].toUpperCase() !== 'X') continue;
+
+                        let rawName = nameRow[i];
+                        let uniqueName = rawName;
+
+                        // Handle duplicates by appending suffix
+                        if (nameCounts[rawName]) {
+                            uniqueName = `${rawName} (${nameCounts[rawName]})`;
+                            nameCounts[rawName]++;
+                        } else {
+                            nameCounts[rawName] = 1;
+                        }
+
+                        if (rigidBodyInfo[uniqueName]) continue;
+                        rigidBodyInfo[uniqueName] = { name: uniqueName, xIndex: -1, yIndex: -1, zIndex: -1 };
                         for (let j = 0; j < 3; j++) {
                             const colIndex = i + j;
-                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== name || propertyRow[colIndex] !== 'Position') break;
+                            // Check rawName for columns since CSV repeats it
+                            if (colIndex >= dataHeaderRow.length || nameRow[colIndex] !== rawName || propertyRow[colIndex] !== 'Position') break;
                             const axis = dataHeaderRow[colIndex].toUpperCase();
-                            if (axis === 'X') rigidBodyInfo[name].xIndex = colIndex;
-                            else if (axis === 'Y') rigidBodyInfo[name].yIndex = colIndex;
-                            else if (axis === 'Z') rigidBodyInfo[name].zIndex = colIndex;
+                            if (axis === 'X') rigidBodyInfo[uniqueName].xIndex = colIndex;
+                            else if (axis === 'Y') rigidBodyInfo[uniqueName].yIndex = colIndex;
+                            else if (axis === 'Z') rigidBodyInfo[uniqueName].zIndex = colIndex;
                         }
                     }
                 }
@@ -3445,13 +3521,35 @@
                 });
 
                 if (selectedBodies.length === 0) { alert('解析する剛体を少なくとも1つ選択してください。'); return; }
-                const samplingRate = parseFloat(samplingRateInputWide.value);
-                if (isNaN(samplingRate) || samplingRate <= 0) { alert('データ取得間隔には正の数値を入力してください。'); return; }
+
+                const samplingMode = samplingModeSelectWide.value;
+                const invertZ = invertZCheckboxWide.checked;
+                let samplingValue = 0;
+
+                if (samplingMode === 'seconds') {
+                    samplingValue = parseFloat(samplingRateInputWide.value);
+                    if (isNaN(samplingValue) || samplingValue <= 0) { alert('データ取得間隔(秒)には正の数値を入力してください。'); return; }
+                } else if (samplingMode === 'frames') {
+                    samplingValue = parseInt(samplingFramesInputWide.value, 10);
+                    if (isNaN(samplingValue) || samplingValue < 1) { alert('データ取得間隔(フレーム)には1以上の整数を入力してください。'); return; }
+                }
+
                 let gridSize = parseFloat(gridSizeInputWide.value);
                 if (isNaN(gridSize) || gridSize <= 0) { alert('マス目のサイズには正の数値を入力してください。'); return; }
 
                 if (dataUnit === 'mm') {
                     gridSize /= 1000;
+                }
+
+                // Handle 3D Button State
+                if (samplingMode === 'none') {
+                    show3DTrajectoryBtnWide.disabled = true;
+                    show3DTrajectoryBtnWide.title = "ダウンサンプリングなしの場合は3D軌跡機能は使用できません";
+                    show3DTrajectoryBtnWide.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    show3DTrajectoryBtnWide.disabled = false;
+                    show3DTrajectoryBtnWide.title = "";
+                    show3DTrajectoryBtnWide.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
 
                 loadingDiv.classList.remove('hidden');
@@ -3465,11 +3563,12 @@
                         const hAxis1 = horizontalAxes[0];
                         const hAxis2 = horizontalAxes[1];
 
-                        lastSampledDataWide = sampleAllDataWide(selectedBodies, samplingRate, dataUnit);
+                        const samplingParams = { mode: samplingMode, value: samplingValue };
+                        lastSampledDataWide = sampleAllDataWide(selectedBodies, samplingParams, dataUnit, invertZ);
                         drawTrajectoryWide(lastSampledDataWide, hAxis1, hAxis2);
                         // Defer 3D trajectory drawing until the tab is clicked
                         // draw3DTrajectory(lastSampledDataWide);
-                        lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize, hAxis1, hAxis2);
+                        lastHeatmapGridWide = calculateHeatmapGridWide(lastSampledDataWide, gridSize, hAxis1, hAxis2, samplingParams);
                         heatmapMaxValueWide.textContent = lastHeatmapGridWide.maxCount;
 
                         const allPoints = [].concat(...Object.values(lastSampledDataWide));
@@ -3497,7 +3596,7 @@
                 }, 50);
             }
 
-            function sampleAllDataWide(selectedBodies, samplingRate, dataUnit) {
+            function sampleAllDataWide(selectedBodies, samplingParams, dataUnit, invertZ) {
                 const result = {};
                 selectedBodies.forEach(({ filename, bodyName, label }) => {
                     const uniqueKey = label;
@@ -3506,12 +3605,31 @@
                     const info = rigidBodyInfo[bodyName];
                     if (!info) return;
 
+                    const mode = samplingParams.mode;
+                    const val = samplingParams.value;
+
                     let nextSampleTime = 0;
-                    for (const row of rawData) {
+
+                    for (let i = 0; i < rawData.length; i++) {
+                        const row = rawData[i];
                         const time = parseFloat(row[1]);
                         if (isNaN(time)) continue;
 
-                        if (time >= nextSampleTime) {
+                        let shouldSample = false;
+                        if (mode === 'none') {
+                            shouldSample = true;
+                        } else if (mode === 'frames') {
+                            // Raw data includes index, so i is index relative to start of data
+                            // Actually rawData is sliced. i is 0-based index.
+                            shouldSample = (i % val === 0);
+                        } else { // seconds
+                            if (time >= nextSampleTime) {
+                                shouldSample = true;
+                                nextSampleTime += val;
+                            }
+                        }
+
+                        if (shouldSample) {
                             let x = parseFloat(row[info.xIndex]);
                             let y = parseFloat(row[info.yIndex]);
                             let z = parseFloat(row[info.zIndex]);
@@ -3522,10 +3640,13 @@
                                 z /= 1000;
                             }
 
+                            if (invertZ) {
+                                z = -z;
+                            }
+
                             if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
                                 result[uniqueKey].push({ t: time, x: x, y: y, z: z });
                             }
-                            nextSampleTime += samplingRate;
                         }
                     }
                 });
